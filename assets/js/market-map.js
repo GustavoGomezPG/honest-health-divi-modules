@@ -178,6 +178,18 @@
 
 		detachHandler();
 
+		// The builder recreates this element on every settings change, so init()
+		// is not once-per-page there. Without destroying the previous instance
+		// each edit leaks an animation that is still bound to a detached node and
+		// still consuming rAF.
+		if ( anim ) {
+			anim.destroy();
+			anim = null;
+		}
+
+		// Lets the boot pass below tell an initialised container from a fresh one.
+		container.setAttribute( 'data-honest-map-ready', '1' );
+
 		var raw = container.getAttribute( 'data-segments' );
 		var parsed = [];
 		if ( raw ) {
@@ -240,11 +252,6 @@
 	}
 
 	window.HonestMarketMap = { init: init, showSegment: showSegment, on: on, segmentDurationMs: segmentDurationMs };
-
-	document.addEventListener( 'DOMContentLoaded', function () {
-		var el = document.querySelector( '.honest-market-map' );
-		if ( el ) { init( el ); }
-	} );
 }() );
 
 /**
@@ -509,11 +516,49 @@
 		} );
 	}
 
-	document.addEventListener( 'DOMContentLoaded', function () {
+	// Booting is idempotent and repeatable, not a one-shot on DOMContentLoaded,
+	// because Divi's builders render module HTML into their own React tree well
+	// after that event and re-render it on every settings change. A one-shot boot
+	// leaves builder output inert: no map, dead tabs, and -- before the PHP opt-out
+	// -- a grid of cards still waiting for a reveal that never comes.
+	//
+	// Both halves are booted from here so a single place knows what has already
+	// been started. `data-honest-map-ready` is stamped by the driver's init(), and
+	// the flag on the root marks a wired controller; a re-render produces new
+	// elements carrying neither, which is exactly what makes them get picked up.
+	function boot() {
 		var driven = document.querySelector( '.honest-market-map' );
 
+		if ( driven && window.HonestMarketMap && '1' !== driven.getAttribute( 'data-honest-map-ready' ) ) {
+			window.HonestMarketMap.init( driven );
+		}
+
 		[].slice.call( document.querySelectorAll( '.honest-market' ) ).forEach( function ( root ) {
+			if ( root.honestMarketReady ) { return; }
+			root.honestMarketReady = true;
 			setup( root, !! driven && root.contains( driven ) );
 		} );
-	} );
+	}
+
+	document.addEventListener( 'DOMContentLoaded', boot );
+
+	// Coalesced to one pass per frame: the builder mutates the document
+	// continuously, and the work here is two querySelectors plus a flag check
+	// unless something genuinely new turned up.
+	if ( window.MutationObserver ) {
+		var queued = false;
+		new MutationObserver( function () {
+			// While the document is still parsing, a `.honest-market` root can be
+			// visible to querySelector before its tabs are. Wiring it then would
+			// capture a partial tab list, and DOMContentLoaded is about to boot it
+			// properly anyway.
+			if ( 'loading' === document.readyState ) { return; }
+			if ( queued ) { return; }
+			queued = true;
+			requestAnimationFrame( function () {
+				queued = false;
+				boot();
+			} );
+		} ).observe( document.documentElement, { childList: true, subtree: true } );
+	}
 }() );
