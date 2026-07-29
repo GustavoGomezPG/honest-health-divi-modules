@@ -21,44 +21,60 @@
  * matters most for `current_member`: a team member with no credited articles
  * must not leave a "Articles by So-and-so" heading sitting over a blank grid.
  *
- * Every colour this module renders is exposed as an editable Divi colour
- * field (Design tab) whose default is the hex extracted from Figma (file
- * 6LBpKOMFlN8KxaKbut00YW) by pixel-sampling rendered node screenshots -- see
- * the task report for the full method and a discrepancy worth flagging here:
+ * Two composited layouts exist for the heading+button pairing, both real and
+ * both reachable via the `button_position` field:
  *
- *   - Heading   node 50:766  -> solid white (#ffffff), sampled off the real
- *     composited "Our Team" page render (the isolated node screenshot alone
- *     renders blank, because the heading's own white fill is invisible
- *     against the screenshot API's default white matte -- it only reads
- *     against the purple section-background rectangle actually behind it on
- *     the page).
- *   - Intro     node 224:2323 -> also white (#ffffff), same reasoning; a
- *     `get_variable_defs` call on this node returns no bound variable, so it
- *     was pixel-sampled directly.
- *   - Eyebrow   node 50:672 ("Thought Leadership Headline") -> #070707,
- *     sampled directly off its own isolated node screenshot (black text on a
- *     white/transparent backdrop, matching its bound `Foreground/Default`
- *     variable).
- *   - Button    node 50:674 ("Button/Main") -> #070707 border and label text
- *     on a white/transparent fill (an outline pill button), matching its
- *     bound `Foreground/Default` / `Brand/Secondary` variables.
+ *   - `below` (button centred under the grid): the "Our Team" page's finished
+ *     section -- heading and intro centred, then the grid, then a centred
+ *     button reading "Explore All Articles" (node 54:308, solid `#6985c3`
+ *     fill, white text).
+ *   - `top` (button beside the heading, in a row above the grid): the "Team
+ *     Member Page" frame's finished section (node 224:2532) -- "Articles by
+ *     Aaron" on the left, a "View All Thought Leadership" button (node
+ *     224:2997, white fill, `#6985c3` border and text) on the right, no
+ *     visible intro in that instance. This is the `current_member` case, the
+ *     one the brief calls out as the more important of the two ("This is
+ *     what powers the 'Articles by [First Name]' section"), and it recurs on
+ *     every team member's page -- so `top` is the field's default.
  *
- *   Flagged discrepancy: nodes 50:672 and 50:674 sit, in the Figma document,
- *   directly beneath the purple section-background rectangle in paint order
- *   on the "Our Team Layout" frame -- they are fully obscured by it and do
- *   not appear in the composited page render at all. The section's actually
- *   visible "view all" affordance there is a solid `#6985c3` filled button
- *   reading "Explore All Articles". However, the *same* heading+button
- *   pairing (an eyebrow-styled heading on the left, an outline "Secondary
- *   Button" on the right, in one row) appears again, unobscured, on the
- *   "Team Member Page" frame as "Articles by Aaron" + a Secondary Button --
- *   confirming this pairing is a real, intentional design pattern for this
- *   module and not a stray leftover, even though this particular instance of
- *   it is hidden on the Our Team page. The brief names 50:672/50:674
- *   explicitly as this module's own colour sources, so those (not the
- *   visible `#6985c3` override, which is a per-instance colour choice a
- *   Divi editor can already make with these same fields) are what the
- *   `eyebrow_color` / `button_*_color` defaults below carry.
+ * An earlier pass at this module sourced its button/eyebrow colours from
+ * Figma nodes 50:672/50:674, which turned out to be generic wireframe
+ * scaffolding (literally named/labelled "Thought Leadership Headline" and
+ * "View All CTA") sitting hidden behind the Our Team page's purple
+ * background rectangle -- not a finished design. Colours now come from the
+ * two real, visible button nodes above instead:
+ *
+ *   - `button_bg_color`/`button_text_color`/`button_border_color` default to
+ *     the `below` (Our Team page) treatment -- `#6985c3` fill, white text,
+ *     `#6985c3` border (same colour as the fill, so it reads as a plain
+ *     solid pill, matching node 54:308 exactly). The Our Team page is this
+ *     plugin's primary landing surface, so its button styling is the
+ *     default; the `top` treatment (`#ffffff` background, `#6985c3` border
+ *     and text) is fully reachable with these same three fields, no code
+ *     changes needed, by whoever builds the member-page Theme Builder
+ *     template.
+ *   - `eyebrow_color` defaults to `#1e1e1e`: pixel-sampling both real
+ *     composited sections (the Our Team purple band and the Team Member Page
+ *     lavender band) turned up no eyebrow/kicker element anywhere -- it does
+ *     not appear to be part of either finished design. Rather than keep the
+ *     discarded wireframe node's colour, this now matches the dark-neutral
+ *     text token this plugin already uses for on-light headings elsewhere
+ *     (Executive Leadership's and Leadership by Market's `heading_color`/
+ *     `intro_color`, both `#1e1e1e`).
+ *   - `heading_color`/`intro_color` remain `#ffffff`, confirmed correct: both
+ *     were pixel-sampled off the real, fully composited Our Team page render
+ *     (not an isolated/hidden node -- the heading and intro genuinely are
+ *     solid white there, readable against the purple section background
+ *     actually behind them on that page). They read as invisible on a plain
+ *     white page background precisely because that purple is a real part of
+ *     the design and needs to be present (via Divi's own Section background
+ *     colour, or by overriding these two fields per instance) for this
+ *     module to look right -- the same trade-off Testimonials' white-on-band
+ *     text already makes elsewhere in this plugin. The Team Member Page's
+ *     own composited heading is dark (`#1e1e1e`, matching its own light
+ *     lavender background) -- an instance-level override, not a reason to
+ *     change this module's own default, which follows the Our Team page per
+ *     the brief's original node reference (50:766).
  *
  * The card's own colours (background, byline, title, etc.) are owned
  * entirely by the shared article-card partial and its stylesheet rules --
@@ -196,6 +212,24 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'toggle_slug'     => 'main_content',
 				'dynamic_content' => 'url',
 			),
+			// Two real composited layouts exist in Figma -- see the file header
+			// comment. Defaults to `top` (beside the heading): that is the
+			// `current_member` / member-page treatment, which the brief calls
+			// out as the more important of the two and which recurs on every
+			// team member's page, versus the single Our Team page instance of
+			// `below`.
+			'button_position'      => array(
+				'label'           => esc_html__( 'Button Position', 'honest-divi-modules' ),
+				'type'            => 'select',
+				'option_category' => 'configuration',
+				'description'     => esc_html__( 'Where the "view all" button sits relative to the heading and grid.', 'honest-divi-modules' ),
+				'options'         => array(
+					'top'   => esc_html__( 'Beside Heading (Top Right)', 'honest-divi-modules' ),
+					'below' => esc_html__( 'Below Grid (Centered)', 'honest-divi-modules' ),
+				),
+				'default'         => 'top',
+				'toggle_slug'     => 'main_content',
+			),
 			// Colour fields. Defaults are the hexes extracted from Figma
 			// (file 6LBpKOMFlN8KxaKbut00YW) -- see the file header comment
 			// for the full method and the flagged label/button discrepancy.
@@ -206,7 +240,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'custom_color' => true,
 				'tab_slug'     => 'advanced',
 				'toggle_slug'  => 'colors',
-				'default'      => '#070707',
+				'default'      => '#1e1e1e',
 			),
 			'heading_color'        => array(
 				'label'        => esc_html__( 'Heading Color', 'honest-divi-modules' ),
@@ -233,7 +267,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'custom_color' => true,
 				'tab_slug'     => 'advanced',
 				'toggle_slug'  => 'colors',
-				'default'      => '#ffffff',
+				'default'      => '#6985c3',
 			),
 			'button_text_color'    => array(
 				'label'        => esc_html__( 'Button Text Color', 'honest-divi-modules' ),
@@ -242,7 +276,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'custom_color' => true,
 				'tab_slug'     => 'advanced',
 				'toggle_slug'  => 'colors',
-				'default'      => '#070707',
+				'default'      => '#ffffff',
 			),
 			'button_border_color'  => array(
 				'label'        => esc_html__( 'Button Border Color', 'honest-divi-modules' ),
@@ -251,7 +285,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'custom_color' => true,
 				'tab_slug'     => 'advanced',
 				'toggle_slug'  => 'colors',
-				'default'      => '#070707',
+				'default'      => '#6985c3',
 			),
 		);
 	}
@@ -330,22 +364,38 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 			$intro = sprintf( '<div class="honest-insights__intro">%s</div>', et_core_esc_previously( $this->content ) );
 		}
 
-		$foot        = '';
+		$button      = '';
 		$button_text = trim( (string) $this->props['button_text'] );
 		if ( '' !== $button_text ) {
 			$button_url = trim( (string) $this->props['button_url'] );
-			$foot       = sprintf(
-				'<div class="honest-insights__foot"><a class="honest-insights__button" href="%1$s">%2$s</a></div>',
+			$button     = sprintf(
+				'<a class="honest-insights__button" href="%1$s">%2$s</a>',
 				esc_url( '' !== $button_url ? $button_url : '#' ),
 				esc_html( $button_text )
 			);
 		}
 
+		// `top`: heading (+ eyebrow/intro) and the button share one row above
+		// the grid, matching the Team Member Page's finished design -- the
+		// button sits beside the heading, not below the grid, so `$foot`
+		// stays empty and the button is folded into `$head` instead.
+		// `below` (or anything else): the Our Team page's finished design --
+		// heading/intro centred, button centred under the grid in its own
+		// `$foot`.
+		$top_button = 'top' === $this->props['button_position'] && '' !== $button;
+
+		$head = sprintf( '<div class="honest-insights__headtext">%1$s%2$s%3$s</div>', $eyebrow, $heading, $intro );
+		if ( $top_button ) {
+			$head .= $button;
+		}
+
+		$foot = ( ! $top_button && '' !== $button )
+			? sprintf( '<div class="honest-insights__foot">%s</div>', $button )
+			: '';
+
 		$inner = sprintf(
-			'<div class="honest-insights__inner"><div class="honest-insights__head">%1$s%2$s%3$s</div><div class="honest-insights__grid">%4$s</div>%5$s</div>',
-			$eyebrow,
-			$heading,
-			$intro,
+			'<div class="honest-insights__inner"><div class="honest-insights__head">%1$s</div><div class="honest-insights__grid">%2$s</div>%3$s</div>',
+			$head,
 			$cards,
 			$foot
 		);
@@ -353,7 +403,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 		return $this->wrap(
 			$render_slug,
 			$inner,
-			array( 'honest-insights' ),
+			array( 'honest-insights', $top_button ? 'honest-insights--top-button' : '' ),
 			array(
 				'--hh-insights-eyebrow'       => $this->props['eyebrow_color'],
 				'--hh-insights-heading'       => $this->props['heading_color'],
