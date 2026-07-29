@@ -84,9 +84,18 @@
  *      white, for the Our Team page's purple band).
  *   3. [honest_call_to_action] -- the closing band.
  *
- * Each row is full-width with zero padding: all three modules manage their own
- * inner max-width (1245px) and their bands are meant to be full-bleed, so
- * Divi's default row width/padding would double up on them.
+ * THE ROWS CARRY NO WIDTH ATTRIBUTES. They used to be forced to
+ * `width="100%" max_width="100%"`, which was only ever necessary because every
+ * module carried a page container of its own (`max-width: 1245px; margin: 0
+ * auto`) and the two would otherwise have compounded -- i.e. the modules were
+ * acting as rows. The modules render at 100% width now, so the row is the only
+ * container and Divi decides how wide it is (Divi > Theme Options > Layout >
+ * Website Content Width). The rows keep `custom_padding="0px||0px||true|false"`
+ * because that is VERTICAL padding only: all three modules supply their own
+ * vertical rhythm. The Team Member Header's back bar and the Call To Action's
+ * band still reach the viewport edges -- each paints itself with a breakout
+ * layer, see rule 5 in assets/css/modules.css's header -- so a normal-width row
+ * is no obstacle to either.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -190,8 +199,8 @@ WP_CLI::log( sprintf( 'Reusing header layout %d and footer layout %d from the de
 /**
  * The body layout's Divi shortcode content.
  *
- * Three sections, one per module, each with a full-width zero-padding row --
- * see the file docblock for why. `theme_builder_area` marks the shortcodes as
+ * Three sections, one per module, each in a row of Divi's own width with zero
+ * VERTICAL padding -- see the file docblock for why. `theme_builder_area` marks the shortcodes as
  * belonging to a body layout, matching what Divi writes itself when a layout
  * is built through the Theme Builder UI.
  */
@@ -200,7 +209,7 @@ $honest_tpl_content = implode(
 	array(
 		// 1. Member header, including its own "Back to Team Page" bar.
 		'[et_pb_section fb_built="1" _builder_version="4.27.4" _module_preset="default" custom_padding="0px||0px||true|false" theme_builder_area="et_body_layout"]',
-		'[et_pb_row _builder_version="4.27.4" _module_preset="default" width="100%" max_width="100%" custom_padding="0px||0px||true|false" theme_builder_area="et_body_layout"]',
+		'[et_pb_row _builder_version="4.27.4" _module_preset="default" custom_padding="0px||0px||true|false" theme_builder_area="et_body_layout"]',
 		'[et_pb_column type="4_4" _builder_version="4.27.4" _module_preset="default" theme_builder_area="et_body_layout"]',
 		'[honest_team_member_header back_text="Back to Team Page" back_url="/our-team/" _builder_version="4.27.4" theme_builder_area="et_body_layout"][/honest_team_member_header]',
 		'[/et_pb_column][/et_pb_row][/et_pb_section]',
@@ -212,14 +221,14 @@ $honest_tpl_content = implode(
 		// page's purple band that the module's white defaults are for. Button
 		// colours are the Team Member Page's outline treatment.
 		'[et_pb_section fb_built="1" _builder_version="4.27.4" _module_preset="default" custom_padding="0px||0px||true|false" theme_builder_area="et_body_layout"]',
-		'[et_pb_row _builder_version="4.27.4" _module_preset="default" width="100%" max_width="100%" custom_padding="0px||0px||true|false" theme_builder_area="et_body_layout"]',
+		'[et_pb_row _builder_version="4.27.4" _module_preset="default" custom_padding="0px||0px||true|false" theme_builder_area="et_body_layout"]',
 		'[et_pb_column type="4_4" _builder_version="4.27.4" _module_preset="default" theme_builder_area="et_body_layout"]',
 		'[honest_featured_insights heading="Articles by %first_name%" source="current_member" limit="8" button_text="View All Thought Leadership" button_url="/industry-news/" button_position="top" heading_color="#1e1e1e" intro_color="#1e1e1e" button_bg_color="#ffffff" button_label_color="#6985c3" button_border_color="#6985c3" _builder_version="4.27.4" theme_builder_area="et_body_layout"][/honest_featured_insights]',
 		'[/et_pb_column][/et_pb_row][/et_pb_section]',
 
 		// 3. Closing CTA band.
 		'[et_pb_section fb_built="1" _builder_version="4.27.4" _module_preset="default" custom_padding="0px||0px||true|false" theme_builder_area="et_body_layout"]',
-		'[et_pb_row _builder_version="4.27.4" _module_preset="default" width="100%" max_width="100%" custom_padding="0px||0px||true|false" theme_builder_area="et_body_layout"]',
+		'[et_pb_row _builder_version="4.27.4" _module_preset="default" custom_padding="0px||0px||true|false" theme_builder_area="et_body_layout"]',
 		'[et_pb_column type="4_4" _builder_version="4.27.4" _module_preset="default" theme_builder_area="et_body_layout"]',
 		'[honest_call_to_action heading="About Honest Health" button_text="About Honest Health" button_url="/our-story/" alignment="right" _builder_version="4.27.4" theme_builder_area="et_body_layout"]',
 		'<p>Honest Health partners with primary care providers to build value-based care programs that work for clinicians and the people they care for.</p>',

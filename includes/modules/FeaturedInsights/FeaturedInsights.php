@@ -536,8 +536,11 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 			? sprintf( '<div class="honest-insights__foot">%s</div>', $button )
 			: '';
 
+		// No inner wrapper: the module renders at 100% width and Divi's Row is
+		// the page container, so there is nothing for one to do -- see rule 4
+		// in assets/css/modules.css's header.
 		$inner = sprintf(
-			'<div class="honest-insights__inner"><div class="honest-insights__head">%1$s</div><div class="honest-insights__grid">%2$s</div>%3$s</div>',
+			'<div class="honest-insights__head">%1$s</div><div class="honest-insights__grid">%2$s</div>%3$s',
 			$head,
 			$cards,
 			$foot

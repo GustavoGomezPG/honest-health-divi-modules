@@ -66,9 +66,7 @@
  * WHAT THE PAGE CONTAINS
  *
  * Six Divi sections, in the order of Figma frame 50:470 (file
- * 6LBpKOMFlN8KxaKbut00YW), one module each, every row full-width with zero
- * padding because each module manages its own inner max-width (1245px) and
- * its band is meant to be full-bleed:
+ * 6LBpKOMFlN8KxaKbut00YW), one module each, every row at DIVI'S OWN WIDTH:
  *
  *   1. [honest_text_hero]             purple gradient band, "Our Team." eyebrow
  *   2. [honest_leadership_by_market]  region tabs, member grid, Lottie map
@@ -76,6 +74,19 @@
  *   4. [honest_testimonials]          quote carousel on its own coloured band
  *   5. [honest_featured_insights]     3 article cards, button centred BELOW
  *   6. [honest_call_to_action]        closing band
+ *
+ * THE ROWS CARRY NO WIDTH ATTRIBUTES. They used to be forced to
+ * `width="100%" max_width="100%"`, which was only ever necessary because every
+ * module carried a page container of its own (`max-width: 1245px; margin: 0
+ * auto`) and the two would otherwise have compounded -- i.e. the modules were
+ * acting as rows. The modules render at 100% width now, so the row is the only
+ * container and Divi decides how wide it is (Divi > Theme Options > Layout >
+ * Website Content Width). The rows keep `custom_padding="0px||0px||true|false"`
+ * because that is VERTICAL padding only: these sections are edge-to-edge bands
+ * and stacked grids that supply their own vertical rhythm, and nothing about
+ * the width fix changes that. A module whose band has to reach the viewport
+ * edges paints it with a breakout layer of its own -- see rule 5 in
+ * assets/css/modules.css's header -- so a normal-width row is no obstacle.
  *
  * Section 5 is the one section that carries a background: the Featured
  * Insights module's heading/intro default to WHITE because on this page they
@@ -394,7 +405,9 @@ $honest_seed_page_id = (int) $honest_seed_page->ID;
 WP_CLI::log( sprintf( 'Found page %d ("%s") at /%s/.', $honest_seed_page_id, $honest_seed_page->post_title, $honest_seed_page_path ) );
 
 /**
- * One Divi section wrapping one module, full-width row, zero padding.
+ * One Divi section wrapping one module, in a row of Divi's own width with zero
+ * VERTICAL padding -- see the file docblock for why the row no longer sets a
+ * width of its own.
  *
  * @param string $module      The module shortcode, opening tag through closing tag.
  * @param string $admin_label Label shown on the section in the Divi Builder.
@@ -404,7 +417,7 @@ WP_CLI::log( sprintf( 'Found page %d ("%s") at /%s/.', $honest_seed_page_id, $ho
 $honest_seed_section = static function ( $module, $admin_label, $section_atts = '' ) {
 	return sprintf(
 		'[et_pb_section fb_built="1" admin_label="%1$s" _builder_version="4.27.4" _module_preset="default"%2$s custom_padding="0px||0px||true|false" global_colors_info="{}"]'
-		. '[et_pb_row _builder_version="4.27.4" _module_preset="default" width="100%%" max_width="100%%" custom_padding="0px||0px||true|false" global_colors_info="{}"]'
+		. '[et_pb_row _builder_version="4.27.4" _module_preset="default" custom_padding="0px||0px||true|false" global_colors_info="{}"]'
 		. '[et_pb_column type="4_4" _builder_version="4.27.4" _module_preset="default" global_colors_info="{}"]'
 		. '%3$s'
 		. '[/et_pb_column][/et_pb_row][/et_pb_section]',

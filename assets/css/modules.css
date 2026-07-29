@@ -28,6 +28,51 @@
  *    hex the modules use as their field defaults -- not a historical value.
  *    (The four card fallbacks below were reconciled to the Figma hexes already
  *    carried by ExecutiveLeadership.php's field defaults.)
+ *
+ * 4. NO MODULE OWNS THE PAGE CONTAINER. Every one of these modules is a Divi
+ *    module: it renders inside a Section > Row > Column, and Divi's Row is
+ *    already the page container (Divi > Theme Options > Layout > Website
+ *    Content Width, 1240px on this site, at 80% of the viewport below that).
+ *    A module that also carried `max-width: <px>; margin: 0 auto; padding: 0
+ *    20px` was a second container inside the first, which is why the seeded
+ *    pages had to force every row to `width="100%" max_width="100%"` to stop
+ *    the two from compounding -- i.e. the modules were acting as rows.
+ *
+ *    => Modules render at 100% width. Content width and horizontal gutters are
+ *       Divi's decision, made once on the Row, for every module on the page.
+ *
+ *    The only max-widths left in this file are CONTENT MEASURES (how wide a
+ *    paragraph or a piece of card copy is allowed to get inside the container)
+ *    and COMPONENT SIZES (a portrait's diameter, a flex basis). Each one is
+ *    commented where it appears.
+ *
+ * 5. FULL-BLEED BANDS BREAK OUT AND COME BACK. Four elements paint a band that
+ *    must reach the viewport edges (Text Hero, Testimonials, Call To Action,
+ *    and the Team Member Header's back bar). Rule 4 puts them inside a Row, so
+ *    each one breaks out of it -- and then puts its own content straight back:
+ *
+ *        margin-inline:  calc(50% - 50vw);   -- box becomes 100vw
+ *        padding-inline: calc(50vw - 50%);   -- content box becomes 100% again
+ *
+ *    Both percentages resolve against the same containing block (the Divi
+ *    Column, i.e. the Row's width), so the two cancel exactly: the painted box
+ *    is the viewport, the content box is whatever Divi decided the Row is. The
+ *    module still declares no width of its own -- change Divi's Website Content
+ *    Width and every one of these follows -- and the band still bleeds. This is
+ *    the ONLY reason a `vw` unit appears in this file.
+ *
+ *    Why not an absolutely positioned `left: calc(50% - 50vw); width: 100vw`
+ *    layer inside a Row-width module instead? Because it cannot be made safe.
+ *    Such a layer is horizontal overflow, and the two ways to contain it both
+ *    fail: `overflow-x: clip` on the module clips the layer back to the Row (so
+ *    nothing bleeds), and `overflow-x: clip` + `overflow-clip-margin` paints the
+ *    bleed but stops suppressing the overflow -- measured 96px of page-wide
+ *    horizontal scroll at 1920. Breaking the box out instead means there is no
+ *    overflow to contain in the first place.
+ *
+ *    Residual: `100vw` counts the classic scrollbar on platforms that render
+ *    one, so on those the band is ~a scrollbar wider than the viewport. Every
+ *    full-bleed technique that is not a Divi Section background shares this.
  */
 
 .honest-member-card {
@@ -90,6 +135,10 @@
 .honest-article-card__link { align-self: flex-start; margin: auto 20px 20px; background: var(--hh-black, #070707); color: var(--hh-white, #ffffff); padding: 12px 24px; text-decoration: none; font-weight: 700; }
 
 /* Text Hero.
+   The gradient band breaks out to the viewport and the copy comes straight
+   back to Divi's Row width -- see rule 5 in the file header for the
+   `margin-inline`/`padding-inline` pair that does it.
+
    `overflow-x: clip` (NOT `overflow: hidden`) on the band: the decorative
    `::after` ellipse below is deliberately 110% of the band's width, so with
    visible overflow it pushed documentElement.scrollWidth 5% past the viewport
@@ -97,15 +146,27 @@
    down to 16px @316). `clip` removes that horizontal overflow without
    establishing a scroll container, so the ellipse's intended ~80px vertical
    bleed below the band still shows -- `overflow: hidden` would have clipped
-   it flat. */
-.honest-text-hero { background: linear-gradient(90deg, var(--hh-hero-from, #6a4c91), var(--hh-hero-to, #9b87b5)); color: var(--hh-hero-text, #ffffff); padding: 80px 0 140px; position: relative; overflow-x: clip; }
+   it flat.
+
+   `__inner` carries no width of its own: `position: relative; z-index: 1` is
+   only what lifts the copy above the ellipse. */
+.honest-text-hero {
+	margin-inline: calc(50% - 50vw);
+	padding-inline: calc(50vw - 50%);
+	padding-block: 80px 140px;
+	background: linear-gradient(90deg, var(--hh-hero-from, #6a4c91), var(--hh-hero-to, #9b87b5));
+	color: var(--hh-hero-text, #ffffff);
+	position: relative;
+	overflow-x: clip;
+}
 .honest-text-hero::after { content: ""; position: absolute; left: -5%; right: -5%; bottom: -80px; height: 160px; background: var(--hh-white, #ffffff); border-radius: 50%; }
-.honest-text-hero__inner { max-width: 1030px; margin: 0 auto; padding: 0 20px; text-align: center; position: relative; z-index: 1; }
+.honest-text-hero__inner { text-align: center; position: relative; z-index: 1; }
 .honest-text-hero__eyebrow { font-size: 48px; font-weight: 700; margin: 0 0 16px; }
 .honest-text-hero__headline { color: var(--hh-hero-headline, #c7e4ff); margin: 0 0 24px; }
 
-/* Executive Leadership */
-.honest-exec__inner { max-width: 1245px; margin: 0 auto; padding: 0 20px; }
+/* Executive Leadership.
+   No wrapper element between the module and its heading/intro/grid: there is
+   nothing left for one to do now that the container is Divi's Row. */
 .honest-exec__heading { color: var(--hh-exec-heading, #1e1e1e); margin: 0 0 16px; }
 .honest-exec__intro { color: var(--hh-exec-intro, #1e1e1e); margin: 0 0 40px; }
 .honest-exec__grid { display: grid; gap: 30px; }
@@ -122,7 +183,7 @@
    and the map share the same gutter. The member grid sets no `align-items` at
    all, so it keeps the default `stretch` and cards in a row stay equal height;
    the only `align-items` in this section is on the tab row (see below). */
-.honest-market__inner { max-width: 1245px; margin: 0 auto; padding: 0 20px; display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 50px; row-gap: 40px; }
+.honest-market__inner { display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 50px; row-gap: 40px; }
 .honest-market__head { grid-column: 1; grid-row: 1; }
 .honest-market__heading { color: var(--hh-market-heading, #1e1e1e); margin: 0 0 16px; }
 .honest-market__intro { color: var(--hh-market-intro, #1e1e1e); margin: 0; }
@@ -176,11 +237,16 @@
 @media (max-width: 600px) { .honest-market__grid { grid-template-columns: 1fr; } }
 
 /* Testimonials.
-   The band's background lives on the module's own outer wrapper class
-   (added via wrap()'s $extra_classes), not on __inner, so it always spans
-   the module's full width regardless of __inner's own max-width. */
-.honest-testimonials { background: var(--hh-testimonials-bg, #6985c3); padding: 80px 0; }
-.honest-testimonials__inner { max-width: 900px; margin: 0 auto; padding: 0 20px; text-align: center; }
+   The band's background lives on the module's own outer wrapper class (added
+   via wrap()'s $extra_classes), which breaks out to the viewport and puts its
+   content back at Divi's Row width -- see rule 5 in the file header.
+   `__inner` carries no width of its own; it only centres the slides. */
+.honest-testimonials {
+	margin-inline: calc(50% - 50vw);
+	padding: 80px calc(50vw - 50%);
+	background: var(--hh-testimonials-bg, #6985c3);
+}
+.honest-testimonials__inner { text-align: center; }
 
 .honest-testimonials__slide[hidden] { display: none; }
 .honest-testimonials__quote {
@@ -220,7 +286,7 @@
 .honest-testimonials__dot[aria-current="true"] { background: var(--hh-testimonials-dot-active, #6a4c91); }
 .honest-testimonials__dot:focus-visible { outline: 3px solid var(--hh-testimonials-dot-active, #6a4c91); outline-offset: 3px; }
 
-@media (max-width: 600px) { .honest-testimonials { padding: 50px 0; } }
+@media (max-width: 600px) { .honest-testimonials { padding: 50px calc(50vw - 50%); } }
 
 /* Featured Insights.
    Two real composited layouts, chosen per instance by the `button_position`
@@ -240,11 +306,18 @@
    section background (e.g. the purple band on the Our Team page, or the
    lighter lavender band on the Team Member Page) is Divi's own native
    section background, not something this module renders or exposes -- see
-   the file header for why. */
-.honest-insights__inner { max-width: 1245px; margin: 0 auto; padding: 0 20px; }
+   the file header for why. That is also why this module needs no breakout
+   layer of its own: a Divi Section is already the full width of the page, so
+   its background bleeds without any help from here.
+
+   No wrapper element between the module and its head/grid/foot, for the same
+   reason as Executive Leadership: the container is Divi's Row. */
 .honest-insights__head { text-align: center; margin: 0 0 40px; }
 .honest-insights__eyebrow { color: var(--hh-insights-eyebrow, #1e1e1e); margin: 0 0 12px; font-weight: 700; }
 .honest-insights__heading { color: var(--hh-insights-heading, #ffffff); margin: 0 0 16px; }
+/* CONTENT MEASURE, not a container (file header rule 4): the centred intro
+   paragraph is deliberately narrower than the grid below it, per Figma node
+   224:2323. It stays because it describes the copy, not the page. */
 .honest-insights__intro { color: var(--hh-insights-intro, #ffffff); margin: 0 auto; max-width: 745px; }
 .honest-insights__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
 .honest-insights__foot { text-align: center; margin-top: 40px; }
@@ -309,7 +382,17 @@
    empty `background-image`: with no image chosen the layer list still
    resolves to a valid `linear-gradient(...), none` over a solid colour, no
    different in kind from any other var(--token, fallback) in this file. */
-.honest-cta { position: relative; overflow: hidden; }
+/* The band breaks out to the viewport and puts its content back at Divi's Row
+   width -- see rule 5 in the file header. `__media` stays `inset: 0`: it fills
+   whatever the module's painted box is, which the breakout has made the
+   viewport again, so the image and the gradient overlay still run the full
+   width the design draws them across. */
+.honest-cta {
+	position: relative;
+	overflow: hidden;
+	margin-inline: calc(50% - 50vw);
+	padding-inline: calc(50vw - 50%);
+}
 .honest-cta__media {
 	position: absolute;
 	inset: 0;
@@ -324,7 +407,12 @@
 .honest-cta--align-right .honest-cta__media { background-image: linear-gradient(to right, transparent, var(--hh-cta-overlay, #b8c8e7)), var(--hh-cta-bg-image, none); }
 .honest-cta--align-left .honest-cta__media { background-image: linear-gradient(to left, transparent, var(--hh-cta-overlay, #b8c8e7)), var(--hh-cta-bg-image, none); }
 
-.honest-cta__inner { position: relative; z-index: 1; max-width: 1245px; margin: 0 auto; padding: 100px 40px; display: flex; }
+.honest-cta__inner { position: relative; z-index: 1; padding: 100px 0; display: flex; }
+/* CONTENT MEASURE, not a container (file header rule 4): the whole point of
+   this module is a band whose copy occupies ONE SIDE of the image, so the
+   content block is deliberately narrower than the container and pushed to the
+   `alignment` edge by the flex rules below. Removing it would stretch the copy
+   across the photo and destroy the layout. */
 .honest-cta__content { max-width: 480px; text-align: center; }
 .honest-cta--align-right .honest-cta__inner { justify-content: flex-end; }
 .honest-cta--align-left .honest-cta__inner { justify-content: flex-start; }
@@ -343,7 +431,7 @@
 .honest-cta__button:focus-visible { outline: 3px solid var(--hh-cta-button-bg, #000000); outline-offset: 3px; }
 
 @media (max-width: 600px) {
-	.honest-cta__inner { padding: 60px 24px; }
+	.honest-cta__inner { padding: 60px 0; }
 	.honest-cta__content { max-width: 100%; }
 }
 
@@ -365,14 +453,19 @@
    full-bleed circular portrait and is what the fallback placeholder mark
    sits on when a member's attachment is missing. `object-fit: cover` fills
    the circle. */
-.honest-member__backbar { background: var(--hh-member-back-bg, #6a4c91); }
+/* The back bar is the module's one breakout: its fill reaches the viewport
+   edges while the link inside it lines up with the page's content, i.e. with
+   Divi's Row -- see rule 5 in the file header. */
+.honest-member__backbar {
+	background: var(--hh-member-back-bg, #6a4c91);
+	margin-inline: calc(50% - 50vw);
+	padding-inline: calc(50vw - 50%);
+}
 .honest-member__back-link {
 	display: flex;
 	align-items: center;
 	gap: 14px;
-	max-width: 1245px;
-	margin: 0 auto;
-	padding: 18px 40px;
+	padding: 18px 0;
 	color: var(--hh-member-back-label, #ffffff);
 	text-decoration: none;
 	font-weight: 700;
@@ -381,14 +474,15 @@
 .honest-member__back-link:focus-visible { outline: 3px solid var(--hh-member-back-label, #ffffff); outline-offset: 2px; }
 
 .honest-member__inner {
-	max-width: 1245px;
-	margin: 0 auto;
-	padding: 60px 40px;
+	padding: 60px 0;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: flex-start;
 	gap: 60px;
 }
+/* COMPONENT SIZES, not containers (file header rule 4): a flex basis that
+   decides when the two columns stop sharing a line, and below it the
+   portrait's own diameter. Neither describes the page's width. */
 .honest-member__text { flex: 1 1 420px; min-width: 0; }
 .honest-member__name { color: var(--hh-member-name, #1e1e1e); margin: 0 0 12px; }
 .honest-member__title { color: var(--hh-member-title, #070707); margin: 0 0 20px; font-weight: 700; }
@@ -432,8 +526,8 @@
 	.honest-member__media { width: 260px; flex-basis: auto; }
 }
 @media (max-width: 600px) {
-	.honest-member__back-link { padding: 14px 24px; gap: 10px; }
-	.honest-member__inner { padding: 40px 24px; }
+	.honest-member__back-link { padding: 14px 0; gap: 10px; }
+	.honest-member__inner { padding: 40px 0; }
 	.honest-member__media { width: 200px; }
 	.honest-member--portrait-ring .honest-member__media { border-width: 10px; }
 }

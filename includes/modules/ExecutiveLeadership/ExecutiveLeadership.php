@@ -207,8 +207,11 @@ class Honest_Divi_Module_Executive_Leadership extends Honest_Divi_Module_Base {
 			$header .= sprintf( '<div class="honest-exec__intro">%s</div>', et_core_esc_previously( $this->content ) );
 		}
 
+		// No inner wrapper: the module renders at 100% width and Divi's Row is
+		// the page container, so there is nothing for one to do -- see rule 4
+		// in assets/css/modules.css's header.
 		$inner = sprintf(
-			'<div class="honest-exec__inner">%1$s<div class="honest-exec__grid honest-exec__grid--%2$s">%3$s</div></div>',
+			'%1$s<div class="honest-exec__grid honest-exec__grid--%2$s">%3$s</div>',
 			$header,
 			esc_attr( $this->props['columns'] ),
 			$cards
