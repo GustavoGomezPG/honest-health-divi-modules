@@ -50,7 +50,7 @@
  *
  * This module owns every colour it renders, all applied as inline CSS custom
  * properties via wrap()'s $css_vars map (see Honest_Divi_Module_Base):
- * heading_color, content_color, button_bg_color, button_text_color,
+ * heading_color, content_color, button_bg_color, button_label_color,
  * overlay_color (the gradient's opaque end -- a single editable colour,
  * since Divi's colour field can only hold one value; the transparent end is
  * fixed in modules.css because a Figma-real 0%-alpha stop of the same hue is
@@ -72,10 +72,24 @@
  * Divi's own native Background toggle is still present in the Design tab
  * (base_advanced_fields() does not turn it off) but is simply left unused.
  *
+ * A second, subtler instance of the same class of collision: Divi's
+ * font-group generator auto-creates an `"{$option_name}_text_color"` prop for
+ * every font group unless that group sets `hide_text_color => true`
+ * (class-et-builder-element.php, ET_Builder_Element::generate_font_options()).
+ * This module's own `button` font group would therefore generate
+ * `button_text_color` -- which is why the button label colour field is named
+ * `button_label_color`, not the more obvious `button_text_color`: the latter
+ * would be an exact match for Divi's own auto-generated prop name for that
+ * same font group. See the `hide_text_color` comment at the `button` font
+ * group definition in init() for why this is currently harmless (that flag
+ * suppresses Divi's auto-generated prop entirely) but was still worth
+ * renaming away from rather than leaving as a same-name coincidence that
+ * only doesn't collide because of a flag set for an unrelated reason.
+ *
  * Contrast: the heading (#3a61b6, large/extrabold) against the overlay's
- * opaque end (#b8c8e7) computes to ~3.7:1, clearing WCAG AA's 3:1 threshold
+ * opaque end (#b8c8e7) computes to 3.49:1, clearing WCAG AA's 3:1 threshold
  * for large text. The body copy (#6a8090, ~23px, not "large" per WCAG)
- * against the same background computes to ~2.4:1, well short of the 4.5:1
+ * against the same background computes to ~2.44:1, well short of the 4.5:1
  * normal-text minimum. This is a real property of the Figma design's own
  * colour choices, faithfully reproduced here, not a defect introduced by
  * this implementation -- flagged per the brief rather than silently shipped.
@@ -115,6 +129,22 @@ class Honest_Divi_Module_Call_To_Action extends Honest_Divi_Module_Base {
 		// inherited custom-property value and defeat the single-source-of-
 		// truth colour rule (see the other modules in this plugin for the
 		// same pattern).
+		//
+		// On the `button` group specifically, hide_text_color is load-bearing
+		// for a SECOND, independent reason, not just colour ownership: Divi's
+		// font-group generator auto-creates an `"{$option_name}_text_color"`
+		// prop for every font group unless this flag is set -- which for a
+		// group named `button` means an auto-generated `button_text_color`
+		// prop. This module's own colour field is named `button_label_color`
+		// precisely to avoid ever colliding with that (see the file header
+		// comment for the full story, including a case where an earlier,
+		// differently-named field on this exact module DID collide with a
+		// Divi-reserved prop and had to be renamed after the fact). Do not
+		// remove `hide_text_color` from this group believing it only governs
+		// colour ownership -- doing so would also re-enable Divi's
+		// auto-generated `button_text_color` prop, which is a plausible-enough
+		// name that a future edit could easily reintroduce a same-name
+		// collision on this group without renaming this comment along with it.
 		$this->advanced_fields = $this->base_advanced_fields(
 			array(
 				'heading' => array( 'label' => esc_html__( 'Heading', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-cta__heading" ), 'toggle_slug' => 'heading', 'hide_text_color' => true ),
@@ -217,8 +247,15 @@ class Honest_Divi_Module_Call_To_Action extends Honest_Divi_Module_Base {
 				'toggle_slug'  => 'colors',
 				'default'      => '#000000',
 			),
-			'button_text_color' => array(
-				'label'        => esc_html__( 'Button Text Color', 'honest-divi-modules' ),
+			// Named `button_label_color`, not `button_text_color` -- see the
+			// file header comment and the `hide_text_color` comment on the
+			// `button` font group in init(): `button_text_color` is the exact
+			// prop name Divi's font-group generator would auto-create for a
+			// font group named `button` if `hide_text_color` were ever
+			// removed from it, so this field avoids that name entirely rather
+			// than relying on the flag alone to prevent a collision.
+			'button_label_color' => array(
+				'label'        => esc_html__( 'Button Label Color', 'honest-divi-modules' ),
 				'description'  => esc_html__( 'Label colour of the button.', 'honest-divi-modules' ),
 				'type'         => 'color',
 				'custom_color' => true,
@@ -274,7 +311,7 @@ class Honest_Divi_Module_Call_To_Action extends Honest_Divi_Module_Base {
 	 * wp_get_attachment_image_url(), per the brief. An empty field, a URL
 	 * that no longer matches any attachment (deleted/moved file), or a
 	 * pasted external URL all resolve to '' here -- the one signal render()
-	 * needs to fall back to a solid background_color instead of emitting a
+	 * needs to fall back to a solid cta_bg_color instead of emitting a
 	 * background-image at all.
 	 *
 	 * @return string Attachment URL, or '' if there is no usable image.
@@ -341,7 +378,7 @@ class Honest_Divi_Module_Call_To_Action extends Honest_Divi_Module_Base {
 				'--hh-cta-heading'     => $this->props['heading_color'],
 				'--hh-cta-body'        => $this->props['content_color'],
 				'--hh-cta-button-bg'   => $this->props['button_bg_color'],
-				'--hh-cta-button-text' => $this->props['button_text_color'],
+				'--hh-cta-button-text' => $this->props['button_label_color'],
 				'--hh-cta-overlay'     => $this->props['overlay_color'],
 				'--hh-cta-bg'          => $this->props['cta_bg_color'],
 				'--hh-cta-bg-image'    => array( 'url' => $this->get_background_image_url() ),
