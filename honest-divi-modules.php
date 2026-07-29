@@ -37,6 +37,7 @@ function honest_divi_modules_map() {
 		'TextHero'            => 'Honest_Divi_Module_Text_Hero',
 		'ExecutiveLeadership' => 'Honest_Divi_Module_Executive_Leadership',
 		'LeadershipByMarket'  => 'Honest_Divi_Module_Leadership_By_Market',
+		'Testimonials'        => 'Honest_Divi_Module_Testimonials',
 	);
 }
 
@@ -96,6 +97,16 @@ function honest_divi_modules_assets() {
 		'honest-market-map',
 		HONEST_DIVI_MODULES_URL . 'assets/js/market-map.js',
 		array( 'lottie-web' ),
+		HONEST_DIVI_MODULES_VERSION,
+		true
+	);
+
+	// Registered only; the Testimonials module enqueues this itself so the
+	// script loads only on pages that use it.
+	wp_register_script(
+		'honest-testimonials',
+		HONEST_DIVI_MODULES_URL . 'assets/js/testimonials.js',
+		array(),
 		HONEST_DIVI_MODULES_VERSION,
 		true
 	);

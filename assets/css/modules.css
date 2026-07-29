@@ -178,3 +178,50 @@
 	.honest-market__body { grid-column: 1; grid-row: auto; grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) { .honest-market__grid { grid-template-columns: 1fr; } }
+
+/* Testimonials.
+   The band's background lives on the module's own outer wrapper class
+   (added via wrap()'s $extra_classes), not on __inner, so it always spans
+   the module's full width regardless of __inner's own max-width. */
+.honest-testimonials { background: var(--hh-testimonials-bg, #6985c3); padding: 80px 0; }
+.honest-testimonials__inner { max-width: 900px; margin: 0 auto; padding: 0 20px; text-align: center; }
+
+.honest-testimonials__slide[hidden] { display: none; }
+.honest-testimonials__quote {
+	margin: 0 0 32px;
+	padding: 0;
+	border: none;
+	color: var(--hh-testimonials-quote, #ffffff);
+	font-weight: 700;
+	font-size: 1.25rem;
+	line-height: 1.5;
+	quotes: none;
+}
+/* font-style reset: <cite> is italic by default in browser UA stylesheets;
+   Figma's attribution line is upright, not italic. */
+.honest-testimonials__cite {
+	display: block;
+	margin: 0 0 40px;
+	color: var(--hh-testimonials-attribution, #ffffff);
+	font-style: normal;
+}
+/* Decorative em dash lives in CSS, not the accessible text content, so a
+   screen reader announces the attribution itself rather than "em dash". */
+.honest-testimonials__cite::before { content: "\2014\00A0"; }
+
+.honest-testimonials__dots { display: flex; justify-content: center; align-items: center; gap: 12px; }
+.honest-testimonials__dot {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 15px;
+	height: 15px;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: var(--hh-testimonials-dot, #ffffff);
+	cursor: pointer;
+}
+.honest-testimonials__dot[aria-current="true"] { background: var(--hh-testimonials-dot-active, #6a4c91); }
+.honest-testimonials__dot:focus-visible { outline: 3px solid var(--hh-testimonials-dot-active, #6a4c91); outline-offset: 3px; }
+
+@media (max-width: 600px) { .honest-testimonials { padding: 50px 0; } }
