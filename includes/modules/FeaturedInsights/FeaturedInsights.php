@@ -187,7 +187,6 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'label'           => esc_html__( 'Heading', 'honest-divi-modules' ),
 				'type'            => 'text',
 				'option_category' => 'basic_option',
-				// Translators: %s: the literal %first_name% token, not a value.
 				'description'     => sprintf(
 					/* translators: %s: the literal placeholder token an editor types, e.g. %first_name% */
 					esc_html__( 'Optional. Leave blank to hide the heading. With Source set to Current Team Member, %s is replaced by that member\'s first name, e.g. "Articles by %s" becomes "Articles by Aaron". The whole heading is hidden if no member is in context.', 'honest-divi-modules' ),

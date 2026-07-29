@@ -18,13 +18,36 @@
  *     run reuses the same `et_template` post instead of adding a duplicate.
  *   - The body layout is located via the template's own
  *     `_et_body_layout_id`, so it is likewise never duplicated.
- *   - The layout's shortcode content is only rewritten while it still matches
- *     what this script last wrote (tracked by a content hash in
- *     `_honest_member_template_hash`). If someone has since edited the layout
- *     in the Divi Theme Builder UI, the edit is left alone and the script
- *     reports it rather than silently reverting a designer's work.
  *   - The template ID is added to the Theme Builder post's multi-row
  *     `_et_template` meta only if it is not already one of the rows.
+ *
+ * NEVER DESTROYS A HAND-EDITED LAYOUT. The layout's shortcode content is only
+ * rewritten while it is still byte-for-byte what this script last wrote,
+ * tracked by a content hash in `_honest_member_template_hash`. If the layout
+ * has been edited since -- most realistically by someone re-saving it in the
+ * Divi Theme Builder, which re-serializes the shortcode -- the script leaves
+ * the content alone, says so, and KEEPS REFUSING ON EVERY SUBSEQUENT RUN. It
+ * deliberately does not re-record the hash on that path: doing so would make
+ * the next run mistake the edit for its own output and silently revert it, so
+ * two deploys in a row would quietly destroy the editor's work.
+ *
+ * Everything else (the template's metas, its `_et_use_on` assignment, its
+ * place in the Theme Builder's live template list) is still brought up to date
+ * on a refusing run -- only the layout's content is held back.
+ *
+ * Resolving a refusal is a deliberate human act, one of exactly two:
+ *
+ *   - Keep the edit: do nothing. The refusal is not an error and the run still
+ *     exits successfully.
+ *   - Discard the edit and rebuild from this script:
+ *       wp eval-file bin/create-member-template.php force
+ *
+ * `force` is the ONLY way to make the script overwrite content it did not
+ * author. In particular, deleting `_honest_member_template_hash` does not do
+ * it: a layout with no recorded hash has unknown provenance -- it may be one
+ * a designer built by hand in the Theme Builder and that this script merely
+ * adopted -- so a missing hash refuses too, rather than treating "I have no
+ * record of writing this" as licence to replace it.
  *
  * WHAT IT BUILDS
  *
@@ -82,6 +105,32 @@ $honest_tpl_post_type   = 'article-author';
 $honest_tpl_title       = 'Team Member Template';
 $honest_tpl_marker_meta = '_honest_member_template';
 $honest_tpl_hash_meta   = '_honest_member_template_hash';
+
+/**
+ * Whether to discard a hand-edited body layout and rebuild it from this
+ * script. Off unless `force` is passed as a positional argument:
+ *
+ *   wp eval-file bin/create-member-template.php force
+ *
+ * A positional argument, not `--force`: WP-CLI's own parser rejects unknown
+ * `--` flags on `wp eval-file` before the file is ever included, so a `--`
+ * flag cannot reach this script at all. `--force` is still accepted here in
+ * case a future WP-CLI passes it through, so the obvious spelling never
+ * silently no-ops into a destructive default.
+ */
+$honest_tpl_force = isset( $args ) && is_array( $args )
+	&& ( in_array( 'force', $args, true ) || in_array( '--force', $args, true ) );
+
+/**
+ * Whether to (re)record the body layout content hash at the end of the run.
+ *
+ * Cleared on exactly one path: when a foreign edit to the layout is detected
+ * and preserved. The hash must always describe the content THIS SCRIPT wrote,
+ * never whatever happens to be in the post -- if a run that refused to touch
+ * an edit still re-stamped the hash, the next run would read that edit as its
+ * own previous output and silently overwrite it.
+ */
+$honest_tpl_stamp_hash = true;
 
 // The "All Article Authors" condition, assembled exactly the way Divi
 // assembles it -- from the separator constant and the same four pieces, rather
@@ -257,9 +306,25 @@ if ( $honest_tpl_body_id ) {
 	$honest_tpl_current  = (string) get_post_field( 'post_content', $honest_tpl_body_id, 'raw' );
 	$honest_tpl_last_run = (string) get_post_meta( $honest_tpl_body_id, $honest_tpl_hash_meta, true );
 
+	// "Untouched" means: still byte-for-byte what THIS SCRIPT last wrote. The
+	// stored hash is the record of that write and nothing else -- see the
+	// $honest_tpl_stamp_hash rule below for why it must never be re-stamped
+	// from content the script did not author.
+	//
+	// A MISSING hash is deliberately not "untouched": a layout this script has
+	// no record of writing may be one a designer built by hand and that the
+	// find-or-create step above merely adopted, so it falls through to the
+	// same refusal as an edited one. Only `force` overrides either case.
+	$honest_tpl_untouched = '' !== $honest_tpl_last_run && md5( $honest_tpl_current ) === $honest_tpl_last_run;
+
 	if ( $honest_tpl_current === $honest_tpl_content ) {
+		// Already exactly the canonical content, so hashing it records a true
+		// statement regardless of who typed it. This is the one branch that
+		// stamps without writing, and it is safe precisely because there is
+		// no editor work to lose: the content and the canonical content are
+		// the same bytes.
 		WP_CLI::log( 'Body layout content already matches; left untouched.' );
-	} elseif ( '' !== $honest_tpl_last_run && md5( $honest_tpl_current ) === $honest_tpl_last_run ) {
+	} elseif ( $honest_tpl_untouched ) {
 		// Still exactly what this script last wrote -- safe to bring forward.
 		wp_update_post(
 			array(
@@ -268,12 +333,34 @@ if ( $honest_tpl_body_id ) {
 			)
 		);
 		WP_CLI::log( 'Body layout content refreshed from this script (it had not been edited since the last run).' );
-	} else {
+	} elseif ( $honest_tpl_force ) {
 		WP_CLI::warning(
 			sprintf(
-				'Body layout %d has been edited since this script last wrote it; its content is left as-is. Delete the layout (or clear its %s meta) if you want this script to rebuild it.',
+				'force: discarding the edited content of body layout %d and rebuilding it from this script.',
+				$honest_tpl_body_id
+			)
+		);
+		wp_update_post(
+			array(
+				'ID'           => $honest_tpl_body_id,
+				'post_content' => $honest_tpl_content,
+			)
+		);
+	} else {
+		// A foreign edit. Refuse, loudly, and -- critically -- do NOT stamp
+		// the hash. Stamping here would make the very next run mistake the
+		// edit for this script's own work and silently revert it, which is
+		// the opposite of what this guard exists to do.
+		$honest_tpl_stamp_hash = false;
+
+		WP_CLI::warning(
+			sprintf(
+				"Body layout %d does not match what this script last wrote -- it has been edited (most likely re-saved in the Divi Theme Builder).\n"
+				. "Its content is LEFT AS-IS. This script will keep refusing on every run until a human resolves it; it will not overwrite the edit on a later deploy.\n"
+				. "  To KEEP the edit:    do nothing. This run already updated the template, its metas and its assignment; only the layout content was held back.\n"
+				. '  To DISCARD the edit: wp eval-file %s force',
 				$honest_tpl_body_id,
-				$honest_tpl_hash_meta
+				'wp-content/plugins/honest-divi-modules/bin/create-member-template.php'
 			)
 		);
 	}
@@ -310,9 +397,21 @@ foreach ( $honest_tpl_layout_meta as $honest_tpl_key => $honest_tpl_value ) {
 	}
 }
 
-// Record what the layout content looks like now, so the next run can tell
+// Record the hash of the content THIS SCRIPT wrote, so the next run can tell
 // "unchanged since I wrote it" from "a human edited this in the UI".
-update_post_meta( $honest_tpl_body_id, $honest_tpl_hash_meta, md5( (string) get_post_field( 'post_content', $honest_tpl_body_id, 'raw' ) ) );
+//
+// $honest_tpl_stamp_hash is false on exactly one path: the branch above that
+// detected a foreign edit and preserved it. Stamping there would re-point the
+// guard at content the script did not author, so the next run would read the
+// edit as its own work and silently revert it -- the refusal must persist on
+// every subsequent run until a human resolves it with `force`.
+// The hash is taken by re-reading the stored content rather than hashing
+// $honest_tpl_content directly, so that anything WordPress's save filters do
+// to the shortcode on the way in is captured too -- otherwise a filtered save
+// would read as a foreign edit on the very next run.
+if ( $honest_tpl_stamp_hash ) {
+	update_post_meta( $honest_tpl_body_id, $honest_tpl_hash_meta, md5( (string) get_post_field( 'post_content', $honest_tpl_body_id, 'raw' ) ) );
+}
 
 /**
  * Template metas. Written only where they differ, so a re-run is a no-op.
