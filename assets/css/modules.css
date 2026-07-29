@@ -62,3 +62,10 @@
 .honest-article-card__author-title { display: block; color: var(--hh-blue); font-size: 0.9em; }
 .honest-article-card__desc { margin: 0 20px 20px; }
 .honest-article-card__link { display: inline-block; margin: auto 20px 20px; background: var(--hh-black); color: var(--hh-white, #fff); padding: 12px 24px; text-decoration: none; font-weight: 700; }
+
+/* Text Hero */
+.honest-text-hero { background: linear-gradient(90deg, var(--hh-hero-from, #6a4c91), var(--hh-hero-to, #9b87b5)); color: var(--hh-hero-text, #ffffff); padding: 80px 0 140px; position: relative; }
+.honest-text-hero::after { content: ""; position: absolute; left: -5%; right: -5%; bottom: -80px; height: 160px; background: var(--hh-white, #fff); border-radius: 50%; }
+.honest-text-hero__inner { max-width: 1030px; margin: 0 auto; padding: 0 20px; text-align: center; position: relative; z-index: 1; }
+.honest-text-hero__eyebrow { font-size: 48px; font-weight: 700; margin: 0 0 16px; }
+.honest-text-hero__headline { color: var(--hh-hero-headline, #c7e4ff); margin: 0 0 24px; }
