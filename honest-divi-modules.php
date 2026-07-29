@@ -38,6 +38,7 @@ function honest_divi_modules_map() {
 		'ExecutiveLeadership' => 'Honest_Divi_Module_Executive_Leadership',
 		'LeadershipByMarket'  => 'Honest_Divi_Module_Leadership_By_Market',
 		'Testimonials'        => 'Honest_Divi_Module_Testimonials',
+		'FeaturedInsights'    => 'Honest_Divi_Module_Featured_Insights',
 	);
 }
 

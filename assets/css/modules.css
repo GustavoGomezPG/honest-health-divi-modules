@@ -225,3 +225,34 @@
 .honest-testimonials__dot:focus-visible { outline: 3px solid var(--hh-testimonials-dot-active, #6a4c91); outline-offset: 3px; }
 
 @media (max-width: 600px) { .honest-testimonials { padding: 50px 0; } }
+
+/* Featured Insights.
+   Heading/intro/eyebrow are centred over a 3-column card grid, matching both
+   Figma instances (the Our Team page's row of 3 and the member page's rows
+   of 3 for its 8 cards) -- neither instance uses a different column count, so
+   there is no separate "columns" field here (unlike Executive Leadership).
+   No `align-items` on the grid: it keeps the default `stretch`, so cards in
+   a row stay equal height. Any section background (e.g. the purple band on
+   the Our Team page) is Divi's own native section background, not something
+   this module renders or exposes -- see the file header for why. */
+.honest-insights__inner { max-width: 1245px; margin: 0 auto; padding: 0 20px; }
+.honest-insights__head { text-align: center; margin: 0 0 40px; }
+.honest-insights__eyebrow { color: var(--hh-insights-eyebrow, #070707); margin: 0 0 12px; font-weight: 700; }
+.honest-insights__heading { color: var(--hh-insights-heading, #ffffff); margin: 0 0 16px; }
+.honest-insights__intro { color: var(--hh-insights-intro, #ffffff); margin: 0 auto; max-width: 745px; }
+.honest-insights__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+.honest-insights__foot { text-align: center; margin-top: 40px; }
+.honest-insights__button {
+	display: inline-block;
+	padding: 12px 32px;
+	border-radius: 999px;
+	border: 2px solid var(--hh-insights-button-border, #070707);
+	background: var(--hh-insights-button-bg, #ffffff);
+	color: var(--hh-insights-button-text, #070707);
+	text-decoration: none;
+	font-weight: 700;
+}
+.honest-insights__button:focus-visible { outline: 3px solid var(--hh-insights-button-border, #070707); outline-offset: 3px; }
+
+@media (max-width: 1024px) { .honest-insights__grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .honest-insights__grid { grid-template-columns: 1fr; } }
