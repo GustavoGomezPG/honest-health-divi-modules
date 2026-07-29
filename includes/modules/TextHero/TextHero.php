@@ -2,13 +2,18 @@
 /**
  * Text Hero module.
  *
- * The "Our Team" page hero: an eyebrow ("Our Team."), a headline, and an
- * intro paragraph over a purple gradient band with a curved white bottom
- * edge. Every colour it renders is exposed as an editable Divi colour field
- * (Design tab) whose default is the hex extracted from the corresponding
- * component in Figma (file 6LBpKOMFlN8KxaKbut00YW). The module writes the
- * chosen colours as CSS custom properties inline on its own wrapper; the
- * stylesheet only ever reads them via var(--token, fallback).
+ * The "Our Team" page hero: an eyebrow ("Our Team.") set on a blue banner
+ * highlight, a headline, and an intro paragraph over a purple gradient band
+ * with a FLAT bottom edge. Every colour it renders is exposed as an editable
+ * Divi colour field (Design tab) whose default is the hex extracted from the
+ * corresponding node in Figma. The module writes the chosen colours as CSS
+ * custom properties inline on its own wrapper; the stylesheet only ever reads
+ * them via var(--token, fallback).
+ *
+ * The authoritative design for this hero is file q1MGpWgDpBoZeS6dgrddjB,
+ * node 1:729 -- the file the client supplied directly. It supersedes the
+ * older 6LBpKOMFlN8KxaKbut00YW for this section, and it is where the eyebrow
+ * highlight colour below was sampled.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -53,7 +58,7 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 
 	public function get_fields() {
 		return array(
-			'eyebrow'              => array(
+			'eyebrow'                 => array(
 				'label'           => esc_html__( 'Eyebrow', 'honest-divi-modules' ),
 				'type'            => 'text',
 				'option_category' => 'basic_option',
@@ -61,14 +66,14 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 				'toggle_slug'     => 'main_content',
 				'dynamic_content' => 'text',
 			),
-			'headline'             => array(
+			'headline'                => array(
 				'label'           => esc_html__( 'Headline', 'honest-divi-modules' ),
 				'type'            => 'text',
 				'option_category' => 'basic_option',
 				'toggle_slug'     => 'main_content',
 				'dynamic_content' => 'text',
 			),
-			'content'              => array(
+			'content'                 => array(
 				'label'           => esc_html__( 'Body', 'honest-divi-modules' ),
 				'type'            => 'tiny_mce',
 				'option_category' => 'basic_option',
@@ -80,7 +85,7 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 			// 56:401 (gradient), "Our Team." title frame 229:3001 and
 			// intro paragraph 56:404 (white text, bound to the WHITE
 			// variable, #ffffff), and headline node 56:406 (#c7e4ff).
-			'gradient_start_color' => array(
+			'gradient_start_color'    => array(
 				'label'        => esc_html__( 'Gradient Start', 'honest-divi-modules' ),
 				'description'  => esc_html__( 'Background gradient colour at the left edge.', 'honest-divi-modules' ),
 				'type'         => 'color',
@@ -89,7 +94,7 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 				'toggle_slug'  => 'hero_colors',
 				'default'      => '#6a4c91',
 			),
-			'gradient_end_color'   => array(
+			'gradient_end_color'      => array(
 				'label'        => esc_html__( 'Gradient End', 'honest-divi-modules' ),
 				'description'  => esc_html__( 'Background gradient colour at the right edge.', 'honest-divi-modules' ),
 				'type'         => 'color',
@@ -98,7 +103,7 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 				'toggle_slug'  => 'hero_colors',
 				'default'      => '#9b87b5',
 			),
-			'text_color'           => array(
+			'text_color'              => array(
 				'label'        => esc_html__( 'Eyebrow & Body Text Color', 'honest-divi-modules' ),
 				'description'  => esc_html__( 'Colour of the eyebrow and body copy.', 'honest-divi-modules' ),
 				'type'         => 'color',
@@ -107,7 +112,7 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 				'toggle_slug'  => 'hero_colors',
 				'default'      => '#ffffff',
 			),
-			'headline_color'       => array(
+			'headline_color'          => array(
 				'label'        => esc_html__( 'Headline Text Color', 'honest-divi-modules' ),
 				'description'  => esc_html__( 'Colour of the headline.', 'honest-divi-modules' ),
 				'type'         => 'color',
@@ -115,6 +120,20 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 				'tab_slug'     => 'advanced',
 				'toggle_slug'  => 'hero_colors',
 				'default'      => '#c7e4ff',
+			),
+			// The banner shape behind the eyebrow. Figma frame 1:199 draws it
+			// as two overlapping fills, #6386c8 (node 1:200) and #6985c3
+			// (node 1:201); #6985c3 is the larger shape, is what the overlap
+			// renders as, and matches the plugin's existing --hh-blue, so the
+			// highlight is one colour here rather than two.
+			'eyebrow_highlight_color' => array(
+				'label'        => esc_html__( 'Eyebrow Highlight Color', 'honest-divi-modules' ),
+				'description'  => esc_html__( 'Colour of the banner shape behind the eyebrow.', 'honest-divi-modules' ),
+				'type'         => 'color',
+				'custom_color' => true,
+				'tab_slug'     => 'advanced',
+				'toggle_slug'  => 'hero_colors',
+				'default'      => '#6985c3',
 			),
 		);
 	}
@@ -128,8 +147,16 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 		$eyebrow  = trim( (string) $this->props['eyebrow'] );
 		$headline = trim( (string) $this->props['headline'] );
 
+		// The inner span is what carries the blue banner highlight (its
+		// ::before), so it has to shrink-wrap the text -- that is the whole
+		// reason the eyebrow is wrapped rather than styled on the <p>. It is
+		// only emitted when there is text to sit on, so a blank eyebrow field
+		// leaves no floating shape behind.
 		if ( '' !== $eyebrow ) {
-			$parts .= sprintf( '<p class="honest-text-hero__eyebrow"><span>%s</span></p>', esc_html( $eyebrow ) );
+			$parts .= sprintf(
+				'<p class="honest-text-hero__eyebrow"><span class="honest-text-hero__eyebrow-text">%s</span></p>',
+				esc_html( $eyebrow )
+			);
 		}
 		if ( '' !== $headline ) {
 			$parts .= sprintf( '<h1 class="honest-text-hero__headline">%s</h1>', esc_html( $headline ) );
@@ -143,10 +170,11 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 			sprintf( '<div class="honest-text-hero__inner">%s</div>', $parts ),
 			array( 'honest-text-hero' ),
 			array(
-				'--hh-hero-from'     => $this->props['gradient_start_color'],
-				'--hh-hero-to'       => $this->props['gradient_end_color'],
-				'--hh-hero-text'     => $this->props['text_color'],
-				'--hh-hero-headline' => $this->props['headline_color'],
+				'--hh-hero-from'               => $this->props['gradient_start_color'],
+				'--hh-hero-to'                 => $this->props['gradient_end_color'],
+				'--hh-hero-text'               => $this->props['text_color'],
+				'--hh-hero-headline'           => $this->props['headline_color'],
+				'--hh-hero-eyebrow-highlight' => $this->props['eyebrow_highlight_color'],
 			)
 		);
 	}
