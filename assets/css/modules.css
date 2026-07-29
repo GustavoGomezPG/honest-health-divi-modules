@@ -9,6 +9,7 @@
 	--hh-grey: #6a8090;
 	--hh-black: #070707;
 	--hh-white: #ffffff;
+	--hh-media-placeholder: #d5d0ea;
 	--hh-font: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -20,8 +21,8 @@
 	text-decoration: none;
 	transition: background-color 0.2s ease, color 0.2s ease;
 }
-.honest-member-card__media { display: block; }
-.honest-member-card__image { display: block; width: 100%; height: auto; border-radius: 50%; }
+.honest-member-card__media { display: block; position: relative; aspect-ratio: 1; overflow: hidden; background: var(--hh-media-placeholder, #d5d0ea); }
+.honest-member-card__image { display: block; width: 100%; height: 100%; object-fit: contain; }
 .honest-member-card__body { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; }
 .honest-member-card__name { display: block; font-weight: 700; color: var(--hh-purple); }
 .honest-member-card__title { display: block; font-weight: 600; color: var(--hh-black); }
@@ -51,8 +52,8 @@
 
 /* Article Card */
 .honest-article-card { background: var(--hh-white, #fff); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; }
-.honest-article-card__media { position: relative; }
-.honest-article-card__image { display: block; width: 100%; height: auto; }
+.honest-article-card__media { position: relative; aspect-ratio: 390 / 260; overflow: hidden; background: var(--hh-media-placeholder, #d5d0ea); }
+.honest-article-card__image { display: block; width: 100%; height: 100%; object-fit: cover; }
 .honest-article-card__flag { position: absolute; top: 0; left: 0; background: var(--hh-blue); color: var(--hh-white, #fff); font-style: italic; font-weight: 700; padding: 8px 24px 8px 20px; text-transform: uppercase; }
 .honest-article-card__title { margin: 24px 20px 0; }
 .honest-article-card__byline { margin: 20px; }
