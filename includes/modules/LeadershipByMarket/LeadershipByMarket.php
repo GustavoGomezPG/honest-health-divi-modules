@@ -320,7 +320,7 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 				// fires: the animation elapses while they cannot be painted and they stay
 				// at opacity 0 when the tab is later opened (measured: 6 of 19 cards stuck
 				// invisible). Switching tabs is already this grid's transition.
-				$cards .= honest_team_render_member_card( $member );
+				$cards .= honest_team_render_member_card( $member, null, 'honest-market-hold' );
 			}
 
 			// tabindex="0" on the panel itself, per standard ARIA Tabs

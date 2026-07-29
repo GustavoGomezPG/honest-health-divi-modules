@@ -59,6 +59,51 @@
 		return value;
 	}
 
+	/**
+	 * How long a segment takes to play, in milliseconds.
+	 *
+	 * Derived rather than tabulated, because both inputs are editable: the frame
+	 * ranges come from the manifest (West 82 frames, Southwest 54, Midwest 86,
+	 * East 70) and the speed is a Divi field. At the default speed of 3 these
+	 * come out 911 / 600 / 956 / 778ms.
+	 */
+	function segmentDurationMs( index ) {
+		var seg = segments[ index ];
+		if ( ! seg ) { return 0; }
+
+		var fps = ( anim && anim.frameRate ) ? anim.frameRate : 30;
+		var speed = ( anim && anim.playSpeed ) ? anim.playSpeed : DEFAULT_SPEED;
+
+		return Math.abs( seg.out - seg.in ) / fps / speed * 1000;
+	}
+
+	// Choreography hooks, consumed by the tab controller to time the member
+	// cards against the map.
+	//
+	// The controller cannot compute these moments itself. Segment durations
+	// depend on the per-market frame ranges and the editable speed multiplier,
+	// both of which live here; and the instant a reversal finishes is not
+	// predictable from the click, because a second click retargets an in-flight
+	// reversal without restarting it, so the forward play still begins at the
+	// FIRST click's reversal end. Emitting from the two places a play is
+	// actually issued makes that correct by construction.
+	//
+	// Not reset by init(): listeners belong to the page's controllers, which
+	// register once at DOMContentLoaded, whereas init() may re-run per
+	// animation instance.
+	var listeners = { reversestart: [], forwardstart: [] };
+
+	function on( name, fn ) {
+		if ( listeners[ name ] && 'function' === typeof fn ) {
+			listeners[ name ].push( fn );
+		}
+	}
+
+	function emit( name, index ) {
+		var detail = { index: index, durationMs: segmentDurationMs( index ) };
+		( listeners[ name ] || [] ).forEach( function ( fn ) { fn( detail ); } );
+	}
+
 	function isPlayable( index ) {
 		return typeof index === 'number' &&
 			isFinite( index ) &&
@@ -89,6 +134,7 @@
 		if ( ! isPlayable( target ) ) { return; }
 		if ( play( target, false ) ) {
 			displayed = target;
+			emit( 'forwardstart', target );
 		}
 	}
 
@@ -110,11 +156,14 @@
 			// Nothing shown yet: play forward immediately, no reverse.
 			if ( play( index, false ) ) {
 				displayed = index;
+				emit( 'forwardstart', index );
 			}
 			return;
 		}
 
 		if ( ! play( displayed, true ) ) { return; }
+
+		emit( 'reversestart', displayed );
 
 		pendingTarget = index;
 		completeHandler = function handler() {
@@ -190,7 +239,7 @@
 		} );
 	}
 
-	window.HonestMarketMap = { init: init, showSegment: showSegment };
+	window.HonestMarketMap = { init: init, showSegment: showSegment, on: on, segmentDurationMs: segmentDurationMs };
 
 	document.addEventListener( 'DOMContentLoaded', function () {
 		var el = document.querySelector( '.honest-market-map' );
@@ -203,18 +252,50 @@
  *
  * Kept separate from the playback driver above: this only knows about DOM
  * state (which tab is selected, which panel and caption are visible, what the
- * map's text alternative says) and asks HonestMarketMap for the animation. It
- * deliberately does not touch the driver's internals -- rapid clicking is
- * already handled there by retargeting the in-flight reversal, so every click
- * can just fire showSegment() and the panel/caption swap stays instant.
+ * map's text alternative says) and asks HonestMarketMap for the animation.
+ *
+ * The member cards are choreographed against the map rather than swapped
+ * instantly. Both hand-offs land three quarters of the way through the map
+ * animation that motivates them, which is late enough to read as caused by the
+ * map and early enough to overlap it:
+ *
+ *   market change -> map reverses out
+ *                    |-- 75% -> visible cards fade out, finishing as the
+ *                    |          reversal ends
+ *                    '-- reversal ends -> panels swap; the incoming cards are
+ *                        held invisible while the new segment plays forward
+ *                        |-- 75% -> incoming cards rise in, staggered
+ *
+ * The two moments come from the driver's `reversestart` / `forwardstart`
+ * events, never from timers started at the click: a second click retargets an
+ * in-flight reversal without restarting it, so a click-relative timer would
+ * fire against the wrong segment's duration. Only the 75% offsets are timed
+ * here, each measured from the event that just fired and carrying that
+ * segment's own duration.
+ *
+ * Consequence worth knowing: the panel swap deliberately LAGS the click by the
+ * reversal's length (600-956ms at the default speed). Tab `aria-selected` and
+ * focus move immediately so the control never feels dead; the panel, caption
+ * and the map's own text alternative move together, one beat later, so they are
+ * never describing a region the map is not showing.
  *
  * The driver is single-instance by design (one `anim`, bound to the first
  * `.honest-market-map` on the page). Only the module containing that element
- * drives the map; any further instance still gets working tabs, panels and
- * captions rather than dead buttons.
+ * choreographs; any further instance falls back to an instant swap rather than
+ * dead buttons.
  */
 ( function () {
 	'use strict';
+
+	// Fraction of the map animation elapsed before the cards react.
+	var STAGE_FRACTION = 0.75;
+
+	// Safety net for the held cards. The incoming panel's cards start invisible
+	// and are revealed by `forwardstart`, which is emitted once the Lottie JSON
+	// has loaded. If that fetch fails outright the event never comes, and
+	// without this the section would render permanently empty -- a broken
+	// decorative animation must not be able to hide the actual content.
+	var LOAD_GRACE_MS = 5000;
 
 	function setup( root, drivesMap ) {
 		var tabs = [].slice.call( root.querySelectorAll( '.honest-market__tab' ) );
@@ -223,33 +304,126 @@
 
 		var captions = [].slice.call( root.querySelectorAll( '.honest-market__caption' ) );
 		var map = root.querySelector( '.honest-market-map' );
+		var timers = [];
+		var staged = drivesMap && window.HonestMarketMap && window.HonestMarketMap.on;
 
-		// Replay the card entrance for the panel that just became visible.
-		//
-		// These cards deliberately do NOT use Divi's waypoint animation: three of
-		// the four panels are `hidden` at load, so a waypoint fires while they
-		// cannot be painted and they end up stuck at opacity 0. The tab change is
-		// the trigger instead, which is also what the design implies.
-		//
-		// Removing the class, reading offsetWidth, then re-adding it is the
-		// standard way to restart a CSS animation -- the read forces a style
-		// flush, without which the browser coalesces both changes and nothing
-		// replays. The stagger comes from :nth-child delays in the stylesheet.
-		function replayCards( panel ) {
-			var cards = panel.querySelectorAll( '.honest-member-card' );
+		function panelAt( index ) {
+			var tab = tabs[ index ];
+			return tab ? document.getElementById( tab.getAttribute( 'aria-controls' ) ) : null;
+		}
+
+		function segmentOf( index ) {
+			var raw = parseInt( tabs[ index ].getAttribute( 'data-segment' ), 10 );
+			return isNaN( raw ) ? index : raw;
+		}
+
+		// Segments are authored in tab order, but the mapping is read off the
+		// markup rather than assumed, because `data-segment` is what the driver
+		// is actually given.
+		function indexOfSegment( segment ) {
 			var i;
-
-			for ( i = 0; i < cards.length; i++ ) {
-				cards[ i ].classList.remove( 'honest-market-enter' );
+			for ( i = 0; i < tabs.length; i++ ) {
+				if ( segmentOf( i ) === segment ) { return i; }
 			}
+			return -1;
+		}
 
-			if ( cards.length ) {
-				void panel.offsetWidth;
-			}
+		function clearTimers() {
+			while ( timers.length ) { clearTimeout( timers.pop() ); }
+		}
 
-			for ( i = 0; i < cards.length; i++ ) {
-				cards[ i ].classList.add( 'honest-market-enter' );
+		function later( fn, ms ) {
+			if ( ! ( ms > 0 ) ) { fn(); return; }
+			timers.push( setTimeout( fn, ms ) );
+		}
+
+		function cardsOf( panel ) {
+			return panel ? [].slice.call( panel.querySelectorAll( '.honest-member-card' ) ) : [];
+		}
+
+		// Cleared on every state change: `honest-market-card-in` and
+		// `-out` both use `animation-fill-mode: both`, so a stale class would
+		// keep pinning the opacity and offset it finished on.
+		function reset( card ) {
+			card.classList.remove( 'honest-market-enter', 'honest-market-leave' );
+			card.style.animationDuration = '';
+		}
+
+		function hold( panel ) {
+			cardsOf( panel ).forEach( function ( card ) {
+				reset( card );
+				card.classList.add( 'honest-market-hold' );
+			} );
+		}
+
+		// Removing the class, reading offsetWidth, then re-adding is the standard
+		// way to restart a CSS animation -- the read forces a style flush, without
+		// which the browser coalesces both changes and nothing replays. Necessary
+		// because the same cards are shown many times. The per-card stagger comes
+		// from :nth-child delays in the stylesheet.
+		function enter( panel ) {
+			var cards = cardsOf( panel );
+			cards.forEach( reset );
+			if ( cards.length ) { void panel.offsetWidth; }
+			cards.forEach( function ( card ) {
+				card.classList.remove( 'honest-market-hold' );
+				card.classList.add( 'honest-market-enter' );
+			} );
+		}
+
+		// `ms` is the animation time left in the reversal, so the fade lands
+		// exactly as the map reaches its empty state instead of being cut off
+		// mid-way by the panel swap. It varies per market (150-240ms at the
+		// default speed), which is why it is set inline rather than in the
+		// stylesheet.
+		function leave( panel, ms ) {
+			cardsOf( panel ).forEach( function ( card ) {
+				reset( card );
+				if ( ms > 0 ) { card.style.animationDuration = ms + 'ms'; }
+				card.classList.add( 'honest-market-leave' );
+			} );
+		}
+
+		// Everything that must agree with the region the map is showing.
+		function reveal( index ) {
+			tabs.forEach( function ( tab, i ) {
+				var panel = panelAt( i );
+				if ( panel ) { panel.hidden = i !== index; }
+			} );
+
+			captions.forEach( function ( caption, i ) {
+				caption.hidden = i !== index;
+			} );
+
+			if ( ! map ) { return; }
+
+			var label = tabs[ index ].getAttribute( 'data-map-label' );
+			if ( label ) { map.setAttribute( 'aria-label', label ); }
+
+			// The visible caption is the map's description. An empty one
+			// describes nothing, so the attribute is dropped rather than
+			// pointed at a blank node.
+			var current = captions[ index ];
+			if ( current && current.id && '' !== current.textContent.replace( /\s+/g, '' ) ) {
+				map.setAttribute( 'aria-describedby', current.id );
+			} else {
+				map.removeAttribute( 'aria-describedby' );
 			}
+		}
+
+		// The panel actually on screen, which during a market change is NOT the
+		// selected one: select() moves `aria-selected` immediately so the control
+		// does not feel dead, while the panel swap waits for the map. Reading
+		// `hidden` is the only source that stays true across that gap -- keying
+		// off aria-selected here faded the incoming panel's cards instead of the
+		// outgoing ones, and the visible cards were cut at the swap.
+		function visiblePanel() {
+			var i;
+			for ( i = 0; i < tabs.length; i++ ) {
+				var panel = panelAt( i );
+				if ( panel && ! panel.hidden ) { return panel; }
+			}
+			return panelAt( 0 );
 		}
 
 		function select( index ) {
@@ -259,35 +433,59 @@
 				var on = i === index;
 				tab.setAttribute( 'aria-selected', on ? 'true' : 'false' );
 				tab.setAttribute( 'tabindex', on ? '0' : '-1' );
-				var panel = document.getElementById( tab.getAttribute( 'aria-controls' ) );
-				if ( ! panel ) { return; }
-				panel.hidden = ! on;
-				if ( on ) { replayCards( panel ); }
 			} );
 
-			captions.forEach( function ( caption, i ) {
-				caption.hidden = i !== index;
+			if ( staged ) {
+				window.HonestMarketMap.showSegment( segmentOf( index ) );
+				return;
+			}
+
+			// No map driving this instance: nothing to choreograph against.
+			clearTimers();
+			reveal( index );
+			enter( panelAt( index ) );
+		}
+
+		if ( staged ) {
+			window.HonestMarketMap.on( 'reversestart', function ( detail ) {
+				clearTimers();
+
+				// detail.index is the segment being retracted, so its panel is the
+				// one holding the cards that have to go. visiblePanel() covers the
+				// case where the map's segment has no tab on this instance.
+				var outgoing = indexOfSegment( detail.index );
+				var panel = outgoing < 0 ? visiblePanel() : panelAt( outgoing );
+				var elapsed = detail.durationMs * STAGE_FRACTION;
+
+				later( function () {
+					leave( panel, detail.durationMs - elapsed );
+				}, elapsed );
 			} );
 
-			if ( map ) {
-				var label = tabs[ index ].getAttribute( 'data-map-label' );
-				if ( label ) { map.setAttribute( 'aria-label', label ); }
+			window.HonestMarketMap.on( 'forwardstart', function ( detail ) {
+				var index = indexOfSegment( detail.index );
+				if ( index < 0 ) { return; }
 
-				// The visible caption is the map's description. An empty one
-				// describes nothing, so the attribute is dropped rather than
-				// pointed at a blank node.
-				var current = captions[ index ];
-				if ( current && current.id && '' !== current.textContent.replace( /\s+/g, '' ) ) {
-					map.setAttribute( 'aria-describedby', current.id );
-				} else {
-					map.removeAttribute( 'aria-describedby' );
-				}
-			}
+				clearTimers();
+				reveal( index );
 
-			if ( drivesMap && window.HonestMarketMap ) {
-				var segment = parseInt( tabs[ index ].getAttribute( 'data-segment' ), 10 );
-				window.HonestMarketMap.showSegment( isNaN( segment ) ? index : segment );
-			}
+				var panel = panelAt( index );
+				hold( panel );
+				later( function () { enter( panel ); }, detail.durationMs * STAGE_FRACTION );
+			} );
+
+			setTimeout( function () {
+				var panel = visiblePanel();
+				var stuck = cardsOf( panel ).some( function ( card ) {
+					return card.classList.contains( 'honest-market-hold' );
+				} );
+				if ( stuck ) { enter( panel ); }
+			}, LOAD_GRACE_MS );
+		} else {
+			// Reveal what the server rendered as selected: these cards ship
+			// hidden so the staged path can time their entrance, and nothing
+			// else is going to un-hide them here.
+			enter( visiblePanel() );
 		}
 
 		tabs.forEach( function ( tab, i ) {

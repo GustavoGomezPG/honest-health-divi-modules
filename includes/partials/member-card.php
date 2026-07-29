@@ -10,13 +10,22 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @param int|null $index  Position in its grid. When given, the card opts into
  *                         Divi's own scroll-in animation (see
  *                         honest_team_animation_attrs()) and is staggered.
+ * @param string   $extra_classes Additional classes for the root element. Used by
+ *                         Leadership by Market, whose cards are choreographed
+ *                         against the map by JavaScript instead and so ship
+ *                         hidden (see assets/js/market-map.js).
  */
-function honest_team_render_member_card( $member, $index = null ) {
+function honest_team_render_member_card( $member, $index = null, $extra_classes = '' ) {
 	if ( empty( $member['id'] ) ) {
 		return '';
 	}
 
 	$animation = honest_team_animation_attrs( $index );
+
+	$classes = $animation['class'];
+	if ( '' !== trim( (string) $extra_classes ) ) {
+		$classes .= ' ' . esc_attr( trim( (string) $extra_classes ) );
+	}
 
 	$image = $member['image_id']
 		? wp_get_attachment_image( $member['image_id'], 'medium', false, array( 'class' => 'honest-member-card__image', 'loading' => 'lazy' ) )
@@ -45,7 +54,7 @@ function honest_team_render_member_card( $member, $index = null ) {
 		$image,
 		esc_html( $member['name'] ),
 		esc_html( $member['job_title'] ),
-		$animation['class'],
+		$classes,
 		$animation['style'],
 		honest_team_render_card_chevron()
 	);
