@@ -477,21 +477,31 @@
   -webkit-appearance: none;
   appearance: none;
   font: inherit;
-  line-height: 1.4;
   cursor: pointer;
-  padding: 10px 20px;
+  /* Figma inspector on the pill: padding 20 horizontal / 15 vertical, gap 0,
+     H 54 "Hug". With the 24px label at a 100% line height that is 24 + 15*2 =
+     54, which is where the height comes from -- it is not set directly. The
+     code export claimed py-4 and leading-1.958; the inspector is authoritative
+     and those two happen to land on ~54 as well, which is how the wrong pair
+     went unnoticed. */
+  padding: 15px 20px;
   border-radius: 999px;
-  border: 2px solid var(--hh-market-tab, #6985c3);
+  /* Inset shadow, not a border. Figma aligns this 2px stroke inside the shape,
+     so it does not contribute to the pill's size: the design's H54 is 24px of
+     label plus 15px padding either side. A real border sits outside the padding
+     box and made every pill 58px. */
+  border: 0;
+  box-shadow: inset 0 0 0 2px var(--hh-market-tab, #6985c3);
   background: var(--hh-market-tab-bg, #ffffff);
   color: var(--hh-market-tab, #6985c3);
   transition:
     background-color 0.2s ease,
     color 0.2s ease,
-    border-color 0.2s ease;
+    box-shadow 0.2s ease;
 }
 .honest-market__tab[aria-selected="true"] {
   background: var(--hh-market-tab-active-bg, #6985c3);
-  border-color: var(--hh-market-tab-active-bg, #6985c3);
+  box-shadow: inset 0 0 0 2px var(--hh-market-tab-active-bg, #6985c3);
   color: var(--hh-market-tab-active, #ffffff);
 }
 .honest-market__tab:focus-visible {
@@ -1130,7 +1140,7 @@
 .honest-market__tab {
   font-size: 24px;
   font-weight: 700;
-  line-height: 1.958;
+  line-height: 1;
   letter-spacing: normal;
 }
 .honest-market__caption {
