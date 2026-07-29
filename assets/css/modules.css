@@ -1,5 +1,34 @@
 /* Honest Divi Modules */
 
+:root {
+	--hh-purple: #6b4e9e;
+	--hh-purple-soft: #d5d0ea;
+	--hh-purple-deep: #55407e;
+	--hh-blue: #6985c3;
+	--hh-green: #37a38f;
+	--hh-grey: #6a8090;
+	--hh-black: #070707;
+	--hh-font: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.honest-member-card {
+	display: block;
+	background: var(--hh-purple-soft);
+	border-radius: 12px;
+	padding: 20px;
+	text-decoration: none;
+	transition: background-color 0.2s ease, color 0.2s ease;
+}
+.honest-member-card__media { display: block; }
+.honest-member-card__image { display: block; width: 100%; height: auto; border-radius: 50%; }
+.honest-member-card__body { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; }
+.honest-member-card__name { display: block; font-weight: 700; color: var(--hh-purple); }
+.honest-member-card__title { display: block; font-weight: 600; color: var(--hh-black); }
+.honest-member-card:hover { background: var(--hh-purple); }
+.honest-member-card:hover .honest-member-card__name,
+.honest-member-card:hover .honest-member-card__title { color: #fff; }
+.honest-member-card:focus-visible { outline: 3px solid var(--hh-blue); outline-offset: 2px; }
+
 /* Test Block */
 .honest-test-block__heading {
 	margin: 0 0 0.5em;

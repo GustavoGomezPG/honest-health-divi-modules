@@ -17,6 +17,7 @@ define( 'HONEST_DIVI_MODULES_URL', plugin_dir_url( __FILE__ ) );
 
 require_once HONEST_DIVI_MODULES_DIR . 'includes/admin/team-settings.php';
 require_once HONEST_DIVI_MODULES_DIR . 'includes/data/team-data.php';
+require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/member-card.php';
 
 /**
  * Registered modules, as directory name => class name.
