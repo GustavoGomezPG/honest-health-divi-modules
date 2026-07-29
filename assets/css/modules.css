@@ -48,3 +48,16 @@
 	padding: 30px;
 	border: 1px solid #d8dee4;
 }
+
+/* Article Card */
+.honest-article-card { background: var(--hh-white, #fff); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; }
+.honest-article-card__media { position: relative; }
+.honest-article-card__image { display: block; width: 100%; height: auto; }
+.honest-article-card__flag { position: absolute; top: 0; left: 0; background: var(--hh-blue); color: var(--hh-white, #fff); font-style: italic; font-weight: 700; padding: 8px 24px 8px 20px; text-transform: uppercase; }
+.honest-article-card__title { margin: 24px 20px 0; }
+.honest-article-card__byline { margin: 20px; }
+.honest-article-card__author { display: block; margin-bottom: 8px; }
+.honest-article-card__author-name { display: block; font-weight: 700; color: var(--hh-blue); }
+.honest-article-card__author-title { display: block; color: var(--hh-blue); font-size: 0.9em; }
+.honest-article-card__desc { margin: 0 20px 20px; }
+.honest-article-card__link { display: inline-block; margin: auto 20px 20px; background: var(--hh-black); color: var(--hh-white, #fff); padding: 12px 24px; text-decoration: none; font-weight: 700; }
