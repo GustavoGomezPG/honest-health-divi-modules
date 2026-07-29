@@ -38,7 +38,7 @@ function honest_team_render_member_card( $member, $index = null ) {
 					<span class="honest-member-card__name">%3$s</span>
 					<span class="honest-member-card__title">%4$s</span>
 				</span>
-				<span class="honest-member-card__arrow" aria-hidden="true"></span>
+				<span class="honest-member-card__arrow">%7$s</span>
 			</span>
 		</a>',
 		esc_url( $member['permalink'] ),
@@ -46,6 +46,7 @@ function honest_team_render_member_card( $member, $index = null ) {
 		esc_html( $member['name'] ),
 		esc_html( $member['job_title'] ),
 		$animation['class'],
-		$animation['style']
+		$animation['style'],
+		honest_team_render_card_chevron()
 	);
 }

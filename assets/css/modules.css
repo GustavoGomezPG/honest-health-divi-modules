@@ -1130,3 +1130,23 @@
   line-height: 1.15;
   letter-spacing: normal;
 }
+
+/* Member card double chevron (Figma node 1:427).
+   Two fills, both custom properties: the outline and its knockout. On hover the
+   card background becomes purple, so a knockout still filled with the resting
+   lavender would show as a stray shape -- both flip instead, giving a white
+   outline on the purple card. Sized from the design's 40x34 instance. */
+.honest-member-card__arrow {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+.honest-member-card__chevron {
+  display: block;
+  width: 40px;
+  height: 34px;
+}
+.honest-member-card:hover .honest-member-card__chevron {
+  --hh-chevron: var(--hh-white, #ffffff);
+  --hh-chevron-inner: var(--hh-card-hover-bg, #6a4c91);
+}
