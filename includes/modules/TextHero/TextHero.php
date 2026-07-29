@@ -122,14 +122,33 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 				'toggle_slug'     => 'main_content',
 				'dynamic_content' => 'text',
 			),
-			// Colour fields. Defaults are the hexes extracted from Figma
-			// (file 6LBpKOMFlN8KxaKbut00YW): hero background band node
-			// 56:401 (gradient), "Our Team." title frame 229:3001 and
-			// intro paragraph 56:404 (white text, bound to the WHITE
-			// variable, #ffffff), and headline node 56:406 (#c7e4ff).
+			// Colour fields. The text defaults are the hexes extracted from
+			// the older file 6LBpKOMFlN8KxaKbut00YW -- "Our Team." title
+			// frame 229:3001 and intro paragraph 56:404 (white text, bound
+			// to the WHITE variable, #ffffff), and headline node 56:406
+			// (#c7e4ff).
+			//
+			// The two gradient defaults below are re-derived from the
+			// AUTHORITATIVE file, q1MGpWgDpBoZeS6dgrddjB node 1:198, and
+			// both come out unchanged. That node's fill is a single colour
+			// at two alphas drawn right-to-left and multiplied over the
+			// white page -- rgba(106,76,145,0.67) at the right edge
+			// reaching rgb(106,76,145) 63.435% of the way back across.
+			// Multiply over white is the identity, so the painted endpoints
+			// are rgb(106,76,145) = #6a4c91 on the left and
+			// 0.67*(106,76,145) + 0.33*255 = (155,135,181) = #9b87b5 on the
+			// right, which is exactly what these defaults already said.
+			//
+			// What was actually wrong was the STOP GEOMETRY, and it lives in
+			// assets/css/modules.css, not here: the start colour holds flat
+			// until 36.565% (= 100% - 63.435%) before the ramp begins, and
+			// the old declaration ramped from 0%. See the long note on
+			// `.honest-text-hero` in that file. These two fields still feed
+			// the gradient through `wrap()`'s $css_vars, so editing either
+			// colour keeps the design's hold-then-ramp shape.
 			'gradient_start_color'    => array(
 				'label'        => esc_html__( 'Gradient Start', 'honest-divi-modules' ),
-				'description'  => esc_html__( 'Background gradient colour at the left edge.', 'honest-divi-modules' ),
+				'description'  => esc_html__( 'Background gradient colour at the left edge. Held flat across the first 36.565% of the band before the ramp begins, matching the design.', 'honest-divi-modules' ),
 				'type'         => 'color',
 				'custom_color' => true,
 				'tab_slug'     => 'advanced',
