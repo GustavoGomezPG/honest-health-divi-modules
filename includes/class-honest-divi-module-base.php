@@ -5,6 +5,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 abstract class Honest_Divi_Module_Base extends ET_Builder_Module {
 
+	/**
+	 * Full Visual Builder compatibility. Requires a React component per module
+	 * registered through Divi's builder JavaScript API -- see
+	 * assets/js/vb-modules.js. PHP alone cannot reach this level.
+	 *
+	 * Declared per module rather than here, and deliberately left at 'partial'
+	 * as the default: a module set to 'on' without a matching React component
+	 * has no way to draw itself in the builder. Each module raises its own level
+	 * as its component lands, so the two can never drift apart.
+	 *
+	 * The level also decides who owns the module wrapper.
+	 * ET_Builder_Element::_render_module_wrapper() runs only when
+	 * `'on' === $this->vb_support && ! $this->_is_official_module`
+	 * (class-et-builder-element.php:3458), and it emits BOTH an outer and an
+	 * inner div -- so a module at 'on' must not emit a wrapper of its own, while
+	 * one at 'partial' must. wrap() branches on exactly that.
+	 *
+	 * @var string
+	 */
 	public $vb_support = 'partial';
 
 	protected $module_credits = array(
@@ -46,8 +65,29 @@ abstract class Honest_Divi_Module_Base extends ET_Builder_Module {
 	);
 
 	/**
-	 * Emit the outer module wrapper. Required because vb_support='partial'
-	 * means Divi does not wrap third-party module output.
+	 * Hand the module's classes and CSS custom properties to the wrapper Divi
+	 * builds, and return the inner content unwrapped.
+	 *
+	 * The element carrying the component class and the custom properties must be
+	 * one we own, because it has to be reproducible in the builder too. Divi's
+	 * builder builds its own wrapper in React from the module's type and order
+	 * and offers no supported way to add a class to it -- `moduleInfo` exposes
+	 * `orderClassName` and nothing writable. Putting the class on Divi's wrapper
+	 * server-side (via add_classname, or via the
+	 * et_builder_module_{slug}_outer_wrapper_attrs filter for the properties)
+	 * therefore works on the front end and cannot work in the builder, which
+	 * would style a different element in each context -- the exact divergence
+	 * full compatibility is supposed to remove.
+	 *
+	 * So at 'on' this emits one plain div holding the component class and the
+	 * properties, nested inside the outer/inner pair Divi draws, and the React
+	 * component in assets/js/vb-modules.js emits the identical div. At 'partial'
+	 * Divi wraps nothing, so this div is also the module wrapper and carries
+	 * Divi's own classes and id as well.
+	 *
+	 * Note that add_classname() is deliberately NOT called at 'on': it would put
+	 * the component class on Divi's outer wrapper as well as on our div, and a
+	 * band like the hero's would then paint twice, nested.
 	 *
 	 * @param string $render_slug   Slug passed to render().
 	 * @param string $inner         Inner HTML already built by the module.
@@ -71,10 +111,19 @@ abstract class Honest_Divi_Module_Base extends ET_Builder_Module {
 	 *                              values are dropped rather than emitted.
 	 */
 	protected function wrap( $render_slug, $inner, $extra_classes = array(), $css_vars = array() ) {
-		foreach ( (array) $extra_classes as $class ) {
-			if ( '' !== $class ) {
-				$this->add_classname( $class );
-			}
+		$classes = array_values( array_filter( array_map( 'strval', (array) $extra_classes ) ) );
+
+		if ( 'on' === $this->vb_support ) {
+			return sprintf(
+				'<div class="%1$s"%3$s>%2$s</div>',
+				esc_attr( implode( ' ', $classes ) ),
+				$inner,
+				$this->build_style_attr( $css_vars )
+			);
+		}
+
+		foreach ( $classes as $class ) {
+			$this->add_classname( $class );
 		}
 
 		return sprintf(
@@ -99,6 +148,27 @@ abstract class Honest_Divi_Module_Base extends ET_Builder_Module {
 	 * @return string Either '' (no valid pairs) or ' style="--a:b;--c:d;"'.
 	 */
 	private function build_style_attr( $css_vars ) {
+		$declarations = $this->build_css_var_declarations( $css_vars );
+
+		if ( '' === $declarations ) {
+			return '';
+		}
+
+		return sprintf( ' style="%s"', esc_attr( $declarations ) );
+	}
+
+	/**
+	 * Validate a map of CSS custom properties into a declaration string.
+	 *
+	 * Returns the raw, UNESCAPED declarations (e.g. `--a:red;--b:blue;`) so the
+	 * caller can decide on escaping: build_style_attr() escapes for direct
+	 * output, while filter_outer_wrapper_attrs() must not, because Divi escapes
+	 * the attribute itself.
+	 *
+	 * @param array $css_vars Map of '--custom-property-name' => value.
+	 * @return string Either '' (no valid pairs) or 'name:value;name:value;'.
+	 */
+	private function build_css_var_declarations( $css_vars ) {
 		$declarations = array();
 
 		foreach ( (array) $css_vars as $name => $value ) {
@@ -129,11 +199,7 @@ abstract class Honest_Divi_Module_Base extends ET_Builder_Module {
 			$declarations[] = "{$name}:{$value};";
 		}
 
-		if ( empty( $declarations ) ) {
-			return '';
-		}
-
-		return sprintf( ' style="%s"', esc_attr( implode( '', $declarations ) ) );
+		return implode( '', $declarations );
 	}
 
 	/**

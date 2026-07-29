@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HONEST_DIVI_MODULES_VERSION', '1.4.1' );
+define( 'HONEST_DIVI_MODULES_VERSION', '1.5.2' );
 define( 'HONEST_DIVI_MODULES_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HONEST_DIVI_MODULES_URL', plugin_dir_url( __FILE__ ) );
 
@@ -116,6 +116,43 @@ function honest_divi_modules_assets() {
 	);
 }
 add_action( 'wp_enqueue_scripts', 'honest_divi_modules_assets' );
+
+/**
+ * Enqueue the builder-only assets.
+ *
+ * Two separate problems this solves, both measured on Divi 4.27.7:
+ *
+ * 1. vb-modules.js carries the React components that give the modules full
+ *    builder compatibility. It has to be present in the builder and nowhere
+ *    else -- on the front end there is no builder API to register against.
+ *
+ * 2. The runtime scripts (Lottie, the map driver, testimonials) are only
+ *    *registered* above; each module enqueues its own during render() so the
+ *    library loads solely on pages that use it. That never happens in the
+ *    builder, because the ?et_fb=1 document contains no module markup at all --
+ *    Divi renders modules into its preview iframe afterwards. So nothing ever
+ *    triggered the enqueue and the map could not run in the builder. Enqueuing
+ *    them unconditionally here fixes that; the iframe does receive front-end
+ *    scripts (verified: 86 of them, jQuery included), it just never received
+ *    ours.
+ *
+ * jquery is a hard dependency: registration hangs off the builder's
+ * `et_builder_api_ready` jQuery event.
+ */
+function honest_divi_modules_builder_assets() {
+	wp_enqueue_script( 'lottie-web' );
+	wp_enqueue_script( 'honest-market-map' );
+	wp_enqueue_script( 'honest-testimonials' );
+
+	wp_enqueue_script(
+		'honest-divi-vb-modules',
+		HONEST_DIVI_MODULES_URL . 'assets/js/vb-modules.js',
+		array( 'jquery' ),
+		HONEST_DIVI_MODULES_VERSION,
+		true
+	);
+}
+add_action( 'et_fb_enqueue_assets', 'honest_divi_modules_builder_assets' );
 
 /**
  * Warn when the active theme is not Divi, since the modules cannot register.

@@ -24,6 +24,16 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 
 	public $slug = 'honest_text_hero';
 
+	/**
+	 * Full builder compatibility: the matching React component lives in
+	 * assets/js/vb-modules.js under this same slug. Raised from the base class's
+	 * 'partial' only because that component exists -- and it means Divi, not
+	 * wrap(), draws this module's wrapper.
+	 *
+	 * @var string
+	 */
+	public $vb_support = 'on';
+
 	public function init() {
 		$this->name             = esc_html__( 'Text Hero', 'honest-divi-modules' );
 		$this->main_css_element = '%%order_class%%';
