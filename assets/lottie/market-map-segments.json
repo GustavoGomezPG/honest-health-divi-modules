@@ -1,0 +1,112 @@
+{
+  "file": "market-map.json",
+  "name": "Honest Health - Leadership by Market",
+  "fps": 30,
+  "width": 1319,
+  "height": 814,
+  "totalFrames": 316,
+  "compIn": 0,
+  "compOut": 316,
+  "notes": "Segments are ordered to match the WordPress repeater row index (row 0 = West). Play forward with player.playSegments(segment.frames, true). Reverse by setting direction -1 over the same range. Every segment starts on the identical empty outlined map at segment.emptyFrame (== segment.in). The 6 guard frames between segments are never played and exist so coloured layers of one segment are fully retired before the next segment's first frame.",
+  "segments": [
+    {
+      "index": 1,
+      "name": "West",
+      "slug": "west",
+      "in": 0,
+      "out": 82,
+      "emptyFrame": 0,
+      "frames": [
+        0,
+        82
+      ],
+      "states": [
+        "California",
+        "Oregon",
+        "Washington",
+        "Nevada",
+        "Arizona",
+        "Idaho",
+        "Utah",
+        "Montana",
+        "New Mexico",
+        "Wyoming",
+        "Colorado"
+      ],
+      "stateCount": 11,
+      "labelFrame": 62
+    },
+    {
+      "index": 2,
+      "name": "Southwest",
+      "slug": "southwest",
+      "in": 88,
+      "out": 142,
+      "emptyFrame": 88,
+      "frames": [
+        88,
+        142
+      ],
+      "states": [
+        "Arizona",
+        "New Mexico",
+        "Texas",
+        "Oklahoma"
+      ],
+      "stateCount": 4,
+      "labelFrame": 122
+    },
+    {
+      "index": 3,
+      "name": "Midwest",
+      "slug": "midwest",
+      "in": 148,
+      "out": 234,
+      "emptyFrame": 148,
+      "frames": [
+        148,
+        234
+      ],
+      "states": [
+        "South Dakota",
+        "North Dakota",
+        "Nebraska",
+        "Minnesota",
+        "Iowa",
+        "Missouri",
+        "Wisconsin",
+        "Illinois",
+        "Michigan (Upper Peninsula)",
+        "Indiana",
+        "Michigan (Lower Peninsula)",
+        "Ohio"
+      ],
+      "stateCount": 12,
+      "labelFrame": 214
+    },
+    {
+      "index": 4,
+      "name": "East",
+      "slug": "east",
+      "in": 240,
+      "out": 310,
+      "emptyFrame": 240,
+      "frames": [
+        240,
+        310
+      ],
+      "states": [
+        "Pennsylvania",
+        "New York",
+        "New Jersey",
+        "Vermont",
+        "Connecticut",
+        "New Hampshire",
+        "Massachusetts",
+        "Maine"
+      ],
+      "stateCount": 8,
+      "labelFrame": 290
+    }
+  ]
+}
