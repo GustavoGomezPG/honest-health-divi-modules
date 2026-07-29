@@ -314,9 +314,28 @@
 		var timers = [];
 		var staged = drivesMap && window.HonestMarketMap && window.HonestMarketMap.on;
 
+		// Scoped to this controller's own root, never document.getElementById.
+		// Divi's builder re-renders a module by replacing its DOM, so several
+		// controllers can exist at once, and the replacement reuses the same
+		// element ids (the ids come from the cached computed value). A document-wide
+		// lookup therefore let a controller from a detached render resolve the LIVE
+		// panels and drive them with its own stale state and timers -- measured as
+		// the visible panel's cards stranded at opacity 0, one controller's `leave`
+		// landing after another's `enter`.
 		function panelAt( index ) {
 			var tab = tabs[ index ];
-			return tab ? document.getElementById( tab.getAttribute( 'aria-controls' ) ) : null;
+
+			if ( ! tab ) { return null; }
+
+			var id = tab.getAttribute( 'aria-controls' );
+
+			return id ? root.querySelector( '[id="' + id + '"]' ) : null;
+		}
+
+		// A controller whose root has been detached by a re-render must stop
+		// touching the document: the live nodes now belong to a newer controller.
+		function isStale() {
+			return ! root.isConnected;
 		}
 
 		function segmentOf( index ) {
@@ -455,6 +474,8 @@
 
 		if ( staged ) {
 			window.HonestMarketMap.on( 'reversestart', function ( detail ) {
+				if ( isStale() ) { return; }
+
 				clearTimers();
 
 				// detail.index is the segment being retracted, so its panel is the
@@ -465,11 +486,14 @@
 				var elapsed = detail.durationMs * STAGE_FRACTION;
 
 				later( function () {
+					if ( isStale() ) { return; }
 					leave( panel, detail.durationMs - elapsed );
 				}, elapsed );
 			} );
 
 			window.HonestMarketMap.on( 'forwardstart', function ( detail ) {
+				if ( isStale() ) { return; }
+
 				var index = indexOfSegment( detail.index );
 				if ( index < 0 ) { return; }
 
@@ -478,10 +502,15 @@
 
 				var panel = panelAt( index );
 				hold( panel );
-				later( function () { enter( panel ); }, detail.durationMs * STAGE_FRACTION );
+				later( function () {
+					if ( isStale() ) { return; }
+					enter( panel );
+				}, detail.durationMs * STAGE_FRACTION );
 			} );
 
 			setTimeout( function () {
+				if ( isStale() ) { return; }
+
 				var panel = visiblePanel();
 				var stuck = cardsOf( panel ).some( function ( card ) {
 					return card.classList.contains( 'honest-market-hold' );
@@ -542,9 +571,23 @@
 
 	document.addEventListener( 'DOMContentLoaded', boot );
 
-	// Coalesced to one pass per frame: the builder mutates the document
-	// continuously, and the work here is two querySelectors plus a flag check
-	// unless something genuinely new turned up.
+	// Also boot immediately when the document is already past parsing. In Divi's
+	// builder this script runs inside a preview iframe whose DOMContentLoaded
+	// fired long before the modules were rendered into it, so the listener above
+	// never covers that case on its own.
+	if ( 'loading' !== document.readyState ) { boot(); }
+
+	// Coalesced to one pass per batch of mutations: the builder mutates the
+	// document continuously, and the work here is two querySelectors plus a flag
+	// check unless something genuinely new turned up.
+	//
+	// Deliberately setTimeout and NOT requestAnimationFrame. rAF does not fire
+	// while a document is hidden, and Divi builds its preview iframe offscreen
+	// before revealing it: a mutation arriving in that window set `queued` and the
+	// frame never came, so the flag latched and every later mutation returned
+	// early. Measured result was a permanently uninitialised map in the builder --
+	// the element and driver both present, init() never called. A timer fires in a
+	// hidden document (throttled, which is fine for a coalescing tick).
 	if ( window.MutationObserver ) {
 		var queued = false;
 		new MutationObserver( function () {
@@ -555,10 +598,10 @@
 			if ( 'loading' === document.readyState ) { return; }
 			if ( queued ) { return; }
 			queued = true;
-			requestAnimationFrame( function () {
+			setTimeout( function () {
 				queued = false;
 				boot();
-			} );
+			}, 0 );
 		} ).observe( document.documentElement, { childList: true, subtree: true } );
 	}
 }() );

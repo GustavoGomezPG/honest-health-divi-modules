@@ -123,6 +123,32 @@
 		}
 
 		/**
+		 * A computed property that carries a structure rather than a string.
+		 *
+		 * Divi wp_json_encode()s whatever the callback returns, and the value can
+		 * reach the component either already parsed or still as JSON text, so both
+		 * are accepted. A PHP callback returning array() arrives as [] -- an empty
+		 * ARRAY, not an object -- which is how "nothing to show" is signalled.
+		 */
+		function computedData( value ) {
+			var data = value;
+
+			if ( 'string' === typeof data ) {
+				try {
+					data = JSON.parse( data );
+				} catch ( err ) {
+					return null;
+				}
+			}
+
+			if ( ! data || 'object' !== typeof data ) {
+				return null;
+			}
+
+			return ( Array.isArray( data ) && 0 === data.length ) ? false : data;
+		}
+
+		/**
 		 * Build the CSS custom properties for a module's own div, mirroring
 		 * Honest_Divi_Module_Base::wrap().
 		 *
@@ -377,6 +403,96 @@
 						} )
 					},
 					parts
+				);
+			}
+		} );
+
+		/**
+		 * Leadership by Market.
+		 *
+		 * Heading and intro are mirrored as props, so editing them is instant. The
+		 * tabs and the panel/map body arrive as server-rendered HTML in the
+		 * `__market` computed property, from the same get_market_parts() the front
+		 * end calls -- so the interlocked tab/panel/caption ARIA wiring exists in
+		 * exactly one place.
+		 *
+		 * The three divs are built here rather than injected as one block on
+		 * purpose: `.honest-market__inner` is a two-column grid and head, tabs and
+		 * body are direct grid items with explicit grid-column / grid-row. They
+		 * must stay direct children, so only their contents are injected.
+		 *
+		 * The map animates here too, now that the driver script is enqueued into
+		 * the builder iframe: market-map.js boots on any newly inserted
+		 * `.honest-market` rather than only at DOMContentLoaded, which is what a
+		 * builder re-render produces.
+		 */
+		modules.push( {
+			slug: 'honest_leadership_by_market',
+
+			render: function () {
+				var props = this.props || {};
+				var market = computedData( props.__market );
+
+				// false means the callback found no markets, which is when PHP
+				// renders nothing at all. null means the round-trip has not landed
+				// yet, so the head still renders and the rest fills in.
+				if ( false === market ) {
+					return null;
+				}
+
+				var parts = [];
+				var heading = text( props.heading );
+				var intro = contentBlock( props.content, 'honest-market__intro', 'intro' );
+
+				if ( heading ) {
+					parts.push( e( 'h2', { className: 'honest-market__heading', key: 'heading' }, heading ) );
+				}
+
+				if ( intro ) {
+					parts.push( intro );
+				}
+
+				var children = [ e( 'div', { className: 'honest-market__head', key: 'head' }, parts ) ];
+
+				if ( market ) {
+					children.push( e( 'div', {
+						className: 'honest-market__tabs',
+						key: 'tabs',
+						role: 'tablist',
+						// Not run through Divi's i18n: the builder API exposes no
+						// translation bridge, and PHP still emits the translated
+						// string on the front end.
+						'aria-label': 'Markets',
+						dangerouslySetInnerHTML: computed( market.tabs )
+					} ) );
+
+					children.push( e( 'div', {
+						className: 'honest-market__body',
+						key: 'body',
+						dangerouslySetInnerHTML: computed( market.body )
+					} ) );
+				}
+
+				return e(
+					'div',
+					{
+						className: 'honest-market',
+						style: cssVars( {
+							'--hh-market-heading': props.heading_color,
+							'--hh-market-intro': props.intro_color,
+							'--hh-market-tab': props.tab_color,
+							'--hh-market-tab-bg': props.tab_bg_color,
+							'--hh-market-tab-active': props.tab_active_color,
+							'--hh-market-tab-active-bg': props.tab_active_bg_color,
+							'--hh-market-caption': props.caption_color,
+							'--hh-card-bg': props.card_bg_color,
+							'--hh-card-hover-bg': props.card_hover_bg_color,
+							'--hh-card-hover-shadow': props.card_hover_shadow_color,
+							'--hh-card-name': props.card_name_color,
+							'--hh-card-title': props.card_title_color
+						} )
+					},
+					e( 'div', { className: 'honest-market__inner' }, children )
 				);
 			}
 		} );

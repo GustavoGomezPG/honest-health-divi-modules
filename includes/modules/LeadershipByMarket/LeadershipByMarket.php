@@ -39,6 +39,17 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 	 */
 	private static $instances = 0;
 
+	/**
+	 * Full builder compatibility; component in assets/js/vb-modules.js under this
+	 * slug. The tabs, panels, captions and map reach the builder as
+	 * server-rendered HTML via the `__market` computed property, so none of that
+	 * interlocked markup -- or the ARIA wiring that ties the ids together -- is
+	 * duplicated in JavaScript.
+	 *
+	 * @var string
+	 */
+	public $vb_support = 'on';
+
 	public function init() {
 		$this->name             = esc_html__( 'Leadership by Market', 'honest-divi-modules' );
 		$this->main_css_element = '%%order_class%%';
@@ -96,6 +107,17 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 			// existing frames play. Unitless per Divi's own convention for
 			// non-CSS-unit range fields (see Divi core's CircleCounter module's
 			// `circle_color_alpha`).
+			// Delivers the tabs and the panel/map body to the builder's React
+			// component as two HTML strings. map_speed is the only prop involved:
+			// the roster, captions and segment order live in the Teams settings
+			// screen, so a change there appears on the next builder load rather
+			// than instantly -- the correct trade for not duplicating this
+			// module's interlocked markup and ARIA wiring in JavaScript.
+			'__market'   => array(
+				'type'                => 'computed',
+				'computed_callback'   => array( 'Honest_Divi_Module_Leadership_By_Market', 'get_market_parts' ),
+				'computed_depends_on' => array( 'map_speed' ),
+			),
 			'map_speed'               => array(
 				'label'           => esc_html__( 'Map Animation Speed', 'honest-divi-modules' ),
 				'description'     => esc_html__( 'Playback speed multiplier for the animated market map. 1 is the Lottie asset\'s native speed; higher numbers play faster.', 'honest-divi-modules' ),
@@ -262,7 +284,7 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 	 * @param array  $ranges  honest_team_map_segment_ranges() output.
 	 * @return string Unescaped label text.
 	 */
-	private function map_label( $name, $segment, $ranges ) {
+	private static function map_label( $name, $segment, $ranges ) {
 		$states = isset( $ranges[ $segment ]['states'] ) && is_array( $ranges[ $segment ]['states'] )
 			? array_filter( array_map( 'strval', $ranges[ $segment ]['states'] ) )
 			: array();
@@ -280,15 +302,64 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 		);
 	}
 
-	public function render( $attrs, $content, $render_slug ) {
+	/**
+	 * Normalise the map's playback speed multiplier.
+	 *
+	 * Re-validated against the SAME 1-4 bounds the field advertises, not merely
+	 * against `<= 0`: a raw shortcode edit or a stale/mismatched saved value
+	 * bypasses the builder UI entirely, and a fractional value such as 0.0001 is
+	 * > 0 yet slow enough to freeze the map in practice. Anything non-numeric or
+	 * out of range falls back to the documented default rather than being
+	 * silently snapped to a bound, so a nonsense value produces the normal
+	 * animation instead of a surprising one.
+	 *
+	 * @param mixed $raw Stored field value.
+	 * @return float
+	 */
+	private static function normalize_speed( $raw ) {
+		$speed = null === $raw ? 3.0 : (float) $raw;
+
+		if ( ! is_finite( $speed ) || $speed < 1.0 || $speed > 4.0 ) {
+			return 3.0;
+		}
+
+		return $speed;
+	}
+
+	/**
+	 * The market tabs and the panel/map body, rendered server-side.
+	 *
+	 * Shared by render() and by the `__market` computed property, so the builder
+	 * and the front end cannot drift. Returned as two separate strings rather
+	 * than one block because `.honest-market__inner` is a two-column grid whose
+	 * head, tabs and body are direct grid items with explicit grid-column /
+	 * grid-row: they have to stay direct children, so the React component builds
+	 * those three divs itself and injects only their contents. Wrapping tabs and
+	 * body together to inject them as one unit would collapse the layout.
+	 *
+	 * Static because Divi calls computed callbacks as plain callables with no
+	 * module instance. The roster, captions and segment order all come from the
+	 * Teams settings screen rather than from module props, so `map_speed` is the
+	 * only prop involved.
+	 *
+	 * Known limit of the builder path: $uid comes from a per-request instance
+	 * counter, and each module's computed value is fetched in its own AJAX
+	 * request, so two copies of this module on one page would both be handed
+	 * `honest-market-1` and their tab/panel ARIA ids would collide in the builder
+	 * preview. The front end is unaffected, because there both instances render
+	 * in a single request and the counter separates them.
+	 *
+	 * @param array $args Depends-on values; only 'map_speed' is read.
+	 * @return array{tabs:string,body:string} Empty array when no markets exist.
+	 */
+	public static function get_market_parts( $args = array() ) {
 		$markets = honest_team_get_markets();
 
 		if ( empty( $markets ) ) {
-			return '';
+			return array();
 		}
 
-		wp_enqueue_script( 'honest-market-map' );
-
+		$speed  = self::normalize_speed( isset( $args['map_speed'] ) ? $args['map_speed'] : null );
 		$ranges = honest_team_map_segment_ranges();
 		$uid    = 'honest-market-' . ( ++self::$instances );
 
@@ -309,7 +380,7 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 				$selected ? 'true' : 'false',
 				$selected ? '0' : '-1',
 				$segment,
-				esc_attr( $this->map_label( $market['name'], $segment, $ranges ) ),
+				esc_attr( self::map_label( $market['name'], $segment, $ranges ) ),
 				esc_html( $market['name'] )
 			);
 
@@ -356,21 +427,6 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 			}
 		}
 
-		// Playback speed multiplier, forwarded as a plain data attribute the same
-		// way data-lottie/data-segments already are (see market-map.js init()).
-		// Re-validated here against the SAME 1-4 bounds the field advertises,
-		// not merely against `<= 0`: a raw shortcode edit or a stale/mismatched
-		// saved value bypasses the builder UI entirely, and a fractional value
-		// such as 0.0001 is > 0 yet slow enough to freeze the map in practice --
-		// it would have passed the old guard untouched. Anything non-numeric or
-		// outside the advertised range falls back to the documented default
-		// rather than being silently snapped to a bound, so a nonsense value
-		// produces the normal animation instead of a surprising one.
-		$speed = isset( $this->props['map_speed'] ) ? (float) $this->props['map_speed'] : 3.0;
-		if ( ! is_finite( $speed ) || $speed < 1.0 || $speed > 4.0 ) {
-			$speed = 3.0;
-		}
-
 		// The caption already names the states in the selected market, so it is
 		// wired up as the map's description rather than duplicated into the
 		// label. When a market has no caption there is nothing to point at, and
@@ -381,10 +437,27 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 			esc_url( HONEST_DIVI_MODULES_URL . 'assets/lottie/market-map.json' ),
 			esc_attr( (string) wp_json_encode( $ranges ) ),
 			esc_attr( (string) $speed ),
-			esc_attr( $this->map_label( $markets[0]['name'], (int) $markets[0]['segment'], $ranges ) ),
+			esc_attr( self::map_label( $markets[0]['name'], (int) $markets[0]['segment'], $ranges ) ),
 			'' === $first_cap_id ? '' : sprintf( ' aria-describedby="%s"', esc_attr( $first_cap_id ) ),
 			$captions
 		);
+
+		return array(
+			'tabs' => $tabs,
+			'body' => sprintf( '<div class="honest-market__panels">%1$s</div>%2$s', $panels, $map ),
+		);
+	}
+
+	public function render( $attrs, $content, $render_slug ) {
+		$parts = self::get_market_parts( array(
+			'map_speed' => isset( $this->props['map_speed'] ) ? $this->props['map_speed'] : null,
+		) );
+
+		if ( empty( $parts ) ) {
+			return '';
+		}
+
+		wp_enqueue_script( 'honest-market-map' );
 
 		$head = '';
 		// Trimmed before testing, so a whitespace-only heading renders nothing
@@ -398,12 +471,11 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 		}
 
 		$inner = sprintf(
-			'<div class="honest-market__inner"><div class="honest-market__head">%1$s</div><div class="honest-market__tabs" role="tablist" aria-label="%2$s">%3$s</div><div class="honest-market__body"><div class="honest-market__panels">%4$s</div>%5$s</div></div>',
+			'<div class="honest-market__inner"><div class="honest-market__head">%1$s</div><div class="honest-market__tabs" role="tablist" aria-label="%2$s">%3$s</div><div class="honest-market__body">%4$s</div></div>',
 			$head,
 			esc_attr__( 'Markets', 'honest-divi-modules' ),
-			$tabs,
-			$panels,
-			$map
+			$parts['tabs'],
+			$parts['body']
 		);
 
 		return $this->wrap(
