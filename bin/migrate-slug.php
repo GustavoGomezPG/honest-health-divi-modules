@@ -21,6 +21,14 @@
  *
  * Does NOT touch has_archive (left false) so a future page at /team/ can
  * coexist with member URLs at /team/{slug}/.
+ *
+ * DEPLOY ORDER: includes/admin/slug-migration.php's redirect handler checks
+ * the post type's live rewrite slug and stays inert (no redirects) until it
+ * is "team", so deploying the plugin before running this script — or a DB
+ * restore that reopens that window — is safe rather than turning indexed
+ * /article-author/ URLs into 301s to a 404. Still, run this script as part
+ * of the same deploy so the URLs move promptly: /article-author/ only
+ * starts redirecting to /team/ once this script has been run.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
