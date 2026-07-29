@@ -21,6 +21,11 @@
 	--hh-card-hover-bg: #6b4e9e;
 	--hh-card-name: #6b4e9e;
 	--hh-card-title: #070707;
+
+	/* Executive Leadership section heading/intro tokens. Figma-extracted
+	   defaults (see the module's get_fields() for the node references). */
+	--hh-exec-heading: #1e1e1e;
+	--hh-exec-intro: #1e1e1e;
 }
 
 .honest-member-card {
@@ -82,8 +87,8 @@
 
 /* Executive Leadership */
 .honest-exec__inner { max-width: 1245px; margin: 0 auto; padding: 0 20px; }
-.honest-exec__heading { margin: 0 0 16px; }
-.honest-exec__intro { margin: 0 0 40px; }
+.honest-exec__heading { color: var(--hh-exec-heading); margin: 0 0 16px; }
+.honest-exec__intro { color: var(--hh-exec-intro); margin: 0 0 40px; }
 .honest-exec__grid { display: grid; gap: 30px; }
 .honest-exec__grid--4 { grid-template-columns: repeat(4, 1fr); }
 .honest-exec__grid--3 { grid-template-columns: repeat(3, 1fr); }

@@ -6,12 +6,15 @@
  * (Teams -> Executive Team) as a grid of member cards, in the exact order
  * set by that ACF relationship field. Every colour it renders is exposed as
  * an editable Divi colour field (Design tab) whose default is the hex
- * extracted from the member card component in Figma (file
- * 6LBpKOMFlN8KxaKbut00YW, node 145:291, hover example node 224:2431). The
- * module writes the chosen colours as CSS custom properties inline on its
- * own wrapper; they cascade to the shared member card partial rendered
+ * extracted from Figma (file 6LBpKOMFlN8KxaKbut00YW): the member card
+ * component, node 145:291 (hover example node 224:2431), for the four card
+ * colour fields, and this module's own section heading (node 53:390) and
+ * intro paragraph (node 223:449) for the other two. The module writes the
+ * chosen colours as CSS custom properties inline on its own wrapper; the
+ * card-related ones cascade to the shared member card partial rendered
  * inside it, which reads the same custom properties (with the pre-refactor
- * hardcoded values as its own :root fallback).
+ * hardcoded values as its own :root fallback); the heading/intro ones are
+ * read by this module's own CSS.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -32,18 +35,23 @@ class Honest_Divi_Module_Executive_Leadership extends Honest_Divi_Module_Base {
 				'toggles' => array(
 					'heading'     => esc_html__( 'Heading', 'honest-divi-modules' ),
 					'intro'       => esc_html__( 'Intro', 'honest-divi-modules' ),
-					'card_colors' => esc_html__( 'Card Colors', 'honest-divi-modules' ),
+					'card_colors' => esc_html__( 'Colors', 'honest-divi-modules' ),
 				),
 			),
 		);
 
-		// hide_text_color: see Text Hero for why -- colour for these
-		// elements is owned exclusively by the custom colour fields below,
-		// applied as inline CSS custom properties.
+		// hide_text_color: colour for these elements is owned exclusively by
+		// the custom colour fields below (heading_color / intro_color),
+		// applied as inline CSS custom properties. Divi's font-group builder
+		// otherwise auto-generates a native "Text Color" sub-option per
+		// group that emits a directly-targeted CSS rule, which would
+		// silently beat the inherited custom-property value and defeat the
+		// single-source-of-truth colour rule (see Text Hero for the same
+		// pattern).
 		$this->advanced_fields = $this->base_advanced_fields(
 			array(
-				'heading' => array( 'label' => esc_html__( 'Heading', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-exec__heading" ), 'toggle_slug' => 'heading' ),
-				'intro'   => array( 'label' => esc_html__( 'Intro', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-exec__intro" ), 'toggle_slug' => 'intro' ),
+				'heading' => array( 'label' => esc_html__( 'Heading', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-exec__heading" ), 'toggle_slug' => 'heading', 'hide_text_color' => true ),
+				'intro'   => array( 'label' => esc_html__( 'Intro', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-exec__intro" ), 'toggle_slug' => 'intro', 'hide_text_color' => true ),
 			)
 		);
 	}
@@ -77,7 +85,31 @@ class Honest_Divi_Module_Executive_Leadership extends Honest_Divi_Module_Base {
 				'default'         => '4',
 				'toggle_slug'     => 'main_content',
 			),
-			// Colour fields. Defaults are the hexes extracted from Figma
+			// Heading/intro colour fields. Defaults are the hexes extracted
+			// from Figma (file 6LBpKOMFlN8KxaKbut00YW): the section heading
+			// node 53:390 ("Executive Leadership Team") and the intro
+			// paragraph node 223:449, both solid #1e1e1e text, pixel-sampled
+			// from the rendered node screenshots -- see the task report for
+			// the full method.
+			'heading_color'        => array(
+				'label'        => esc_html__( 'Heading Color', 'honest-divi-modules' ),
+				'description'  => esc_html__( 'Colour of the section heading.', 'honest-divi-modules' ),
+				'type'         => 'color',
+				'custom_color' => true,
+				'tab_slug'     => 'advanced',
+				'toggle_slug'  => 'card_colors',
+				'default'      => '#1e1e1e',
+			),
+			'intro_color'          => array(
+				'label'        => esc_html__( 'Intro Color', 'honest-divi-modules' ),
+				'description'  => esc_html__( 'Colour of the intro copy.', 'honest-divi-modules' ),
+				'type'         => 'color',
+				'custom_color' => true,
+				'tab_slug'     => 'advanced',
+				'toggle_slug'  => 'card_colors',
+				'default'      => '#1e1e1e',
+			),
+			// Card colour fields. Defaults are the hexes extracted from Figma
 			// (file 6LBpKOMFlN8KxaKbut00YW): member card component node
 			// 145:291 ("Member Inactive") for the resting-state background
 			// (#d2d8ee), name text (#6a4c91), and title text (#1e1e1e); the
@@ -162,6 +194,8 @@ class Honest_Divi_Module_Executive_Leadership extends Honest_Divi_Module_Base {
 			$inner,
 			array( 'honest-exec' ),
 			array(
+				'--hh-exec-heading'  => $this->props['heading_color'],
+				'--hh-exec-intro'    => $this->props['intro_color'],
 				'--hh-card-bg'       => $this->props['card_bg_color'],
 				'--hh-card-hover-bg' => $this->props['card_hover_bg_color'],
 				'--hh-card-name'     => $this->props['card_name_color'],
