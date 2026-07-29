@@ -32,6 +32,13 @@ function honest_team_render_article_card( $post ) {
 		? get_the_post_thumbnail( $post, 'medium_large', array( 'class' => 'honest-article-card__image', 'loading' => 'lazy' ) )
 		: '';
 
+	// Tested on the rendered HTML rather than has_post_thumbnail() alone, so a
+	// featured image whose attachment has since been deleted (which still
+	// reports true but renders '') falls back to the placeholder too.
+	if ( '' === $image ) {
+		$image = honest_team_render_media_placeholder();
+	}
+
 	$byline = '';
 	foreach ( honest_team_get_article_authors( $post->ID ) as $author ) {
 		$byline .= sprintf(

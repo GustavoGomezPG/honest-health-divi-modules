@@ -19,6 +19,7 @@ require_once HONEST_DIVI_MODULES_DIR . 'includes/admin/team-settings.php';
 require_once HONEST_DIVI_MODULES_DIR . 'includes/admin/member-fields.php';
 require_once HONEST_DIVI_MODULES_DIR . 'includes/admin/slug-migration.php';
 require_once HONEST_DIVI_MODULES_DIR . 'includes/data/team-data.php';
+require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/media-placeholder.php';
 require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/member-card.php';
 require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/article-card.php';
 

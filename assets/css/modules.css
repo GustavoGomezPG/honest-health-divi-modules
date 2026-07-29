@@ -1,50 +1,65 @@
 /* Honest Divi Modules */
 
-:root {
-	--hh-purple: #6b4e9e;
-	--hh-purple-soft: #d5d0ea;
-	--hh-purple-deep: #55407e;
-	--hh-blue: #6985c3;
-	--hh-green: #37a38f;
-	--hh-grey: #6a8090;
-	--hh-black: #070707;
-	--hh-white: #ffffff;
-	--hh-media-placeholder: #d5d0ea;
-	--hh-font: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-
-	/* Card-scoped tokens (member card). Card-scoped rather than global so a
-	   module (Executive Leadership, Leadership by Market) can restyle its own
-	   cards via inline custom properties on its wrapper without hijacking
-	   sitewide tokens. Defaults below are the values the member card already
-	   used prior to this refactor -- unchanged, kept byte-identical. */
-	--hh-card-bg: #d5d0ea;
-	--hh-card-hover-bg: #6b4e9e;
-	--hh-card-name: #6b4e9e;
-	--hh-card-title: #070707;
-
-	/* Executive Leadership section heading/intro tokens. Figma-extracted
-	   defaults (see the module's get_fields() for the node references). */
-	--hh-exec-heading: #1e1e1e;
-	--hh-exec-intro: #1e1e1e;
-}
+/*
+ * Styling contract for every module in this plugin.
+ *
+ * 1. NO GLOBAL DECLARATIONS. There is deliberately no `:root` block (and no
+ *    bare element selector) anywhere in this file. Every selector is scoped to
+ *    a `.honest-*` class we own, so nothing here can leak into, or collide
+ *    with, the theme or another plugin.
+ *
+ * 2. DEFAULTS LIVE IN THE `var()` FALLBACK, NEVER IN A DECLARATION BLOCK.
+ *    Modules expose editable colours by writing inline custom properties onto
+ *    their own wrapper (see Honest_Divi_Module_Base::wrap()'s $css_vars map);
+ *    descendants pick them up by inheritance. Declaring a default on the
+ *    component's own class -- e.g. `.honest-member-card { --hh-card-bg: #d5d0ea; }`
+ *    -- would break that: for that element its OWN declaration wins over the
+ *    value inherited from the module wrapper, so every module override would
+ *    silently stop working. Carrying the default in the fallback instead
+ *    (`var(--hh-card-bg, #d5d0ea)`) leaves the property genuinely unset, so an
+ *    inherited or inline value always wins, while the component still renders
+ *    correctly standalone.
+ *
+ *    => When adding a token: write `var(--hh-thing, <default>)` at the point of
+ *       use. Never add a declaration block for `--hh-*`.
+ */
 
 .honest-member-card {
 	display: block;
-	background: var(--hh-card-bg);
+	background: var(--hh-card-bg, #d5d0ea);
 	border-radius: 12px;
 	padding: 20px;
 	text-decoration: none;
 	transition: background-color 0.2s ease, color 0.2s ease;
 }
-.honest-member-card__media { display: block; position: relative; aspect-ratio: 1; overflow: hidden; background: var(--hh-media-placeholder, #d5d0ea); }
+.honest-member-card__media { display: block; position: relative; aspect-ratio: 1; overflow: hidden; background: var(--hh-member-media-bg, #d5d0ea); }
 .honest-member-card__image { display: block; width: 100%; height: 100%; object-fit: contain; }
 .honest-member-card__body { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; }
-.honest-member-card__name { display: block; font-weight: 700; color: var(--hh-card-name); }
-.honest-member-card__title { display: block; font-weight: 600; color: var(--hh-card-title); }
-.honest-member-card:hover { background: var(--hh-card-hover-bg); }
+.honest-member-card__name { display: block; font-weight: 700; color: var(--hh-card-name, #6b4e9e); }
+.honest-member-card__title { display: block; font-weight: 600; color: var(--hh-card-title, #070707); }
+.honest-member-card:hover { background: var(--hh-card-hover-bg, #6b4e9e); }
 .honest-member-card:hover .honest-member-card__name,
-.honest-member-card:hover .honest-member-card__title { color: var(--hh-white, #fff); }
-.honest-member-card:focus-visible { outline: 3px solid var(--hh-blue); outline-offset: 2px; }
+.honest-member-card:hover .honest-member-card__title { color: var(--hh-white, #ffffff); }
+.honest-member-card:focus-visible { outline: 3px solid var(--hh-blue, #6985c3); outline-offset: 2px; }
+
+/* Empty-media placeholder (both card types). Centred in the existing
+   fixed-ratio media box without changing the box's dimensions; sized from the
+   box so the square member box and the 390/260 article box both get a
+   proportionate mark. `object-fit: contain` keeps the heart square in the
+   non-square article box. Greyscaled in CSS rather than shipping a second
+   binary -- one asset stays the single source of truth. */
+.honest-media-placeholder {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 38%;
+	height: 38%;
+	object-fit: contain;
+	filter: grayscale(1);
+	opacity: 0.45;
+	pointer-events: none;
+}
 
 /* Test Block */
 .honest-test-block__heading {
@@ -66,29 +81,31 @@
 }
 
 /* Article Card */
-.honest-article-card { background: var(--hh-white, #fff); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; }
-.honest-article-card__media { position: relative; aspect-ratio: 390 / 260; overflow: hidden; background: var(--hh-media-placeholder, #d5d0ea); }
+.honest-article-card { background: var(--hh-white, #ffffff); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; }
+/* Neutral light grey, deliberately NOT the member card's lavender: an article
+   card sits on white, where the lavender read as a jarring block. */
+.honest-article-card__media { position: relative; aspect-ratio: 390 / 260; overflow: hidden; background: var(--hh-article-media-bg, #f0f0f2); }
 .honest-article-card__image { display: block; width: 100%; height: 100%; object-fit: cover; }
-.honest-article-card__flag { position: absolute; top: 0; left: 0; background: var(--hh-blue); color: var(--hh-white, #fff); font-style: italic; font-weight: 700; padding: 8px 24px 8px 20px; text-transform: uppercase; }
+.honest-article-card__flag { position: absolute; top: 0; left: 0; background: var(--hh-blue, #6985c3); color: var(--hh-white, #ffffff); font-style: italic; font-weight: 700; padding: 8px 24px 8px 20px; text-transform: uppercase; }
 .honest-article-card__title { margin: 24px 20px 0; }
 .honest-article-card__byline { margin: 20px; }
 .honest-article-card__author { display: block; margin-bottom: 8px; }
-.honest-article-card__author-name { display: block; font-weight: 700; color: var(--hh-blue); }
-.honest-article-card__author-title { display: block; color: var(--hh-blue); font-size: 0.9em; }
+.honest-article-card__author-name { display: block; font-weight: 700; color: var(--hh-blue, #6985c3); }
+.honest-article-card__author-title { display: block; color: var(--hh-blue, #6985c3); font-size: 0.9em; }
 .honest-article-card__desc { margin: 0 20px 20px; }
-.honest-article-card__link { display: inline-block; margin: auto 20px 20px; background: var(--hh-black); color: var(--hh-white, #fff); padding: 12px 24px; text-decoration: none; font-weight: 700; }
+.honest-article-card__link { display: inline-block; margin: auto 20px 20px; background: var(--hh-black, #070707); color: var(--hh-white, #ffffff); padding: 12px 24px; text-decoration: none; font-weight: 700; }
 
 /* Text Hero */
 .honest-text-hero { background: linear-gradient(90deg, var(--hh-hero-from, #6a4c91), var(--hh-hero-to, #9b87b5)); color: var(--hh-hero-text, #ffffff); padding: 80px 0 140px; position: relative; }
-.honest-text-hero::after { content: ""; position: absolute; left: -5%; right: -5%; bottom: -80px; height: 160px; background: var(--hh-white, #fff); border-radius: 50%; }
+.honest-text-hero::after { content: ""; position: absolute; left: -5%; right: -5%; bottom: -80px; height: 160px; background: var(--hh-white, #ffffff); border-radius: 50%; }
 .honest-text-hero__inner { max-width: 1030px; margin: 0 auto; padding: 0 20px; text-align: center; position: relative; z-index: 1; }
 .honest-text-hero__eyebrow { font-size: 48px; font-weight: 700; margin: 0 0 16px; }
 .honest-text-hero__headline { color: var(--hh-hero-headline, #c7e4ff); margin: 0 0 24px; }
 
 /* Executive Leadership */
 .honest-exec__inner { max-width: 1245px; margin: 0 auto; padding: 0 20px; }
-.honest-exec__heading { color: var(--hh-exec-heading); margin: 0 0 16px; }
-.honest-exec__intro { color: var(--hh-exec-intro); margin: 0 0 40px; }
+.honest-exec__heading { color: var(--hh-exec-heading, #1e1e1e); margin: 0 0 16px; }
+.honest-exec__intro { color: var(--hh-exec-intro, #1e1e1e); margin: 0 0 40px; }
 .honest-exec__grid { display: grid; gap: 30px; }
 .honest-exec__grid--4 { grid-template-columns: repeat(4, 1fr); }
 .honest-exec__grid--3 { grid-template-columns: repeat(3, 1fr); }

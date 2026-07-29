@@ -12,9 +12,10 @@
  * intro paragraph (node 223:449) for the other two. The module writes the
  * chosen colours as CSS custom properties inline on its own wrapper; the
  * card-related ones cascade to the shared member card partial rendered
- * inside it, which reads the same custom properties (with the pre-refactor
- * hardcoded values as its own :root fallback); the heading/intro ones are
- * read by this module's own CSS.
+ * inside it, which reads the same custom properties (each default carried in
+ * the `var()` fallback at the point of use in modules.css, so the inherited
+ * value from this wrapper always wins); the heading/intro ones are read by
+ * this module's own CSS.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -114,15 +115,20 @@ class Honest_Divi_Module_Executive_Leadership extends Honest_Divi_Module_Base {
 			// 145:291 ("Member Inactive") for the resting-state background
 			// (#d2d8ee), name text (#6a4c91), and title text (#1e1e1e); the
 			// hover-state example node 224:2431 for the hover background
-			// (#6a4c91 -- the frame actually shows a two-tone horizontal
-			// gradient from #6985c3 to #6a4c91, but the shared card only
-			// supports a single flat colour via this custom property, so
-			// the purple edge nearest the existing brand-purple token was
-			// used as the flat representative value). All extracted by
-			// pixel-sampling the rendered node screenshots -- see the task
-			// report for the full method and the discrepancy against the
-			// pre-existing (pre-refactor) token values, which this module's
-			// defaults intentionally do NOT match.
+			// (#6a4c91). All extracted by pixel-sampling the rendered node
+			// screenshots -- see the task report for the full method and the
+			// discrepancy against the pre-existing (pre-refactor) token
+			// values, which this module's defaults intentionally do NOT match.
+			//
+			// NOTE on the hover state: an earlier report described node
+			// 224:2431 as a two-tone horizontal gradient (#6985c3 -> #6a4c91).
+			// That was a misreading. get_design_context on the node returns a
+			// FLAT `bg-[#6a4c91]` fill plus a hard offset shadow
+			// `shadow-[-8px_8px_0px_0px_#6985c3]`, and a per-pixel scan of the
+			// rendered node confirms it: #6985c3 occupies exactly x=0..7 and
+			// y=16..394 (an 8px band, offset down by 8px), with the card body a
+			// uniform #6a4c91 from x=8 to x=296. There is no gradient ramp.
+			// The flat hover colour below therefore matches Figma as-is.
 			'card_bg_color'        => array(
 				'label'        => esc_html__( 'Card Background', 'honest-divi-modules' ),
 				'description'  => esc_html__( 'Background colour of each member card.', 'honest-divi-modules' ),
