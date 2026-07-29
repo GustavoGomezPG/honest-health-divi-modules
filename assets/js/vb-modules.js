@@ -68,15 +68,49 @@
 		}
 
 		/**
-		 * Content fields hold HTML authored in Divi's rich-text editor, so they
-		 * cannot go through a text node. This is the builder's own preview of
-		 * content the editor just typed; it is the same trust boundary as the
-		 * editor itself.
+		 * Build the block that holds a module's `content` field.
+		 *
+		 * The content field is NOT a string in the builder. Divi hands it over as
+		 * a React COMPONENT, so the field stays inline-editable on the canvas --
+		 * the function it passes closes over the module's props and renders Divi's
+		 * own rich-text component (createElement(E.default, { rawContentProcesser:
+		 * ... }, e.props)).
+		 *
+		 * Coercing that to a string is what printed
+		 * `function(t){return o.default.createElement(...)}` into the hero. It has
+		 * to be rendered, not read. All three shapes are handled, because the same
+		 * field is a plain HTML string in other contexts (a saved shortcode
+		 * attribute) and could already be an element:
+		 *
+		 * - function      -> render it, which also gives inline editing for free
+		 * - React element -> use as-is
+		 * - string        -> HTML authored in Divi's editor, injected as markup
+		 *
+		 * Returns null when there is genuinely nothing, so the wrapper is omitted
+		 * exactly as the PHP render omits it. In the component form the block
+		 * always renders, because Divi supplies the component whether or not the
+		 * field has text -- which is also what gives the editor something to click.
 		 */
-		function html( value ) {
+		function contentBlock( value, className, key ) {
+			if ( 'function' === typeof value ) {
+				return e( 'div', { className: className, key: key }, e( value ) );
+			}
+
+			if ( value && value.$$typeof ) {
+				return e( 'div', { className: className, key: key }, value );
+			}
+
 			var raw = text( value );
 
-			return raw ? { __html: raw } : null;
+			if ( ! raw ) {
+				return null;
+			}
+
+			return e( 'div', {
+				className: className,
+				key: key,
+				dangerouslySetInnerHTML: { __html: raw }
+			} );
 		}
 
 		/**
@@ -177,7 +211,7 @@
 
 				var eyebrow = text( props.eyebrow );
 				var headline = text( props.headline );
-				var body = html( props.content );
+				var body = contentBlock( props.content, 'honest-text-hero__body', 'body' );
 
 				if ( eyebrow ) {
 					parts.push( e(
@@ -192,11 +226,7 @@
 				}
 
 				if ( body ) {
-					parts.push( e( 'div', {
-						className: 'honest-text-hero__body',
-						key: 'body',
-						dangerouslySetInnerHTML: body
-					} ) );
+					parts.push( body );
 				}
 
 				return e(
@@ -238,7 +268,7 @@
 				var parts = [];
 
 				var heading = text( props.heading );
-				var body = html( props.content );
+				var body = contentBlock( props.content, 'honest-cta__body', 'body' );
 				var buttonText = text( props.button_text );
 
 				if ( heading ) {
@@ -246,11 +276,7 @@
 				}
 
 				if ( body ) {
-					parts.push( e( 'div', {
-						className: 'honest-cta__body',
-						key: 'body',
-						dangerouslySetInnerHTML: body
-					} ) );
+					parts.push( body );
 				}
 
 				if ( buttonText ) {
@@ -317,18 +343,14 @@
 
 				var parts = [];
 				var heading = text( props.heading );
-				var intro = html( props.content );
+				var intro = contentBlock( props.content, 'honest-exec__intro', 'intro' );
 
 				if ( heading ) {
 					parts.push( e( 'h2', { className: 'honest-exec__heading', key: 'heading' }, heading ) );
 				}
 
 				if ( intro ) {
-					parts.push( e( 'div', {
-						className: 'honest-exec__intro',
-						key: 'intro',
-						dangerouslySetInnerHTML: intro
-					} ) );
+					parts.push( intro );
 				}
 
 				var columns = text( props.columns ) || '4';
