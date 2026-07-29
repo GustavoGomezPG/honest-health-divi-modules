@@ -40,6 +40,7 @@ function honest_divi_modules_map() {
 		'Testimonials'        => 'Honest_Divi_Module_Testimonials',
 		'FeaturedInsights'    => 'Honest_Divi_Module_Featured_Insights',
 		'CallToAction'        => 'Honest_Divi_Module_Call_To_Action',
+		'TeamMemberHeader'    => 'Honest_Divi_Module_Team_Member_Header',
 	);
 }
 

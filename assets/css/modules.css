@@ -340,3 +340,83 @@
 	.honest-cta__inner { padding: 60px 24px; }
 	.honest-cta__content { max-width: 100%; }
 }
+
+/* Team Member Header.
+   Full-width "Back to Team Page" bar, then a two-column header (text left,
+   circular portrait right) -- see the module's file header comment for the
+   Figma nodes and the portrait ring/backdrop pixel-sampling.
+
+   The portrait frame (`__media`) is a live circle built in CSS -- a fixed
+   ring border plus a backdrop fill, both editable -- rather than a shipped
+   pre-composited image: the Figma portrait node itself is a single flattened
+   PNG per member (ring+backdrop+photo baked together), which is exactly what
+   this module cannot rely on, since a real deployment uploads a plain
+   portrait photo per member with no ring baked in. `object-fit: cover` fills
+   the ring; the backdrop fill only shows where a photo (or the fallback
+   placeholder mark) doesn't reach every corner. */
+.honest-member__backbar { background: var(--hh-member-back-bg, #6a4c91); }
+.honest-member__back-link {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	max-width: 1245px;
+	margin: 0 auto;
+	padding: 18px 40px;
+	color: var(--hh-member-back-label, #ffffff);
+	text-decoration: none;
+	font-weight: 700;
+}
+.honest-member__back-icon { display: block; flex: 0 0 auto; }
+.honest-member__back-link:focus-visible { outline: 3px solid var(--hh-member-back-label, #ffffff); outline-offset: 2px; }
+
+.honest-member__inner {
+	max-width: 1245px;
+	margin: 0 auto;
+	padding: 60px 40px;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 60px;
+}
+.honest-member__text { flex: 1 1 420px; min-width: 0; }
+.honest-member__name { color: var(--hh-member-name, #1e1e1e); margin: 0 0 12px; }
+.honest-member__title { color: var(--hh-member-title, #070707); margin: 0 0 20px; font-weight: 700; }
+.honest-member__bio { color: var(--hh-member-bio, #1e1e1e); margin: 0 0 28px; }
+.honest-member__bio > *:last-child { margin-bottom: 0; }
+.honest-member__quote {
+	margin: 0 0 24px;
+	padding: 0;
+	border: none;
+	color: var(--hh-member-quote, #6a4c91);
+	font-weight: 700;
+	font-size: 1.3rem;
+	line-height: 1.45;
+	quotes: none;
+}
+.honest-member__linkedin { display: inline-flex; align-items: center; gap: 10px; color: var(--hh-member-linkedin, #6985c3); text-decoration: none; font-weight: 700; }
+.honest-member__linkedin-icon { display: block; flex: 0 0 auto; }
+.honest-member__linkedin:focus-visible { outline: 3px solid var(--hh-member-linkedin, #6985c3); outline-offset: 3px; }
+
+.honest-member__media {
+	position: relative;
+	flex: 0 0 340px;
+	width: 340px;
+	max-width: 100%;
+	aspect-ratio: 1;
+	box-sizing: border-box;
+	border-radius: 50%;
+	overflow: hidden;
+	border: 14px solid var(--hh-member-portrait-ring, #6a4c91);
+	background: var(--hh-member-portrait-bg, #d2d8ee);
+}
+.honest-member__portrait { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+@media (max-width: 1024px) {
+	.honest-member__inner { flex-direction: column; gap: 40px; }
+	.honest-member__media { width: 260px; flex-basis: auto; }
+}
+@media (max-width: 600px) {
+	.honest-member__back-link { padding: 14px 24px; gap: 10px; }
+	.honest-member__inner { padding: 40px 24px; }
+	.honest-member__media { width: 200px; border-width: 10px; }
+}
