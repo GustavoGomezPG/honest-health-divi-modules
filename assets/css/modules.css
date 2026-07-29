@@ -78,8 +78,10 @@
 .honest-member-card {
   display: block;
   background: var(--hh-card-bg, #d2d8ee);
-  border-radius: 12px;
-  padding: 20px;
+  /* Figma node 1:106: radius 18, padding 20 top / 30 sides / 28 bottom. The
+     bottom is deeper than the top because the chevron row sits above it. */
+  border-radius: 18px;
+  padding: 20px 30px 28px;
   text-decoration: none;
   transition:
     transform 0.25s cubic-bezier(0.2, 0.7, 0.3, 1),
@@ -90,21 +92,32 @@
 .honest-member-card__media {
   display: block;
   position: relative;
-  aspect-ratio: 1;
+  /* Figma node 1:107: the portrait box is 228.75x269, not square. */
+  aspect-ratio: 228.75 / 269;
   overflow: hidden;
 }
 .honest-member-card__image {
   display: block;
   width: 100%;
   height: 100%;
+  /* Figma specifies object-cover, but its asset is exactly 228.75x269 -- the
+     same ratio as the box -- so cover crops nothing there. Real uploads are not
+     that ratio, and cover would silently crop faces, so `contain` is the honest
+     equivalent of the designed result. The box is background-transparent, so
+     any letterboxing shows the card, not a grey band. */
   object-fit: contain;
 }
 .honest-member-card__body {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
   margin-top: 20px;
+}
+.honest-member-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .honest-member-card__name {
   display: block;
@@ -113,7 +126,7 @@
 }
 .honest-member-card__title {
   display: block;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--hh-card-title, #1e1e1e);
 }
 .honest-member-card:hover {
@@ -393,17 +406,38 @@
 /* Executive Leadership.
    No wrapper element between the module and its heading/intro/grid: there is
    nothing left for one to do now that the container is Divi's Row. */
+/* Typography from Figma nodes 1:103 (heading) and 1:104 (intro). Declared here
+   as well as in the module's font-group defaults because a Divi default alone
+   emits no CSS for an instance saved before the default existed -- these are the
+   floor. Left-aligned: the heading's `text-center` in the Figma export is an
+   artefact of it being absolutely centred on its own width, which puts its left
+   edge at 0, level with the intro.
+   Spacing: heading to intro is ~13px (34px apart less the 26.1px line box), and
+   intro to grid is the 35px the section uses between all its rows. */
 .honest-exec__heading {
   color: var(--hh-exec-heading, #1e1e1e);
-  margin: 0 0 16px;
+  margin: 0 0 13px;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.27;
 }
 .honest-exec__intro {
   color: var(--hh-exec-intro, #1e1e1e);
-  margin: 0 0 40px;
+  margin: 0 0 35px;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.45;
 }
+/* Figma 1:101 stacks its card rows 35px apart while each row spaces its cards
+   30px, so the two axes differ.
+   Card height is deliberately NOT the design's fixed 395px: grid rows already
+   equalise the cards in a row, and a hard height would clip the longer job
+   titles this section actually carries (Figma's card is `overflow-clip` around
+   placeholder "Job Title" text). */
 .honest-exec__grid {
   display: grid;
-  gap: 30px;
+  row-gap: 35px;
+  column-gap: 30px;
 }
 .honest-exec__grid--4 {
   grid-template-columns: repeat(4, 1fr);
@@ -1201,6 +1235,7 @@
   display: flex;
   flex: 0 0 auto;
   align-items: center;
+  padding-bottom: 13px;
 }
 .honest-member-card__chevron {
   display: block;

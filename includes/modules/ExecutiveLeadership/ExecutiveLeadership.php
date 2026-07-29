@@ -51,8 +51,34 @@ class Honest_Divi_Module_Executive_Leadership extends Honest_Divi_Module_Base {
 		// pattern).
 		$this->advanced_fields = $this->base_advanced_fields(
 			array(
-				'heading' => array( 'label' => esc_html__( 'Heading', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-exec__heading" ), 'toggle_slug' => 'heading', 'hide_text_color' => true ),
-				'intro'   => array( 'label' => esc_html__( 'Intro', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-exec__intro" ), 'toggle_slug' => 'intro', 'hide_text_color' => true ),
+				// font_size / line_height / weight defaults are read off the Figma
+				// text nodes in file q1MGpWgDpBoZeS6dgrddjB, section 1:101:
+				// heading 1:103 (48px / 700 / 1.27) and intro 1:104 (18px / 400 /
+				// 1.45). `font`'s default keeps an empty first segment so only the
+				// weight is set and the family goes on inheriting from Divi. The
+				// same numbers appear in assets/css/modules.css, which is the
+				// floor -- a default alone emits no CSS for an already-saved
+				// instance.
+				'heading' => array(
+					'label'           => esc_html__( 'Heading', 'honest-divi-modules' ),
+					'css'             => array( 'main' => "{$this->main_css_element} .honest-exec__heading" ),
+					'toggle_slug'     => 'heading',
+					'hide_text_color' => true,
+					'font_size'       => array( 'default' => '48px' ),
+					'letter_spacing'  => array( 'default' => '0px' ),
+					'line_height'     => array( 'default' => '1.27em' ),
+					'font'            => array( 'default' => '|700|||||||' ),
+				),
+				'intro'   => array(
+					'label'           => esc_html__( 'Intro', 'honest-divi-modules' ),
+					'css'             => array( 'main' => "{$this->main_css_element} .honest-exec__intro" ),
+					'toggle_slug'     => 'intro',
+					'hide_text_color' => true,
+					'font_size'       => array( 'default' => '18px' ),
+					'letter_spacing'  => array( 'default' => '0px' ),
+					'line_height'     => array( 'default' => '1.45em' ),
+					'font'            => array( 'default' => '|400|||||||' ),
+				),
 			)
 		);
 	}
