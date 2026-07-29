@@ -77,20 +77,15 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 			// Colour fields. Defaults are the hexes extracted from Figma (file
 			// 6LBpKOMFlN8KxaKbut00YW) by pixel-sampling rendered screenshots
 			// of the listed nodes -- see the task report for the full method:
-			//   band background      node 50:813/50:815 -> #6985c3
+			// The band background that used to live here is gone: the module no
+			// longer paints one. The surrounding Divi Section owns the background
+			// (a half-white / half-purple gradient on the Our Team page), so a
+			// module-level colour would paint over it. The field went with it
+			// rather than being left as a colour picker that changes nothing.
 			//   quote text           node 50:816         -> #ffffff
 			//   attribution text     node 50:817         -> #ffffff
 			//   dot (inactive)       node 54:290         -> #ffffff
 			//   dot (active)         node 54:290         -> #6a4c91
-			'bg_color'           => array(
-				'label'        => esc_html__( 'Background Color', 'honest-divi-modules' ),
-				'description'  => esc_html__( 'Background colour of the testimonial band.', 'honest-divi-modules' ),
-				'type'         => 'color',
-				'custom_color' => true,
-				'tab_slug'     => 'advanced',
-				'toggle_slug'  => 'colors',
-				'default'      => '#6985c3',
-			),
 			'quote_color'        => array(
 				'label'        => esc_html__( 'Quote Color', 'honest-divi-modules' ),
 				'description'  => esc_html__( 'Colour of the pull-quote text.', 'honest-divi-modules' ),
@@ -216,7 +211,6 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 			$inner,
 			array( 'honest-testimonials' ),
 			array(
-				'--hh-testimonials-bg'          => $this->props['bg_color'],
 				'--hh-testimonials-quote'       => $this->props['quote_color'],
 				'--hh-testimonials-attribution' => $this->props['attribution_color'],
 				'--hh-testimonials-dot'         => $this->props['dot_color'],
