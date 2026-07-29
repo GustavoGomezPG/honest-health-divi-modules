@@ -78,6 +78,23 @@ function honest_divi_modules_assets() {
 		array(),
 		HONEST_DIVI_MODULES_VERSION
 	);
+
+	// Registered only; the Leadership by Market module enqueues these
+	// itself so the library loads only on pages that use it.
+	wp_register_script(
+		'lottie-web',
+		'https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js',
+		array(),
+		'5.12.2',
+		true
+	);
+	wp_register_script(
+		'honest-market-map',
+		HONEST_DIVI_MODULES_URL . 'assets/js/market-map.js',
+		array( 'lottie-web' ),
+		HONEST_DIVI_MODULES_VERSION,
+		true
+	);
 }
 add_action( 'wp_enqueue_scripts', 'honest_divi_modules_assets' );
 
