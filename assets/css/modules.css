@@ -288,3 +288,55 @@
 	.honest-insights--top-button .honest-insights__head { flex-direction: column; align-items: stretch; }
 	.honest-insights--top-button .honest-insights__button { align-self: flex-start; }
 }
+
+/* Call To Action.
+   A background image and a gradient overlay, both real and identical layers
+   on the Our Team page and the Team Member Page composited instances -- see
+   the module's file header for the Figma nodes and the contrast note --
+   with content constrained to one side via the `alignment` field.
+
+   The image and overlay both live on `__media` as two stacked
+   `background-image` layers (gradient on top, image underneath), so one
+   element handles both. `--hh-cta-bg-image`'s own var() fallback is `none`,
+   which -- together with `background-color` underneath, also a var() --
+   is what keeps an unset background image from ever producing a broken or
+   empty `background-image`: with no image chosen the layer list still
+   resolves to a valid `linear-gradient(...), none` over a solid colour, no
+   different in kind from any other var(--token, fallback) in this file. */
+.honest-cta { position: relative; overflow: hidden; }
+.honest-cta__media {
+	position: absolute;
+	inset: 0;
+	background-color: var(--hh-cta-bg, #b8c8e7);
+	background-repeat: no-repeat, no-repeat;
+	background-position: center, center;
+	background-size: cover, cover;
+}
+/* Gradient direction mirrors `alignment`: the overlay always fades from
+   transparent (image side) to opaque (content side) -- matching the real
+   Figma fill exactly for the `right` default, mirrored for `left`. */
+.honest-cta--align-right .honest-cta__media { background-image: linear-gradient(to right, transparent, var(--hh-cta-overlay, #b8c8e7)), var(--hh-cta-bg-image, none); }
+.honest-cta--align-left .honest-cta__media { background-image: linear-gradient(to left, transparent, var(--hh-cta-overlay, #b8c8e7)), var(--hh-cta-bg-image, none); }
+
+.honest-cta__inner { position: relative; z-index: 1; max-width: 1245px; margin: 0 auto; padding: 100px 40px; display: flex; }
+.honest-cta__content { max-width: 480px; text-align: center; }
+.honest-cta--align-right .honest-cta__inner { justify-content: flex-end; }
+.honest-cta--align-left .honest-cta__inner { justify-content: flex-start; }
+
+.honest-cta__heading { color: var(--hh-cta-heading, #3a61b6); font-weight: 800; margin: 0 0 20px; }
+.honest-cta__body { color: var(--hh-cta-body, #6a8090); margin: 0 0 28px; }
+.honest-cta__button {
+	display: inline-block;
+	padding: 18px 32px;
+	border-radius: 4px;
+	background: var(--hh-cta-button-bg, #000000);
+	color: var(--hh-cta-button-text, #ffffff);
+	text-decoration: none;
+	font-weight: 700;
+}
+.honest-cta__button:focus-visible { outline: 3px solid var(--hh-cta-button-bg, #000000); outline-offset: 3px; }
+
+@media (max-width: 600px) {
+	.honest-cta__inner { padding: 60px 24px; }
+	.honest-cta__content { max-width: 100%; }
+}

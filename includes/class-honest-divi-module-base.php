@@ -53,13 +53,22 @@ abstract class Honest_Divi_Module_Base extends ET_Builder_Module {
 	 * @param string $inner         Inner HTML already built by the module.
 	 * @param array  $extra_classes Extra classnames to add to the wrapper.
 	 * @param array  $css_vars      Optional map of CSS custom-property name
-	 *                              (e.g. '--hh-hero-from') => colour value.
-	 *                              Used by modules to expose editable
-	 *                              colours as inline custom properties on
-	 *                              their own wrapper. Every name/value pair
-	 *                              is validated and escaped here, centrally;
-	 *                              invalid names or values are dropped
-	 *                              rather than emitted.
+	 *                              (e.g. '--hh-hero-from') => value. The value
+	 *                              is normally a raw colour string, used as-is.
+	 *                              A value can instead be `array( 'url' => $url )`
+	 *                              to expose an editable CSS <image> (e.g. a
+	 *                              background image chosen via an upload
+	 *                              field) as a custom property -- the raw URL
+	 *                              is validated and wrapped as `url("...")`
+	 *                              here, the same way colour values are
+	 *                              validated, so a module never builds a
+	 *                              `url(...)` string itself. Used by modules
+	 *                              to expose editable colours (and, via the
+	 *                              `url` form, background images) as inline
+	 *                              custom properties on their own wrapper.
+	 *                              Every name/value pair is validated and
+	 *                              escaped here, centrally; invalid names or
+	 *                              values are dropped rather than emitted.
 	 */
 	protected function wrap( $render_slug, $inner, $extra_classes = array(), $css_vars = array() ) {
 		foreach ( (array) $extra_classes as $class ) {
@@ -97,6 +106,22 @@ abstract class Honest_Divi_Module_Base extends ET_Builder_Module {
 				continue;
 			}
 
+			// URL form: array( 'url' => $raw_url ). Validated and wrapped into
+			// a CSS <image> value (`url("...")`) here, centrally, the same
+			// way a colour value is validated below -- a module never builds
+			// the `url(...)` string itself. An invalid or empty URL (e.g. no
+			// image chosen) is dropped entirely, same as an invalid colour:
+			// the property is left unset so the module's own var(..., fallback)
+			// at the point of use decides what renders instead.
+			if ( is_array( $value ) ) {
+				if ( ! array_key_exists( 'url', $value ) || ! $this->is_valid_css_url( $value['url'] ) ) {
+					continue;
+				}
+
+				$declarations[] = sprintf( '%s:url("%s");', $name, trim( (string) $value['url'] ) );
+				continue;
+			}
+
 			if ( ! is_string( $value ) || ! $this->is_valid_css_color( $value ) ) {
 				continue;
 			}
@@ -109,6 +134,38 @@ abstract class Honest_Divi_Module_Base extends ET_Builder_Module {
 		}
 
 		return sprintf( ' style="%s"', esc_attr( implode( '', $declarations ) ) );
+	}
+
+	/**
+	 * Whether a string is safe to embed as a CSS <image> URL, i.e. wrapped
+	 * as `url("...")` inside a custom-property declaration.
+	 *
+	 * Requires a well-formed http/https URL (via WordPress's own
+	 * wp_http_validate_url(), the same validity check WordPress applies
+	 * before ever fetching a URL server-side) and rejects any character that
+	 * could break out of the double-quoted CSS string literal the value is
+	 * wrapped in -- a literal quote, backslash, or line break. A legitimate
+	 * WordPress attachment URL never contains any of those.
+	 *
+	 * @param mixed $value
+	 * @return bool
+	 */
+	private function is_valid_css_url( $value ) {
+		if ( ! is_string( $value ) ) {
+			return false;
+		}
+
+		$value = trim( $value );
+
+		if ( '' === $value ) {
+			return false;
+		}
+
+		if ( preg_match( '/["\\\\\r\n]/', $value ) ) {
+			return false;
+		}
+
+		return false !== wp_http_validate_url( $value );
 	}
 
 	/**
