@@ -191,9 +191,10 @@ class Honest_Divi_Module_Executive_Leadership extends Honest_Divi_Module_Base {
 			return '';
 		}
 
-		$cards = '';
+		$cards      = '';
+		$card_index = 0;
 		foreach ( $members as $member ) {
-			$cards .= honest_team_render_member_card( $member );
+			$cards .= honest_team_render_member_card( $member, $card_index++ );
 		}
 
 		$header = '';

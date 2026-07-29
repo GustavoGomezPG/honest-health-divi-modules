@@ -313,9 +313,10 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 				esc_html( $market['name'] )
 			);
 
-			$cards = '';
+			$cards      = '';
+			$card_index = 0;
 			foreach ( honest_team_get_members( $market['members'] ) as $member ) {
-				$cards .= honest_team_render_member_card( $member );
+				$cards .= honest_team_render_member_card( $member, $card_index++ );
 			}
 
 			// tabindex="0" on the panel itself, per standard ARIA Tabs

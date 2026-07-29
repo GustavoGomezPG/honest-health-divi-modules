@@ -76,22 +76,56 @@
  */
 
 .honest-member-card {
-	display: block;
-	background: var(--hh-card-bg, #d2d8ee);
-	border-radius: 12px;
-	padding: 20px;
-	text-decoration: none;
-	transition: background-color 0.2s ease, color 0.2s ease;
+  display: block;
+  background: var(--hh-card-bg, #d2d8ee);
+  border-radius: 12px;
+  padding: 20px;
+  text-decoration: none;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
-.honest-member-card__media { display: block; position: relative; aspect-ratio: 1; overflow: hidden; }
-.honest-member-card__image { display: block; width: 100%; height: 100%; object-fit: contain; }
-.honest-member-card__body { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; }
-.honest-member-card__name { display: block; font-weight: 700; color: var(--hh-card-name, #6a4c91); }
-.honest-member-card__title { display: block; font-weight: 600; color: var(--hh-card-title, #1e1e1e); }
-.honest-member-card:hover { background: var(--hh-card-hover-bg, #6a4c91); box-shadow: -8px 8px 0 0 var(--hh-card-hover-shadow, #6985c3); }
+.honest-member-card__media {
+  display: block;
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+.honest-member-card__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.honest-member-card__body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+}
+.honest-member-card__name {
+  display: block;
+  font-weight: 700;
+  color: var(--hh-card-name, #6a4c91);
+}
+.honest-member-card__title {
+  display: block;
+  font-weight: 600;
+  color: var(--hh-card-title, #1e1e1e);
+}
+.honest-member-card:hover {
+  background: var(--hh-card-hover-bg, #6a4c91);
+  box-shadow: -8px 8px 0 0 var(--hh-card-hover-shadow, #6985c3);
+}
 .honest-member-card:hover .honest-member-card__name,
-.honest-member-card:hover .honest-member-card__title { color: var(--hh-white, #ffffff); }
-.honest-member-card:focus-visible { outline: 3px solid var(--hh-blue, #6985c3); outline-offset: 2px; }
+.honest-member-card:hover .honest-member-card__title {
+  color: var(--hh-white, #ffffff);
+}
+.honest-member-card:focus-visible {
+  outline: 3px solid var(--hh-blue, #6985c3);
+  outline-offset: 2px;
+}
 
 /* Empty-media placeholder (both card types). Centred in the existing
    fixed-ratio media box without changing the box's dimensions; sized from the
@@ -100,31 +134,74 @@
    non-square article box. Greyscaled in CSS rather than shipping a second
    binary -- one asset stays the single source of truth. */
 .honest-media-placeholder {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	width: 38%;
-	height: 38%;
-	object-fit: contain;
-	filter: grayscale(1);
-	opacity: 0.45;
-	pointer-events: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 38%;
+  height: 38%;
+  object-fit: contain;
+  filter: grayscale(1);
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 /* Article Card */
-.honest-article-card { background: var(--hh-white, #ffffff); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; }
+.honest-article-card {
+  background: var(--hh-white, #ffffff);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 /* Neutral light grey, deliberately NOT the member card's lavender: an article
    card sits on white, where the lavender read as a jarring block. */
-.honest-article-card__media { position: relative; aspect-ratio: 390 / 260; overflow: hidden; background: var(--hh-article-media-bg, #f0f0f2); }
-.honest-article-card__image { display: block; width: 100%; height: 100%; object-fit: cover; }
-.honest-article-card__flag { position: absolute; top: 0; left: 0; background: var(--hh-blue, #6985c3); color: var(--hh-white, #ffffff); font-style: italic; font-weight: 700; padding: 8px 24px 8px 20px; text-transform: uppercase; }
-.honest-article-card__title { margin: 24px 20px 0; }
-.honest-article-card__byline { margin: 20px; }
-.honest-article-card__author { display: block; margin-bottom: 8px; }
-.honest-article-card__author-name { display: block; font-weight: 700; color: var(--hh-blue, #6985c3); }
-.honest-article-card__author-title { display: block; color: var(--hh-blue, #6985c3); font-size: 0.9em; }
-.honest-article-card__desc { margin: 0 20px 20px; }
+.honest-article-card__media {
+  position: relative;
+  aspect-ratio: 390 / 260;
+  overflow: hidden;
+  background: var(--hh-article-media-bg, #f0f0f2);
+}
+.honest-article-card__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.honest-article-card__flag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--hh-blue, #6985c3);
+  color: var(--hh-white, #ffffff);
+  font-style: italic;
+  font-weight: 700;
+  padding: 8px 24px 8px 20px;
+  text-transform: uppercase;
+}
+.honest-article-card__title {
+  margin: 24px 20px 0;
+}
+.honest-article-card__byline {
+  margin: 20px;
+}
+.honest-article-card__author {
+  display: block;
+  margin-bottom: 8px;
+}
+.honest-article-card__author-name {
+  display: block;
+  font-weight: 700;
+  color: var(--hh-blue, #6985c3);
+}
+.honest-article-card__author-title {
+  display: block;
+  color: var(--hh-blue, #6985c3);
+  font-size: 0.9em;
+}
+.honest-article-card__desc {
+  margin: 0 20px 20px;
+}
 /* `align-self: flex-start`, not `display: inline-block`: the link is a flex
    item of the card column, so an inline-block display value is blockified and
    did nothing -- the button stretched the full card width. Figma's card
@@ -132,7 +209,15 @@
    left-aligned with the title, so a shrink-to-fit pill is what was intended;
    `align-self` is the property that actually delivers it here. `margin-top:
    auto` still pins it to the bottom of the card. */
-.honest-article-card__link { align-self: flex-start; margin: auto 20px 20px; background: var(--hh-black, #070707); color: var(--hh-white, #ffffff); padding: 12px 24px; text-decoration: none; font-weight: 700; }
+.honest-article-card__link {
+  align-self: flex-start;
+  margin: auto 20px 20px;
+  background: var(--hh-black, #070707);
+  color: var(--hh-white, #ffffff);
+  padding: 12px 24px;
+  text-decoration: none;
+  font-weight: 700;
+}
 
 /* Text Hero.
    Measured against Figma file q1MGpWgDpBoZeS6dgrddjB, hero node 1:729
@@ -160,17 +245,61 @@
    (y=505) in Figma; 80px top is 197-116, band top to the eyebrow frame.
 
    `__inner` carries no width of its own: `position: relative; z-index: 1` is
-   only what puts the copy in its own layer above the band background. */
+   only what puts the copy in its own layer above the band background.
+
+   THE 36.565% STOP IS NOT A TWEAK -- it is the gradient's real geometry, and
+   removing it is what made the band read wrong. Node 1:198 does not paint two
+   opaque endpoints across the full width. Its fill is ONE colour at TWO
+   alphas, drawn right-to-left and composited `mix-blend-multiply` over the
+   white page:
+
+     linear-gradient(-90deg, rgba(106,76,145,0.67) 0%, rgb(106,76,145) 63.435%)
+
+   -90deg means the 0% stop sits at the RIGHT edge, so the translucent end is
+   on the right and the fill reaches full opacity 63.435% of the way back
+   across, i.e. at 100% - 63.435% = 36.565% from the LEFT. Everything left of
+   that is flat, fully-opaque #6a4c91.
+
+   Multiply over white is the identity, so the composite is just
+   `alpha*C + (1-alpha)*white`: at alpha 1 that is #6a4c91, and at alpha 0.67
+   it is 0.67*(106,76,145) + 0.33*255 = (155,135,181) = #9b87b5. Both endpoint
+   hexes therefore stay exactly what they always were -- the editable defaults
+   in TextHero::get_fields() were already correct. What was wrong was the
+   interpolation: the old declaration ramped from 0%, so the band was already
+   lightening toward the pale end across the whole left half, where the design
+   holds the deep purple. Because alpha varies linearly and C is constant, the
+   composite is linear in RGB too, which is why plain opaque stops reproduce it
+   exactly -- no rgba() and no blend mode needed here.
+
+   Verified by column-averaging the rendered PNG of node 1:198 (dithering makes
+   single pixels unreliable): (106,76,145) exactly at every x from 0 to 526 of
+   1440 (526/1439 = 36.55%), first departure at x=547, and a straight ramp to
+   (155,135,181) at x=1439 that models to within +/-1 per channel. */
 .honest-text-hero {
-	margin-inline: calc(50% - 50vw);
-	padding-inline: calc(50vw - 50%);
-	padding-block: 80px 70px;
-	background: linear-gradient(90deg, var(--hh-hero-from, #6a4c91), var(--hh-hero-to, #9b87b5));
-	color: var(--hh-hero-text, #ffffff);
-	position: relative;
+  margin-inline: calc(50% - 50vw);
+  padding-inline: calc(50vw - 50%);
+  padding-block: 80px 70px;
+  background: linear-gradient(
+    90deg,
+    var(--hh-hero-from, #6a4c91) 0%,
+    var(--hh-hero-from, #6a4c91) 36.565%,
+    var(--hh-hero-to, #9b87b5) 100%
+  );
+  color: var(--hh-hero-text, #ffffff);
+  position: relative;
 }
-.honest-text-hero__inner { text-align: center; position: relative; z-index: 1; }
-.honest-text-hero__eyebrow { font-size: 56px; font-weight: 900; line-height: 1; letter-spacing: normal; margin: 0 0 17px; }
+.honest-text-hero__inner {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.honest-text-hero__eyebrow {
+  font-size: 56px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: normal;
+  margin: 0 0 17px;
+}
 
 /* Eyebrow highlight -- the blue banner behind "Our Team." (Figma frame
    1:199). It is two overlapping shapes in the design: a plain 315x38 block
@@ -196,36 +325,96 @@
    hero's gradient. `:not(:empty)` means a span with no text paints nothing;
    `render()` additionally omits the whole `<p>` when the field is blank. */
 .honest-text-hero__eyebrow-text {
-	position: relative;
-	z-index: 0;
-	display: inline-block;
-	vertical-align: top;
-	padding: 0.0536em 0.5em 0.3036em 0.3929em;
+  position: relative;
+  z-index: 0;
+  display: inline-block;
+  vertical-align: top;
+  padding: 0.0536em 0.5em 0.3036em 0.3929em;
 }
 .honest-text-hero__eyebrow-text:not(:empty)::before {
-	content: "";
-	position: absolute;
-	inset: 0;
-	z-index: -1;
-	background: var(--hh-hero-eyebrow-highlight, #6985c3);
-	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 330 76' preserveAspectRatio='none'%3E%3Cpath d='M0 57V14H324V57C226.689 91.408 67.454 71.339 0 57ZM15 0H330V38H15Z' fill='%23fff'/%3E%3C/svg%3E");
-	mask-repeat: no-repeat;
-	mask-size: 100% 100%;
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--hh-hero-eyebrow-highlight, #6985c3);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 330 76' preserveAspectRatio='none'%3E%3Cpath d='M0 57V14H324V57C226.689 91.408 67.454 71.339 0 57ZM15 0H330V38H15Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
 }
-.honest-text-hero__headline { color: var(--hh-hero-headline, #c7e4ff); font-size: 28px; font-weight: 600; line-height: 1.45; letter-spacing: normal; margin: 0 0 24px; }
-.honest-text-hero__body { font-size: 20px; font-weight: 400; line-height: 1.45; letter-spacing: normal; }
+.honest-text-hero__headline {
+  color: var(--hh-hero-headline, #c7e4ff);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: normal;
+  margin: 0 0 24px;
+}
+/* `max-width` here is a CONTENT MEASURE on a text element, not a page
+   container -- please do not "clean it up" as a violation of rule 4. Rule 4
+   says a MODULE must not impose a container width: `.honest-text-hero` itself
+   still has no max-width, still spans 100%, and Divi's Row still decides how
+   wide the section is. This constrains only the paragraph's line length inside
+   whatever width the Row gives it, which is a typographic decision the design
+   makes explicitly: node 1:204 is 1030 wide and 87 tall, i.e. three wrapped
+   lines at 20px/1.45 -- the copy is authored to wrap at that measure, so at
+   Divi's full 1220px row it fell to two lines and read too wide.
+
+   The headline and the eyebrow deliberately get NO measure. Node 1:205 is 880
+   wide but only 41 tall -- a single line at 28px/1.45 -- so 880 is the text's
+   own natural width, not a constraint it wraps against. Same for the eyebrow,
+   node 1:203, 280x56: one line at 56px. Capping either would be inventing a
+   rule the design never states. `margin-inline: auto` centres the measure
+   inside the centred `__inner`. */
+.honest-text-hero__body {
+  /* A text MEASURE, not a module container. Figma node 1:204 is 1030 wide
+     inside a 1447 frame, so the design constrains this paragraph specifically.
+     The rule that a module must not impose a container width still holds and is
+     unaffected: `.honest-text-hero` itself stays 100% and Divi's Row owns the
+     layout. Do not "tidy" this away with the module wrappers. */
+  max-width: 1030px;
+  margin-inline: auto;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: normal;
+  max-width: 1040px;
+  margin-inline: auto;
+}
 
 /* Executive Leadership.
    No wrapper element between the module and its heading/intro/grid: there is
    nothing left for one to do now that the container is Divi's Row. */
-.honest-exec__heading { color: var(--hh-exec-heading, #1e1e1e); margin: 0 0 16px; }
-.honest-exec__intro { color: var(--hh-exec-intro, #1e1e1e); margin: 0 0 40px; }
-.honest-exec__grid { display: grid; gap: 30px; }
-.honest-exec__grid--4 { grid-template-columns: repeat(4, 1fr); }
-.honest-exec__grid--3 { grid-template-columns: repeat(3, 1fr); }
-.honest-exec__grid--2 { grid-template-columns: repeat(2, 1fr); }
-@media (max-width: 1024px) { .honest-exec__grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 600px) { .honest-exec__grid { grid-template-columns: 1fr; } }
+.honest-exec__heading {
+  color: var(--hh-exec-heading, #1e1e1e);
+  margin: 0 0 16px;
+}
+.honest-exec__intro {
+  color: var(--hh-exec-intro, #1e1e1e);
+  margin: 0 0 40px;
+}
+.honest-exec__grid {
+  display: grid;
+  gap: 30px;
+}
+.honest-exec__grid--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.honest-exec__grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.honest-exec__grid--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (max-width: 1024px) {
+  .honest-exec__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .honest-exec__grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* Leadership by Market.
    Two columns, matching the Figma section (node 145:413): heading + intro over
@@ -234,58 +423,126 @@
    and the map share the same gutter. The member grid sets no `align-items` at
    all, so it keeps the default `stretch` and cards in a row stay equal height;
    the only `align-items` in this section is on the tab row (see below). */
-.honest-market__inner { display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 50px; row-gap: 40px; }
-.honest-market__head { grid-column: 1; grid-row: 1; }
-.honest-market__heading { color: var(--hh-market-heading, #1e1e1e); margin: 0 0 16px; }
-.honest-market__intro { color: var(--hh-market-intro, #1e1e1e); margin: 0; }
-.honest-market__body { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 50px; row-gap: 40px; }
+.honest-market__inner {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 50px;
+  row-gap: 40px;
+}
+.honest-market__head {
+  grid-column: 1;
+  grid-row: 1;
+}
+.honest-market__heading {
+  color: var(--hh-market-heading, #1e1e1e);
+  margin: 0 0 16px;
+}
+.honest-market__intro {
+  color: var(--hh-market-intro, #1e1e1e);
+  margin: 0;
+}
+.honest-market__body {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 50px;
+  row-gap: 40px;
+}
 
 /* align-items/align-content are pinned to flex-start ON THE TAB ROW ONLY. This
    is a control strip, not a card grid: the row shares a grid track with the
    heading and intro, so the default `stretch` blows each pill up to the full
    track height. The member grid below deliberately keeps the default stretch so
    cards in a row stay equal height. */
-.honest-market__tabs { grid-column: 2; grid-row: 1; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; align-content: flex-start; }
+.honest-market__tabs {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+  align-content: flex-start;
+}
 .honest-market__tab {
-	-webkit-appearance: none;
-	appearance: none;
-	font: inherit;
-	line-height: 1.4;
-	cursor: pointer;
-	padding: 10px 20px;
-	border-radius: 999px;
-	border: 2px solid var(--hh-market-tab, #6985c3);
-	background: var(--hh-market-tab-bg, #ffffff);
-	color: var(--hh-market-tab, #6985c3);
-	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+  font: inherit;
+  line-height: 1.4;
+  cursor: pointer;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 2px solid var(--hh-market-tab, #6985c3);
+  background: var(--hh-market-tab-bg, #ffffff);
+  color: var(--hh-market-tab, #6985c3);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 .honest-market__tab[aria-selected="true"] {
-	background: var(--hh-market-tab-active-bg, #6985c3);
-	border-color: var(--hh-market-tab-active-bg, #6985c3);
-	color: var(--hh-market-tab-active, #ffffff);
+  background: var(--hh-market-tab-active-bg, #6985c3);
+  border-color: var(--hh-market-tab-active-bg, #6985c3);
+  color: var(--hh-market-tab-active, #ffffff);
 }
-.honest-market__tab:focus-visible { outline: 3px solid var(--hh-market-tab-active-bg, #6985c3); outline-offset: 3px; }
+.honest-market__tab:focus-visible {
+  outline: 3px solid var(--hh-market-tab-active-bg, #6985c3);
+  outline-offset: 3px;
+}
 
-.honest-market__panel[hidden] { display: none; }
-.honest-market__grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; }
+.honest-market__panel[hidden] {
+  display: none;
+}
+.honest-market__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+}
 
 /* Reserve the map's box from the Lottie composition's own 1319x814 canvas so
    the layout does not jump when the animation finishes loading. lottie-web
    injects an <svg> with width/height 100% but leaves it inline-level, whose
    line box adds ~15px of descender space under the map and makes the container
    overflow its own aspect ratio -- hence the display:block on the injected svg. */
-.honest-market-map { width: 100%; aspect-ratio: 1319 / 814; }
-.honest-market-map svg { display: block; }
-.honest-market__caption { color: var(--hh-market-caption, #6a8090); margin: 24px 0 0; }
-.honest-market__caption[hidden] { display: none; }
+.honest-market-map {
+  width: 100%;
+  aspect-ratio: 1319 / 814;
+}
+.honest-market-map svg {
+  display: block;
+}
+.honest-market__caption {
+  color: var(--hh-market-caption, #6a8090);
+  margin: 24px 0 0;
+}
+.honest-market__caption[hidden] {
+  display: none;
+}
 
 @media (max-width: 1024px) {
-	.honest-market__inner { grid-template-columns: 1fr; row-gap: 30px; }
-	.honest-market__head { grid-column: 1; grid-row: auto; }
-	.honest-market__tabs { grid-column: 1; grid-row: auto; }
-	.honest-market__body { grid-column: 1; grid-row: auto; grid-template-columns: 1fr; }
+  .honest-market__inner {
+    grid-template-columns: 1fr;
+    row-gap: 30px;
+  }
+  .honest-market__head {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .honest-market__tabs {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .honest-market__body {
+    grid-column: 1;
+    grid-row: auto;
+    grid-template-columns: 1fr;
+  }
 }
-@media (max-width: 600px) { .honest-market__grid { grid-template-columns: 1fr; } }
+@media (max-width: 600px) {
+  .honest-market__grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* Testimonials.
    The band's background lives on the module's own outer wrapper class (added
@@ -293,51 +550,71 @@
    content back at Divi's Row width -- see rule 5 in the file header.
    `__inner` carries no width of its own; it only centres the slides. */
 .honest-testimonials {
-	margin-inline: calc(50% - 50vw);
-	padding: 80px calc(50vw - 50%);
-	background: var(--hh-testimonials-bg, #6985c3);
+  margin-inline: calc(50% - 50vw);
+  padding: 80px calc(50vw - 50%);
+  background: var(--hh-testimonials-bg, #6985c3);
 }
-.honest-testimonials__inner { text-align: center; }
+.honest-testimonials__inner {
+  text-align: center;
+}
 
-.honest-testimonials__slide[hidden] { display: none; }
+.honest-testimonials__slide[hidden] {
+  display: none;
+}
 .honest-testimonials__quote {
-	margin: 0 0 32px;
-	padding: 0;
-	border: none;
-	color: var(--hh-testimonials-quote, #ffffff);
-	font-weight: 700;
-	font-size: 1.25rem;
-	line-height: 1.5;
-	quotes: none;
+  margin: 0 0 32px;
+  padding: 0;
+  border: none;
+  color: var(--hh-testimonials-quote, #ffffff);
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  quotes: none;
 }
 /* font-style reset: <cite> is italic by default in browser UA stylesheets;
    Figma's attribution line is upright, not italic. */
 .honest-testimonials__cite {
-	display: block;
-	margin: 0 0 40px;
-	color: var(--hh-testimonials-attribution, #ffffff);
-	font-style: normal;
+  display: block;
+  margin: 0 0 40px;
+  color: var(--hh-testimonials-attribution, #ffffff);
+  font-style: normal;
 }
 /* Decorative em dash lives in CSS, not the accessible text content, so a
    screen reader announces the attribution itself rather than "em dash". */
-.honest-testimonials__cite::before { content: "\2014\00A0"; }
-
-.honest-testimonials__dots { display: flex; justify-content: center; align-items: center; gap: 12px; }
-.honest-testimonials__dot {
-	-webkit-appearance: none;
-	appearance: none;
-	width: 15px;
-	height: 15px;
-	padding: 0;
-	border: none;
-	border-radius: 50%;
-	background: var(--hh-testimonials-dot, #ffffff);
-	cursor: pointer;
+.honest-testimonials__cite::before {
+  content: "\2014\00A0";
 }
-.honest-testimonials__dot[aria-current="true"] { background: var(--hh-testimonials-dot-active, #6a4c91); }
-.honest-testimonials__dot:focus-visible { outline: 3px solid var(--hh-testimonials-dot-active, #6a4c91); outline-offset: 3px; }
 
-@media (max-width: 600px) { .honest-testimonials { padding: 50px calc(50vw - 50%); } }
+.honest-testimonials__dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+.honest-testimonials__dot {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--hh-testimonials-dot, #ffffff);
+  cursor: pointer;
+}
+.honest-testimonials__dot[aria-current="true"] {
+  background: var(--hh-testimonials-dot-active, #6a4c91);
+}
+.honest-testimonials__dot:focus-visible {
+  outline: 3px solid var(--hh-testimonials-dot-active, #6a4c91);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .honest-testimonials {
+    padding: 50px calc(50vw - 50%);
+  }
+}
 
 /* Featured Insights.
    Two real composited layouts, chosen per instance by the `button_position`
@@ -363,26 +640,47 @@
 
    No wrapper element between the module and its head/grid/foot, for the same
    reason as Executive Leadership: the container is Divi's Row. */
-.honest-insights__head { text-align: center; margin: 0 0 40px; }
-.honest-insights__eyebrow { color: var(--hh-insights-eyebrow, #1e1e1e); margin: 0 0 12px; font-weight: 700; }
-.honest-insights__heading { color: var(--hh-insights-heading, #ffffff); margin: 0 0 16px; }
+.honest-insights__head {
+  text-align: center;
+  margin: 0 0 40px;
+}
+.honest-insights__eyebrow {
+  color: var(--hh-insights-eyebrow, #1e1e1e);
+  margin: 0 0 12px;
+  font-weight: 700;
+}
+.honest-insights__heading {
+  color: var(--hh-insights-heading, #ffffff);
+  margin: 0 0 16px;
+}
 /* CONTENT MEASURE, not a container (file header rule 4): the centred intro
    paragraph is deliberately narrower than the grid below it, per Figma node
    224:2323. It stays because it describes the copy, not the page. */
-.honest-insights__intro { color: var(--hh-insights-intro, #ffffff); margin: 0 auto; max-width: 745px; }
-.honest-insights__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
-.honest-insights__foot { text-align: center; margin-top: 40px; }
+.honest-insights__intro {
+  color: var(--hh-insights-intro, #ffffff);
+  margin: 0 auto;
+  max-width: 745px;
+}
+.honest-insights__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+}
+.honest-insights__foot {
+  text-align: center;
+  margin-top: 40px;
+}
 .honest-insights__button {
-	display: inline-block;
-	flex: 0 0 auto;
-	padding: 12px 32px;
-	border-radius: 999px;
-	border: 2px solid var(--hh-insights-button-border, #6985c3);
-	background: var(--hh-insights-button-bg, #6985c3);
-	color: var(--hh-insights-button-text, #ffffff);
-	text-decoration: none;
-	font-weight: 700;
-	/* Deliberately NOT `white-space: nowrap`. The longest real label ("View
+  display: inline-block;
+  flex: 0 0 auto;
+  padding: 12px 32px;
+  border-radius: 999px;
+  border: 2px solid var(--hh-insights-button-border, #6985c3);
+  background: var(--hh-insights-button-bg, #6985c3);
+  color: var(--hh-insights-button-text, #ffffff);
+  text-decoration: none;
+  font-weight: 700;
+  /* Deliberately NOT `white-space: nowrap`. The longest real label ("View
 	   All Thought Leadership", the `top` layout every member page uses) has a
 	   367px min-content width, which is wider than the 331px column at a
 	   371px viewport -- with nowrap the pill blew out of the column and
@@ -391,10 +689,13 @@
 	   max-content width wherever it fits, so this only ever wraps at the
 	   narrow end; `balance` + centring make that wrap read as a deliberate
 	   two-line pill rather than one long line with a ragged orphan. */
-	text-align: center;
-	text-wrap: balance;
+  text-align: center;
+  text-wrap: balance;
 }
-.honest-insights__button:focus-visible { outline: 3px solid var(--hh-insights-button-border, #6985c3); outline-offset: 3px; }
+.honest-insights__button:focus-visible {
+  outline: 3px solid var(--hh-insights-button-border, #6985c3);
+  outline-offset: 3px;
+}
 
 /* `top` position: heading/intro on the left, button on the right, one row,
    above the grid -- matches the Team Member Page's "Articles by Aaron" +
@@ -402,21 +703,38 @@
    width rule below is what keeps this from overlapping/overflowing once the
    heading and button can no longer share a line. */
 .honest-insights--top-button .honest-insights__head {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 24px;
-	flex-wrap: wrap;
-	text-align: left;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  text-align: left;
 }
-.honest-insights--top-button .honest-insights__headtext { flex: 1 1 320px; min-width: 0; }
-.honest-insights--top-button .honest-insights__intro { margin: 0; max-width: none; }
+.honest-insights--top-button .honest-insights__headtext {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.honest-insights--top-button .honest-insights__intro {
+  margin: 0;
+  max-width: none;
+}
 
-@media (max-width: 1024px) { .honest-insights__grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 1024px) {
+  .honest-insights__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 @media (max-width: 600px) {
-	.honest-insights__grid { grid-template-columns: 1fr; }
-	.honest-insights--top-button .honest-insights__head { flex-direction: column; align-items: stretch; }
-	.honest-insights--top-button .honest-insights__button { align-self: flex-start; }
+  .honest-insights__grid {
+    grid-template-columns: 1fr;
+  }
+  .honest-insights--top-button .honest-insights__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .honest-insights--top-button .honest-insights__button {
+    align-self: flex-start;
+  }
 }
 
 /* Call To Action.
@@ -439,51 +757,85 @@
    viewport again, so the image and the gradient overlay still run the full
    width the design draws them across. */
 .honest-cta {
-	position: relative;
-	overflow: hidden;
-	margin-inline: calc(50% - 50vw);
-	padding-inline: calc(50vw - 50%);
+  position: relative;
+  overflow: hidden;
+  margin-inline: calc(50% - 50vw);
+  padding-inline: calc(50vw - 50%);
 }
 .honest-cta__media {
-	position: absolute;
-	inset: 0;
-	background-color: var(--hh-cta-bg, #b8c8e7);
-	background-repeat: no-repeat, no-repeat;
-	background-position: center, center;
-	background-size: cover, cover;
+  position: absolute;
+  inset: 0;
+  background-color: var(--hh-cta-bg, #b8c8e7);
+  background-repeat: no-repeat, no-repeat;
+  background-position: center, center;
+  background-size: cover, cover;
 }
 /* Gradient direction mirrors `alignment`: the overlay always fades from
    transparent (image side) to opaque (content side) -- matching the real
    Figma fill exactly for the `right` default, mirrored for `left`. */
-.honest-cta--align-right .honest-cta__media { background-image: linear-gradient(to right, transparent, var(--hh-cta-overlay, #b8c8e7)), var(--hh-cta-bg-image, none); }
-.honest-cta--align-left .honest-cta__media { background-image: linear-gradient(to left, transparent, var(--hh-cta-overlay, #b8c8e7)), var(--hh-cta-bg-image, none); }
+.honest-cta--align-right .honest-cta__media {
+  background-image:
+    linear-gradient(to right, transparent, var(--hh-cta-overlay, #b8c8e7)),
+    var(--hh-cta-bg-image, none);
+}
+.honest-cta--align-left .honest-cta__media {
+  background-image:
+    linear-gradient(to left, transparent, var(--hh-cta-overlay, #b8c8e7)),
+    var(--hh-cta-bg-image, none);
+}
 
-.honest-cta__inner { position: relative; z-index: 1; padding: 100px 0; display: flex; }
+.honest-cta__inner {
+  position: relative;
+  z-index: 1;
+  padding: 100px 0;
+  display: flex;
+}
 /* CONTENT MEASURE, not a container (file header rule 4): the whole point of
    this module is a band whose copy occupies ONE SIDE of the image, so the
    content block is deliberately narrower than the container and pushed to the
    `alignment` edge by the flex rules below. Removing it would stretch the copy
    across the photo and destroy the layout. */
-.honest-cta__content { max-width: 480px; text-align: center; }
-.honest-cta--align-right .honest-cta__inner { justify-content: flex-end; }
-.honest-cta--align-left .honest-cta__inner { justify-content: flex-start; }
-
-.honest-cta__heading { color: var(--hh-cta-heading, #3a61b6); font-weight: 800; margin: 0 0 20px; }
-.honest-cta__body { color: var(--hh-cta-body, #6a8090); margin: 0 0 28px; }
-.honest-cta__button {
-	display: inline-block;
-	padding: 18px 32px;
-	border-radius: 4px;
-	background: var(--hh-cta-button-bg, #000000);
-	color: var(--hh-cta-button-text, #ffffff);
-	text-decoration: none;
-	font-weight: 700;
+.honest-cta__content {
+  max-width: 480px;
+  text-align: center;
 }
-.honest-cta__button:focus-visible { outline: 3px solid var(--hh-cta-button-bg, #000000); outline-offset: 3px; }
+.honest-cta--align-right .honest-cta__inner {
+  justify-content: flex-end;
+}
+.honest-cta--align-left .honest-cta__inner {
+  justify-content: flex-start;
+}
+
+.honest-cta__heading {
+  color: var(--hh-cta-heading, #3a61b6);
+  font-weight: 800;
+  margin: 0 0 20px;
+}
+.honest-cta__body {
+  color: var(--hh-cta-body, #6a8090);
+  margin: 0 0 28px;
+}
+.honest-cta__button {
+  display: inline-block;
+  padding: 18px 32px;
+  border-radius: 4px;
+  background: var(--hh-cta-button-bg, #000000);
+  color: var(--hh-cta-button-text, #ffffff);
+  text-decoration: none;
+  font-weight: 700;
+}
+.honest-cta__button:focus-visible {
+  outline: 3px solid var(--hh-cta-button-bg, #000000);
+  outline-offset: 3px;
+}
 
 @media (max-width: 600px) {
-	.honest-cta__inner { padding: 60px 0; }
-	.honest-cta__content { max-width: 100%; }
+  .honest-cta__inner {
+    padding: 60px 0;
+  }
+  .honest-cta__content {
+    max-width: 100%;
+  }
 }
 
 /* Team Member Header.
@@ -508,77 +860,153 @@
    edges while the link inside it lines up with the page's content, i.e. with
    Divi's Row -- see rule 5 in the file header. */
 .honest-member__backbar {
-	background: var(--hh-member-back-bg, #6a4c91);
-	margin-inline: calc(50% - 50vw);
-	padding-inline: calc(50vw - 50%);
+  background: var(--hh-member-back-bg, #6a4c91);
+  margin-inline: calc(50% - 50vw);
+  padding-inline: calc(50vw - 50%);
 }
 .honest-member__back-link {
-	display: flex;
-	align-items: center;
-	gap: 14px;
-	padding: 18px 0;
-	color: var(--hh-member-back-label, #ffffff);
-	text-decoration: none;
-	font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 0;
+  color: var(--hh-member-back-label, #ffffff);
+  text-decoration: none;
+  font-weight: 700;
 }
-.honest-member__back-icon { display: block; flex: 0 0 auto; }
-.honest-member__back-link:focus-visible { outline: 3px solid var(--hh-member-back-label, #ffffff); outline-offset: 2px; }
+.honest-member__back-icon {
+  display: block;
+  flex: 0 0 auto;
+}
+.honest-member__back-link:focus-visible {
+  outline: 3px solid var(--hh-member-back-label, #ffffff);
+  outline-offset: 2px;
+}
 
 .honest-member__inner {
-	padding: 60px 0;
-	display: flex;
-	flex-wrap: wrap;
-	align-items: flex-start;
-	gap: 60px;
+  padding: 60px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 60px;
 }
 /* COMPONENT SIZES, not containers (file header rule 4): a flex basis that
    decides when the two columns stop sharing a line, and below it the
    portrait's own diameter. Neither describes the page's width. */
-.honest-member__text { flex: 1 1 420px; min-width: 0; }
-.honest-member__name { color: var(--hh-member-name, #1e1e1e); margin: 0 0 12px; }
-.honest-member__title { color: var(--hh-member-title, #070707); margin: 0 0 20px; font-weight: 700; }
-.honest-member__bio { color: var(--hh-member-bio, #1e1e1e); margin: 0 0 28px; }
-.honest-member__bio > *:last-child { margin-bottom: 0; }
-.honest-member__quote {
-	margin: 0 0 24px;
-	padding: 0;
-	border: none;
-	color: var(--hh-member-quote, #6a4c91);
-	font-weight: 700;
-	font-size: 1.3rem;
-	line-height: 1.45;
-	quotes: none;
+.honest-member__text {
+  flex: 1 1 420px;
+  min-width: 0;
 }
-.honest-member__linkedin { display: inline-flex; align-items: center; gap: 10px; color: var(--hh-member-linkedin, #6985c3); text-decoration: none; font-weight: 700; }
-.honest-member__linkedin-icon { display: block; flex: 0 0 auto; }
-.honest-member__linkedin:focus-visible { outline: 3px solid var(--hh-member-linkedin, #6985c3); outline-offset: 3px; }
+.honest-member__name {
+  color: var(--hh-member-name, #1e1e1e);
+  margin: 0 0 12px;
+}
+.honest-member__title {
+  color: var(--hh-member-title, #070707);
+  margin: 0 0 20px;
+  font-weight: 700;
+}
+.honest-member__bio {
+  color: var(--hh-member-bio, #1e1e1e);
+  margin: 0 0 28px;
+}
+.honest-member__bio > *:last-child {
+  margin-bottom: 0;
+}
+.honest-member__quote {
+  margin: 0 0 24px;
+  padding: 0;
+  border: none;
+  color: var(--hh-member-quote, #6a4c91);
+  font-weight: 700;
+  font-size: 1.3rem;
+  line-height: 1.45;
+  quotes: none;
+}
+.honest-member__linkedin {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--hh-member-linkedin, #6985c3);
+  text-decoration: none;
+  font-weight: 700;
+}
+.honest-member__linkedin-icon {
+  display: block;
+  flex: 0 0 auto;
+}
+.honest-member__linkedin:focus-visible {
+  outline: 3px solid var(--hh-member-linkedin, #6985c3);
+  outline-offset: 3px;
+}
 
 .honest-member__media {
-	position: relative;
-	flex: 0 0 340px;
-	width: 340px;
-	max-width: 100%;
-	aspect-ratio: 1;
-	box-sizing: border-box;
-	border-radius: 50%;
-	overflow: hidden;
-	border: 0 solid var(--hh-member-portrait-ring, #6a4c91);
-	background: var(--hh-member-portrait-bg, #d2d8ee);
+  position: relative;
+  flex: 0 0 340px;
+  width: 340px;
+  max-width: 100%;
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 0 solid var(--hh-member-portrait-ring, #6a4c91);
+  background: var(--hh-member-portrait-bg, #d2d8ee);
 }
 /* Opt-in ring, for portraits uploaded as plain photos -- see the section
    comment above. Only the width is switched here; the colour is still the
    inherited `--hh-member-portrait-ring` custom property either way, so the
    ring stays fully editable from the module. */
-.honest-member--portrait-ring .honest-member__media { border-width: 14px; }
-.honest-member__portrait { display: block; width: 100%; height: 100%; object-fit: cover; }
+.honest-member--portrait-ring .honest-member__media {
+  border-width: 14px;
+}
+.honest-member__portrait {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 @media (max-width: 1024px) {
-	.honest-member__inner { flex-direction: column; gap: 40px; }
-	.honest-member__media { width: 260px; flex-basis: auto; }
+  .honest-member__inner {
+    flex-direction: column;
+    gap: 40px;
+  }
+  .honest-member__media {
+    width: 260px;
+    flex-basis: auto;
+  }
 }
 @media (max-width: 600px) {
-	.honest-member__back-link { padding: 14px 0; gap: 10px; }
-	.honest-member__inner { padding: 40px 0; }
-	.honest-member__media { width: 200px; }
-	.honest-member--portrait-ring .honest-member__media { border-width: 10px; }
+  .honest-member__back-link {
+    padding: 14px 0;
+    gap: 10px;
+  }
+  .honest-member__inner {
+    padding: 40px 0;
+  }
+  .honest-member__media {
+    width: 200px;
+  }
+  .honest-member--portrait-ring .honest-member__media {
+    border-width: 10px;
+  }
+}
+
+/* Scroll-in animation.
+   The animation itself is entirely Divi's: `et-waypoint` is the hook its
+   bundled handler watches, `et_pb_animation_bottom` and its `fadeBottom`
+   keyframes ship in Divi's own stylesheet, and the per-item `animation-delay`
+   that creates the stagger is set inline by honest_team_animation_attrs().
+   Nothing here re-implements any of that.
+
+   The one thing worth owning is the reduced-motion case: Divi hides a waypoint
+   element until it animates, so simply disabling the animation would leave the
+   content invisible. These rules neutralise the animation AND restore
+   visibility, so a reduced-motion visitor sees the finished state immediately. */
+@media (prefers-reduced-motion: reduce) {
+  .honest-member-card.et-waypoint,
+  .honest-article-card.et-waypoint {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
+  }
 }

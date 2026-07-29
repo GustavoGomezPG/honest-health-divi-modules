@@ -483,9 +483,10 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 			return '';
 		}
 
-		$cards = '';
+		$cards      = '';
+		$card_index = 0;
 		foreach ( $posts as $post ) {
-			$cards .= honest_team_render_article_card( $post );
+			$cards .= honest_team_render_article_card( $post, $card_index++ );
 		}
 
 		$eyebrow = '';

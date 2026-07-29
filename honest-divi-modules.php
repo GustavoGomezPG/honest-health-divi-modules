@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HONEST_DIVI_MODULES_VERSION', '1.0.1' );
+define( 'HONEST_DIVI_MODULES_VERSION', '1.0.2' );
 define( 'HONEST_DIVI_MODULES_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HONEST_DIVI_MODULES_URL', plugin_dir_url( __FILE__ ) );
 
@@ -19,6 +19,7 @@ require_once HONEST_DIVI_MODULES_DIR . 'includes/admin/team-settings.php';
 require_once HONEST_DIVI_MODULES_DIR . 'includes/admin/member-fields.php';
 require_once HONEST_DIVI_MODULES_DIR . 'includes/admin/slug-migration.php';
 require_once HONEST_DIVI_MODULES_DIR . 'includes/data/team-data.php';
+require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/animation.php';
 require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/media-placeholder.php';
 require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/member-card.php';
 require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/article-card.php';
