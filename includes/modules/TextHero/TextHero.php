@@ -213,17 +213,38 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 		// reason the eyebrow is wrapped rather than styled on the <p>. It is
 		// only emitted when there is text to sit on, so a blank eyebrow field
 		// leaves no floating shape behind.
+		// Eyebrow, headline and body animate in as one staggered sequence, using
+		// the same Divi waypoint detection as the card grids. The index is only
+		// incremented for parts that actually render, so a hero with no eyebrow
+		// still starts its stagger at zero instead of opening on a dead beat.
+		$step = 0;
+
 		if ( '' !== $eyebrow ) {
+			$anim   = honest_team_animation_attrs( $step++ );
 			$parts .= sprintf(
-				'<p class="honest-text-hero__eyebrow"><span class="honest-text-hero__eyebrow-text">%s</span></p>',
-				esc_html( $eyebrow )
+				'<p class="honest-text-hero__eyebrow%2$s"%3$s><span class="honest-text-hero__eyebrow-text">%1$s</span></p>',
+				esc_html( $eyebrow ),
+				$anim['class'],
+				$anim['style']
 			);
 		}
 		if ( '' !== $headline ) {
-			$parts .= sprintf( '<h1 class="honest-text-hero__headline">%s</h1>', esc_html( $headline ) );
+			$anim   = honest_team_animation_attrs( $step++ );
+			$parts .= sprintf(
+				'<h1 class="honest-text-hero__headline%2$s"%3$s>%1$s</h1>',
+				esc_html( $headline ),
+				$anim['class'],
+				$anim['style']
+			);
 		}
 		if ( '' !== trim( (string) $this->content ) ) {
-			$parts .= sprintf( '<div class="honest-text-hero__body">%s</div>', et_core_esc_previously( $this->content ) );
+			$anim   = honest_team_animation_attrs( $step++ );
+			$parts .= sprintf(
+				'<div class="honest-text-hero__body%2$s"%3$s>%1$s</div>',
+				et_core_esc_previously( $this->content ),
+				$anim['class'],
+				$anim['style']
+			);
 		}
 
 		return $this->wrap(
