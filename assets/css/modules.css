@@ -82,6 +82,8 @@
   padding: 20px;
   text-decoration: none;
   transition:
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.3, 1),
+    box-shadow 0.25s cubic-bezier(0.2, 0.7, 0.3, 1),
     background-color 0.2s ease,
     color 0.2s ease;
 }
@@ -117,6 +119,13 @@
 .honest-member-card:hover {
   background: var(--hh-card-hover-bg, #6a4c91);
   box-shadow: -8px 8px 0 0 var(--hh-card-hover-shadow, #6985c3);
+  /* The shadow sits 8px left and 8px down, so the card lifts the opposite way
+     by exactly the same amount: the space it vacates is precisely the shadow
+     that appears, which is what makes the offset read as depth rather than as a
+     block of colour that switched on. Uses `transform` while the entrance
+     animations use the standalone `translate` property -- a filled animation
+     would otherwise pin `transform: none` and the card would never move. */
+  transform: translate(8px, -8px);
 }
 .honest-member-card:hover .honest-member-card__name,
 .honest-member-card:hover .honest-member-card__title {
@@ -1018,11 +1027,11 @@
 @keyframes honest-anim-rise {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    translate: 0 24px;
   }
   to {
     opacity: 1;
-    transform: none;
+    translate: none;
   }
 }
 
@@ -1038,7 +1047,7 @@
   .honest-anim.et-waypoint.et-animated {
     opacity: 1 !important;
     animation: none !important;
-    transform: none !important;
+    translate: none !important;
   }
 }
 
@@ -1052,11 +1061,11 @@
 @keyframes honest-market-card-in {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    translate: 0 16px;
   }
   to {
     opacity: 1;
-    transform: none;
+    translate: none;
   }
 }
 
@@ -1095,7 +1104,7 @@
   .honest-market__grid .honest-member-card.honest-market-enter {
     animation: none !important;
     opacity: 1 !important;
-    transform: none !important;
+    translate: none !important;
   }
 }
 
@@ -1149,4 +1158,11 @@
 .honest-member-card:hover .honest-member-card__chevron {
   --hh-chevron: var(--hh-white, #ffffff);
   --hh-chevron-inner: var(--hh-card-hover-bg, #6a4c91);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Keep the shadow as the hover signal, drop the movement. */
+  .honest-member-card:hover {
+    transform: none;
+  }
 }
