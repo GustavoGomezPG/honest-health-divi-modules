@@ -35,11 +35,18 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 			),
 		);
 
+		// hide_text_color: colour for these elements is owned exclusively by
+		// the custom colour fields below (text_color / headline_color),
+		// applied as inline CSS custom properties. Divi's font-group
+		// builder otherwise auto-generates a native "Text Color" sub-option
+		// per group that emits a directly-targeted CSS rule, which would
+		// silently beat the inherited custom-property value and defeat the
+		// single-source-of-truth colour rule.
 		$this->advanced_fields = $this->base_advanced_fields(
 			array(
-				'eyebrow'  => array( 'label' => esc_html__( 'Eyebrow', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-text-hero__eyebrow" ), 'toggle_slug' => 'eyebrow' ),
-				'headline' => array( 'label' => esc_html__( 'Headline', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-text-hero__headline" ), 'toggle_slug' => 'headline' ),
-				'body'     => array( 'label' => esc_html__( 'Body', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-text-hero__body" ), 'toggle_slug' => 'body' ),
+				'eyebrow'  => array( 'label' => esc_html__( 'Eyebrow', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-text-hero__eyebrow" ), 'toggle_slug' => 'eyebrow', 'hide_text_color' => true ),
+				'headline' => array( 'label' => esc_html__( 'Headline', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-text-hero__headline" ), 'toggle_slug' => 'headline', 'hide_text_color' => true ),
+				'body'     => array( 'label' => esc_html__( 'Body', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-text-hero__body" ), 'toggle_slug' => 'body', 'hide_text_color' => true ),
 			)
 		);
 	}
@@ -125,19 +132,16 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 			$parts .= sprintf( '<div class="honest-text-hero__body">%s</div>', et_core_esc_previously( $this->content ) );
 		}
 
-		$style_vars = sprintf(
-			' style="--hh-hero-from:%1$s;--hh-hero-to:%2$s;--hh-hero-text:%3$s;--hh-hero-headline:%4$s;"',
-			esc_attr( $this->props['gradient_start_color'] ),
-			esc_attr( $this->props['gradient_end_color'] ),
-			esc_attr( $this->props['text_color'] ),
-			esc_attr( $this->props['headline_color'] )
-		);
-
 		return $this->wrap(
 			$render_slug,
 			sprintf( '<div class="honest-text-hero__inner">%s</div>', $parts ),
 			array( 'honest-text-hero' ),
-			$style_vars
+			array(
+				'--hh-hero-from'     => $this->props['gradient_start_color'],
+				'--hh-hero-to'       => $this->props['gradient_end_color'],
+				'--hh-hero-text'     => $this->props['text_color'],
+				'--hh-hero-headline' => $this->props['headline_color'],
+			)
 		);
 	}
 }
