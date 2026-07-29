@@ -992,19 +992,50 @@
 }
 
 /* Scroll-in animation.
-   The animation itself is entirely Divi's: `et-waypoint` is the hook its
-   bundled handler watches, `et_pb_animation_bottom` and its `fadeBottom`
-   keyframes ship in Divi's own stylesheet, and the per-item `animation-delay`
-   that creates the stagger is set inline by honest_team_animation_attrs().
-   Nothing here re-implements any of that.
 
-   The one thing worth owning is the reduced-motion case: Divi hides a waypoint
-   element until it animates, so simply disabling the animation would leave the
-   content invisible. These rules neutralise the animation AND restore
-   visibility, so a reduced-motion visitor sees the finished state immediately. */
+   Viewport detection is Divi's: `et-waypoint` is the hook its bundled handler
+   watches, and it adds `et-animated` when the element scrolls into view. No
+   JavaScript is added by this plugin.
+
+   The REVEAL is ours, and has to be. Divi's `et_pb_animation_*` classes look
+   like they would do it, but the rule that carries the actual `animation`
+   declaration is generated per-module by Divi's CSS generator for Divi's own
+   modules -- on a third-party module the class matches nothing, so the element
+   is hidden by `.et-waypoint { opacity: 0 }` and never comes back. Measured:
+   cards sat at opacity 0 with `animation-name: none` even after Divi had added
+   `et-animated`.
+
+   `.honest-anim.et-animated` is three classes, which outranks Divi's
+   `.et-waypoint:not(.et_pb_counters)` regardless of stylesheet order, and
+   `both` fill-mode holds the finished state. The per-item `animation-delay` is
+   set inline by honest_team_animation_attrs() and outranks the shorthand here.
+
+   Caveat, inherited from using Divi's detection: with JavaScript disabled
+   `et-animated` is never added and Divi's own rule keeps these hidden. That is
+   exactly how every Divi module with an animation behaves on this site, so the
+   behaviour is consistent rather than novel -- but it is a real trade-off of
+   reusing Divi's system instead of shipping an observer. */
+@keyframes honest-anim-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.honest-anim.et-waypoint.et-animated {
+  animation: honest-anim-rise 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+/* Reduced motion: neutralise the movement AND undo Divi's hide, so the finished
+   state is simply present. Disabling the animation alone would leave the card
+   stranded at opacity 0. */
 @media (prefers-reduced-motion: reduce) {
-  .honest-member-card.et-waypoint,
-  .honest-article-card.et-waypoint {
+  .honest-anim.et-waypoint,
+  .honest-anim.et-waypoint.et-animated {
     opacity: 1 !important;
     animation: none !important;
     transform: none !important;

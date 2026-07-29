@@ -11,9 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * - `et-waypoint` is the hook Divi's bundled waypoint handler looks for. It
  *   adds `et-animated` to the element once it scrolls into view.
- * - `et_pb_animation_bottom` selects one of Divi's global animation classes.
- *   Both the class and its `fadeBottom` keyframes ship in Divi's main
- *   stylesheet, so no animation CSS is added here either.
+ * Divi's own animation CLASSES are deliberately not used. `et_pb_animation_*`
+ * looks global but the rule that actually animates is generated per-module by
+ * Divi's CSS generator for Divi's own modules, so on a third-party module the
+ * class matches nothing: the element gets hidden by `.et-waypoint` and never
+ * revealed. The reveal therefore lives in this plugin's stylesheet, keyed off
+ * the `et-animated` class Divi's handler adds.
  *
  * The only thing this plugin contributes is the per-item delay, which is what
  * turns a grid appearing all at once into a stagger. It is set inline because
@@ -41,7 +44,7 @@ function honest_team_animation_attrs( $index = null, $step_ms = 90, $max_ms = 54
 	$delay = min( (int) $max_ms, max( 0, (int) $index ) * (int) $step_ms );
 
 	return array(
-		'class' => ' et-waypoint et_pb_animation_bottom',
+		'class' => ' et-waypoint honest-anim',
 		'style' => $delay > 0 ? sprintf( ' style="animation-delay:%dms"', $delay ) : '',
 	);
 }

@@ -313,10 +313,14 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 				esc_html( $market['name'] )
 			);
 
-			$cards      = '';
-			$card_index = 0;
+			$cards = '';
 			foreach ( honest_team_get_members( $market['members'] ) as $member ) {
-				$cards .= honest_team_render_member_card( $member, $card_index++ );
+				// No scroll-in animation here, deliberately. Three of the four panels are
+				// `hidden` at load, so their cards are display:none when Divi's waypoint
+				// fires: the animation elapses while they cannot be painted and they stay
+				// at opacity 0 when the tab is later opened (measured: 6 of 19 cards stuck
+				// invisible). Switching tabs is already this grid's transition.
+				$cards .= honest_team_render_member_card( $member );
 			}
 
 			// tabindex="0" on the panel itself, per standard ARIA Tabs
