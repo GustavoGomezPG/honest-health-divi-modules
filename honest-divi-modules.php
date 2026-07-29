@@ -42,6 +42,8 @@ function honest_divi_modules_register() {
 		return;
 	}
 
+	require_once HONEST_DIVI_MODULES_DIR . 'includes/class-honest-divi-module-base.php';
+
 	foreach ( honest_divi_modules_map() as $dir => $class ) {
 		$file = HONEST_DIVI_MODULES_DIR . "includes/modules/{$dir}/{$dir}.php";
 
