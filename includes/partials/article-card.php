@@ -39,20 +39,29 @@ function honest_team_render_article_card( $post ) {
 		$image = honest_team_render_media_placeholder();
 	}
 
-	$byline = '';
+	$authors = '';
 	foreach ( honest_team_get_article_authors( $post->ID ) as $author ) {
-		$byline .= sprintf(
+		$authors .= sprintf(
 			'<span class="honest-article-card__author"><span class="honest-article-card__author-name">%1$s</span><span class="honest-article-card__author-title">%2$s</span></span>',
 			esc_html( $author['name'] ),
 			esc_html( $author['job_title'] )
 		);
 	}
 
+	// The byline wrapper is omitted entirely when a post has no credited
+	// authors (live example: post 74295), rather than emitted empty. It
+	// carries `margin: 20px` and is a flex item of a column flex container,
+	// where adjacent margins do not collapse -- an empty one left 40px of
+	// dead space between the title and the description.
+	$byline = '' !== $authors
+		? sprintf( '<div class="honest-article-card__byline">%s</div>', $authors )
+		: '';
+
 	return sprintf(
 		'<article class="honest-article-card">
 			<div class="honest-article-card__media">%1$s%2$s</div>
 			<h3 class="honest-article-card__title">%3$s</h3>
-			<div class="honest-article-card__byline">%4$s</div>
+			%4$s
 			<p class="honest-article-card__desc">%5$s</p>
 			<a class="honest-article-card__link" href="%6$s">%7$s</a>
 		</article>',

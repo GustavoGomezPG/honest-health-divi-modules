@@ -197,8 +197,11 @@ class Honest_Divi_Module_Executive_Leadership extends Honest_Divi_Module_Base {
 		}
 
 		$header = '';
-		if ( '' !== $this->props['heading'] ) {
-			$header .= sprintf( '<h2 class="honest-exec__heading">%s</h2>', esc_html( $this->props['heading'] ) );
+		// Trimmed before testing, so a whitespace-only heading renders nothing
+		// rather than an empty <h2> -- consistent with every other module here.
+		$heading = trim( (string) $this->props['heading'] );
+		if ( '' !== $heading ) {
+			$header .= sprintf( '<h2 class="honest-exec__heading">%s</h2>', esc_html( $heading ) );
 		}
 		if ( '' !== trim( (string) $this->content ) ) {
 			$header .= sprintf( '<div class="honest-exec__intro">%s</div>', et_core_esc_previously( $this->content ) );

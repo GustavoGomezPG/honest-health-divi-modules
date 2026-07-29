@@ -80,10 +80,25 @@
 .honest-article-card__author-name { display: block; font-weight: 700; color: var(--hh-blue, #6985c3); }
 .honest-article-card__author-title { display: block; color: var(--hh-blue, #6985c3); font-size: 0.9em; }
 .honest-article-card__desc { margin: 0 20px 20px; }
-.honest-article-card__link { display: inline-block; margin: auto 20px 20px; background: var(--hh-black, #070707); color: var(--hh-white, #ffffff); padding: 12px 24px; text-decoration: none; font-weight: 700; }
+/* `align-self: flex-start`, not `display: inline-block`: the link is a flex
+   item of the card column, so an inline-block display value is blockified and
+   did nothing -- the button stretched the full card width. Figma's card
+   button (node 50:774 in frame 50:470) is 168px wide inside a 390px card,
+   left-aligned with the title, so a shrink-to-fit pill is what was intended;
+   `align-self` is the property that actually delivers it here. `margin-top:
+   auto` still pins it to the bottom of the card. */
+.honest-article-card__link { align-self: flex-start; margin: auto 20px 20px; background: var(--hh-black, #070707); color: var(--hh-white, #ffffff); padding: 12px 24px; text-decoration: none; font-weight: 700; }
 
-/* Text Hero */
-.honest-text-hero { background: linear-gradient(90deg, var(--hh-hero-from, #6a4c91), var(--hh-hero-to, #9b87b5)); color: var(--hh-hero-text, #ffffff); padding: 80px 0 140px; position: relative; }
+/* Text Hero.
+   `overflow-x: clip` (NOT `overflow: hidden`) on the band: the decorative
+   `::after` ellipse below is deliberately 110% of the band's width, so with
+   visible overflow it pushed documentElement.scrollWidth 5% past the viewport
+   and scrolled the whole page sideways at every width (measured 96px @1920
+   down to 16px @316). `clip` removes that horizontal overflow without
+   establishing a scroll container, so the ellipse's intended ~80px vertical
+   bleed below the band still shows -- `overflow: hidden` would have clipped
+   it flat. */
+.honest-text-hero { background: linear-gradient(90deg, var(--hh-hero-from, #6a4c91), var(--hh-hero-to, #9b87b5)); color: var(--hh-hero-text, #ffffff); padding: 80px 0 140px; position: relative; overflow-x: clip; }
 .honest-text-hero::after { content: ""; position: absolute; left: -5%; right: -5%; bottom: -80px; height: 160px; background: var(--hh-white, #ffffff); border-radius: 50%; }
 .honest-text-hero__inner { max-width: 1030px; margin: 0 auto; padding: 0 20px; text-align: center; position: relative; z-index: 1; }
 .honest-text-hero__eyebrow { font-size: 48px; font-weight: 700; margin: 0 0 16px; }
@@ -243,7 +258,17 @@
 	color: var(--hh-insights-button-text, #ffffff);
 	text-decoration: none;
 	font-weight: 700;
-	white-space: nowrap;
+	/* Deliberately NOT `white-space: nowrap`. The longest real label ("View
+	   All Thought Leadership", the `top` layout every member page uses) has a
+	   367px min-content width, which is wider than the 331px column at a
+	   371px viewport -- with nowrap the pill blew out of the column and
+	   scrolled the whole page sideways (measured 16px of overflow at 316px,
+	   0 once the label may wrap). `flex: 0 0 auto` already keeps it at its
+	   max-content width wherever it fits, so this only ever wraps at the
+	   narrow end; `balance` + centring make that wrap read as a deliberate
+	   two-line pill rather than one long line with a ragged orphan. */
+	text-align: center;
+	text-wrap: balance;
 }
 .honest-insights__button:focus-visible { outline: 3px solid var(--hh-insights-button-border, #6985c3); outline-offset: 3px; }
 
@@ -327,14 +352,19 @@
    circular portrait right) -- see the module's file header comment for the
    Figma nodes and the portrait ring/backdrop pixel-sampling.
 
-   The portrait frame (`__media`) is a live circle built in CSS -- a fixed
-   ring border plus a backdrop fill, both editable -- rather than a shipped
-   pre-composited image: the Figma portrait node itself is a single flattened
-   PNG per member (ring+backdrop+photo baked together), which is exactly what
-   this module cannot rely on, since a real deployment uploads a plain
-   portrait photo per member with no ring baked in. `object-fit: cover` fills
-   the ring; the backdrop fill only shows where a photo (or the fallback
-   placeholder mark) doesn't reach every corner. */
+   The portrait frame (`__media`) is a circular crop with NO ring by default.
+   Every published member's `author_image` is a `*-PurpleCircle.png` asset
+   with the purple ring and lavender backdrop already baked into the bitmap
+   (12 of 12 members with a usable portrait), so drawing a second ring in CSS
+   produced two concentric purple rings with a lavender gap between them.
+   The ring is therefore off unless the module opts in, which it does by
+   adding `.honest-member--portrait-ring` to its own wrapper (the
+   `portrait_ring` field) -- the capability is intact for the day portraits
+   are re-cut as plain photos, colour and all, it is just not the default.
+   The backdrop fill stays on unconditionally: it is invisible behind a
+   full-bleed circular portrait and is what the fallback placeholder mark
+   sits on when a member's attachment is missing. `object-fit: cover` fills
+   the circle. */
 .honest-member__backbar { background: var(--hh-member-back-bg, #6a4c91); }
 .honest-member__back-link {
 	display: flex;
@@ -387,9 +417,14 @@
 	box-sizing: border-box;
 	border-radius: 50%;
 	overflow: hidden;
-	border: 14px solid var(--hh-member-portrait-ring, #6a4c91);
+	border: 0 solid var(--hh-member-portrait-ring, #6a4c91);
 	background: var(--hh-member-portrait-bg, #d2d8ee);
 }
+/* Opt-in ring, for portraits uploaded as plain photos -- see the section
+   comment above. Only the width is switched here; the colour is still the
+   inherited `--hh-member-portrait-ring` custom property either way, so the
+   ring stays fully editable from the module. */
+.honest-member--portrait-ring .honest-member__media { border-width: 14px; }
 .honest-member__portrait { display: block; width: 100%; height: 100%; object-fit: cover; }
 
 @media (max-width: 1024px) {
@@ -399,5 +434,6 @@
 @media (max-width: 600px) {
 	.honest-member__back-link { padding: 14px 24px; gap: 10px; }
 	.honest-member__inner { padding: 40px 24px; }
-	.honest-member__media { width: 200px; border-width: 10px; }
+	.honest-member__media { width: 200px; }
+	.honest-member--portrait-ring .honest-member__media { border-width: 10px; }
 }

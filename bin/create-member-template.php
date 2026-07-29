@@ -214,7 +214,7 @@ $honest_tpl_content = implode(
 		'[et_pb_section fb_built="1" _builder_version="4.27.4" _module_preset="default" custom_padding="0px||0px||true|false" theme_builder_area="et_body_layout"]',
 		'[et_pb_row _builder_version="4.27.4" _module_preset="default" width="100%" max_width="100%" custom_padding="0px||0px||true|false" theme_builder_area="et_body_layout"]',
 		'[et_pb_column type="4_4" _builder_version="4.27.4" _module_preset="default" theme_builder_area="et_body_layout"]',
-		'[honest_featured_insights heading="Articles by %first_name%" source="current_member" limit="8" button_text="View All Thought Leadership" button_url="/industry-news/" button_position="top" heading_color="#1e1e1e" intro_color="#1e1e1e" button_bg_color="#ffffff" button_text_color="#6985c3" button_border_color="#6985c3" _builder_version="4.27.4" theme_builder_area="et_body_layout"][/honest_featured_insights]',
+		'[honest_featured_insights heading="Articles by %first_name%" source="current_member" limit="8" button_text="View All Thought Leadership" button_url="/industry-news/" button_position="top" heading_color="#1e1e1e" intro_color="#1e1e1e" button_bg_color="#ffffff" button_label_color="#6985c3" button_border_color="#6985c3" _builder_version="4.27.4" theme_builder_area="et_body_layout"][/honest_featured_insights]',
 		'[/et_pb_column][/et_pb_row][/et_pb_section]',
 
 		// 3. Closing CTA band.

@@ -37,13 +37,27 @@
  *     same purple already used elsewhere in this plugin -- the member card's
  *     name colour and this design's own quote colour) and backdrop
  *     `#d2d8ee` (the exact same lavender already the member card's
- *     `--hh-card-bg` fallback in modules.css). Both numbers landing on
- *     tokens this plugin already uses is a strong signal the ring+backdrop
- *     treatment is real design intent, not a one-off mockup flourish, so it
- *     is reproduced here in live CSS (a circular frame, editable ring and
- *     backdrop colours) rather than discarded -- see get_fields() for
- *     `portrait_ring_color`/`portrait_bg_color` and the CSS section for how
- *     they're applied.
+ *     `--hh-card-bg` fallback in modules.css).
+ *
+ *     An earlier pass here assumed a real deployment would upload a PLAIN
+ *     portrait photo with no ring baked in, and so drew the ring and backdrop
+ *     unconditionally in live CSS. That assumption is wrong for this site:
+ *     every published member's `author_image` is a `*-PurpleCircle.png`
+ *     asset with the ring and lavender backdrop already baked into the
+ *     bitmap -- 12 of the 12 members with a usable portrait -- exactly like
+ *     the Figma node itself. Drawing a second ring around one of those
+ *     produced two concentric purple rings with a lavender gap between them
+ *     on every member page.
+ *
+ *     So the CSS ring now defaults to OFF (`portrait_ring` => 'off'), and
+ *     the capability is kept rather than deleted: turning the field on adds
+ *     `honest-member--portrait-ring` to this module's wrapper, which is what
+ *     switches the ring's border width on, and `portrait_ring_color` still
+ *     governs its colour. That is the setting to flip if portraits are ever
+ *     re-cut as plain photos. `portrait_bg_color` is applied either way: it
+ *     is invisible behind a full-bleed circular portrait and is what the
+ *     fallback placeholder mark sits on when a member's attachment is
+ *     missing.
  *   - Back bar: strip 224:2787 (`#6a4c91` fill), label 224:2788 ("Back to
  *     Team Page", white, bold), arrow 224:2790 -- all real and rendered
  *     together in place above the header exactly as the brief describes.
@@ -257,18 +271,40 @@ class Honest_Divi_Module_Team_Member_Header extends Honest_Divi_Module_Base {
 			// portrait asset (see the file header comment) -- both numbers
 			// happen to match tokens already used elsewhere in this plugin
 			// (the member card's name colour and `--hh-card-bg` fallback
-			// respectively), which is why this is reproduced as a real,
-			// editable circular frame rather than discarded as one-off mockup
-			// styling. Visible always, regardless of whether a portrait is
-			// set: it frames the fallback placeholder mark too.
+			// respectively).
+			//
+			// The ring is OFF by default because every published member's
+			// portrait is a `*-PurpleCircle.png` with the ring already baked
+			// into the bitmap, and a CSS ring on top of one of those renders
+			// as a double ring -- see the file header comment. The field is
+			// here, rather than the ring simply being deleted, so the
+			// treatment can be switched back on (with its colour) if
+			// portraits are ever re-cut as plain photos.
+			'portrait_ring'       => array(
+				'label'            => esc_html__( 'Portrait Ring', 'honest-divi-modules' ),
+				'description'      => esc_html__( 'Draw a coloured ring around the portrait. Leave off for portraits that already have the ring baked into the image, which is how every current team member\'s photo is supplied.', 'honest-divi-modules' ),
+				'type'             => 'yes_no_button',
+				'option_category'  => 'configuration',
+				'options'          => array(
+					'off' => esc_html__( 'No', 'honest-divi-modules' ),
+					'on'  => esc_html__( 'Yes', 'honest-divi-modules' ),
+				),
+				'default'          => 'off',
+				'default_on_front' => 'off',
+				'tab_slug'         => 'advanced',
+				'toggle_slug'      => 'colors',
+			),
 			'portrait_ring_color' => array(
 				'label'        => esc_html__( 'Portrait Ring Color', 'honest-divi-modules' ),
-				'description'  => esc_html__( 'Colour of the circular ring around the portrait.', 'honest-divi-modules' ),
+				'description'  => esc_html__( 'Colour of the circular ring around the portrait. Only visible while Portrait Ring is on.', 'honest-divi-modules' ),
 				'type'         => 'color',
 				'custom_color' => true,
 				'tab_slug'     => 'advanced',
 				'toggle_slug'  => 'colors',
 				'default'      => '#6a4c91',
+				'show_if'      => array(
+					'portrait_ring' => 'on',
+				),
 			),
 			'portrait_bg_color'   => array(
 				'label'        => esc_html__( 'Portrait Backdrop Color', 'honest-divi-modules' ),
@@ -380,10 +416,16 @@ class Honest_Divi_Module_Team_Member_Header extends Honest_Divi_Module_Base {
 			$portrait
 		);
 
+		// The ring is a wrapper modifier class rather than another custom
+		// property because its "off" state is a border WIDTH of zero, and
+		// wrap()'s $css_vars map only ever carries validated colour (or image
+		// URL) values -- see Honest_Divi_Module_Base::build_style_attr().
+		$ring = 'on' === $this->props['portrait_ring'];
+
 		return $this->wrap(
 			$render_slug,
 			$inner,
-			array( 'honest-member' ),
+			array( 'honest-member', $ring ? 'honest-member--portrait-ring' : '' ),
 			array(
 				'--hh-member-name'          => $this->props['name_color'],
 				'--hh-member-title'         => $this->props['job_title_color'],

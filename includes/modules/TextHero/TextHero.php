@@ -122,11 +122,17 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 	public function render( $attrs, $content, $render_slug ) {
 		$parts = '';
 
-		if ( '' !== $this->props['eyebrow'] ) {
-			$parts .= sprintf( '<p class="honest-text-hero__eyebrow"><span>%s</span></p>', esc_html( $this->props['eyebrow'] ) );
+		// Trimmed before testing, so a whitespace-only field renders nothing
+		// at all rather than an empty <p>/<h1> -- the same guard CallToAction
+		// and Featured Insights already applied to their own headings.
+		$eyebrow  = trim( (string) $this->props['eyebrow'] );
+		$headline = trim( (string) $this->props['headline'] );
+
+		if ( '' !== $eyebrow ) {
+			$parts .= sprintf( '<p class="honest-text-hero__eyebrow"><span>%s</span></p>', esc_html( $eyebrow ) );
 		}
-		if ( '' !== $this->props['headline'] ) {
-			$parts .= sprintf( '<h1 class="honest-text-hero__headline">%s</h1>', esc_html( $this->props['headline'] ) );
+		if ( '' !== $headline ) {
+			$parts .= sprintf( '<h1 class="honest-text-hero__headline">%s</h1>', esc_html( $headline ) );
 		}
 		if ( '' !== trim( (string) $this->content ) ) {
 			$parts .= sprintf( '<div class="honest-text-hero__body">%s</div>', et_core_esc_previously( $this->content ) );

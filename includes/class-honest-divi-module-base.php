@@ -202,15 +202,13 @@ abstract class Honest_Divi_Module_Base extends ET_Builder_Module {
 	 * @param array $selectors Optional font groups keyed by slug.
 	 */
 	protected function base_advanced_fields( $selectors = array() ) {
-		return array_merge(
-			array(
-				'fonts'          => $selectors,
-				'background'     => array(),
-				'margin_padding' => array(),
-				'borders'        => array( 'default' => array() ),
-				'box_shadow'     => array( 'default' => array() ),
-				'button'         => false,
-			)
+		return array(
+			'fonts'          => $selectors,
+			'background'     => array(),
+			'margin_padding' => array(),
+			'borders'        => array( 'default' => array() ),
+			'box_shadow'     => array( 'default' => array() ),
+			'button'         => false,
 		);
 	}
 }

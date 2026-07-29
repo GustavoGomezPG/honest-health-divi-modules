@@ -26,6 +26,16 @@ if ( ! defined( 'ABSPATH' ) ) {
  * would not resolve. The guard below keeps the handler inert until the
  * rewrite slug is actually "team", so it cannot redirect indexed URLs into
  * 404s during that window.
+ *
+ * The second guard is the same problem one level down: a 301 is permanently
+ * cacheable, so redirecting a URL whose target does not exist teaches every
+ * crawler and browser that caches it to keep going to a dead URL — the exact
+ * SEO harm this migration exists to prevent. Blind path rewriting did that
+ * for /article-author/ itself (no member slug at all) and for any
+ * /article-author/{anything}/ that never named a real member, both of which
+ * 301'd straight into a 404. So the member is resolved first and the target
+ * comes from get_permalink(); anything that does not resolve to a published
+ * member is left alone to 404 normally, uncached.
  */
 function honest_team_redirect_legacy_urls() {
 	if ( is_admin() ) {
@@ -46,7 +56,30 @@ function honest_team_redirect_legacy_urls() {
 		return;
 	}
 
-	$target = home_url( str_replace( '/article-author/', '/team/', $path ) );
+	// Exactly one path segment after the prefix is a member URL. The bare
+	// /article-author/ archive URL leaves '' here, and anything deeper (a
+	// paged or otherwise nested URL) is not a member permalink either;
+	// neither has a real /team/ equivalent to send a permanent redirect to.
+	$slug = trim( (string) substr( $path, strlen( '/article-author/' ) ), '/' );
+
+	if ( '' === $slug || false !== strpos( $slug, '/' ) ) {
+		return;
+	}
+
+	$member = get_page_by_path( rawurldecode( $slug ), OBJECT, 'article-author' );
+
+	if ( ! $member instanceof WP_Post || 'publish' !== $member->post_status ) {
+		return;
+	}
+
+	// get_permalink() rather than a str_replace() on the request path: it is
+	// the post's real, current URL, so the redirect target is by construction
+	// a URL that resolves.
+	$target = get_permalink( $member );
+
+	if ( ! $target ) {
+		return;
+	}
 
 	if ( ! empty( $query ) ) {
 		$target .= '?' . $query;

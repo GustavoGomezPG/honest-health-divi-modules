@@ -318,8 +318,13 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 				$cards .= honest_team_render_member_card( $member );
 			}
 
+			// tabindex="0" on the panel itself, per standard ARIA Tabs
+			// practice: a market with no members has no focusable content of
+			// its own, so without this a keyboard user tabbing off the tab
+			// list skips straight past the panel and can never reach (or have
+			// announced) the panel they just selected.
 			$panels .= sprintf(
-				'<div class="honest-market__panel" role="tabpanel" id="%1$s-panel-%2$d" aria-labelledby="%1$s-tab-%2$d"%3$s><div class="honest-market__grid">%4$s</div></div>',
+				'<div class="honest-market__panel" role="tabpanel" tabindex="0" id="%1$s-panel-%2$d" aria-labelledby="%1$s-tab-%2$d"%3$s><div class="honest-market__grid">%4$s</div></div>',
 				esc_attr( $uid ),
 				$i,
 				$selected ? '' : ' hidden',
@@ -370,8 +375,11 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 		);
 
 		$head = '';
-		if ( '' !== $this->props['heading'] ) {
-			$head .= sprintf( '<h2 class="honest-market__heading">%s</h2>', esc_html( $this->props['heading'] ) );
+		// Trimmed before testing, so a whitespace-only heading renders nothing
+		// rather than an empty <h2> -- consistent with every other module here.
+		$heading = trim( (string) $this->props['heading'] );
+		if ( '' !== $heading ) {
+			$head .= sprintf( '<h2 class="honest-market__heading">%s</h2>', esc_html( $heading ) );
 		}
 		if ( '' !== trim( (string) $this->content ) ) {
 			$head .= sprintf( '<div class="honest-market__intro">%s</div>', et_core_esc_previously( $this->content ) );

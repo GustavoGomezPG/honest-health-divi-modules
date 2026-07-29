@@ -85,7 +85,7 @@
  * background rectangle -- not a finished design. Colours now come from the
  * two real, visible button nodes above instead:
  *
- *   - `button_bg_color`/`button_text_color`/`button_border_color` default to
+ *   - `button_bg_color`/`button_label_color`/`button_border_color` default to
  *     the `below` (Our Team page) treatment -- `#6985c3` fill, white text,
  *     `#6985c3` border (same colour as the fill, so it reads as a plain
  *     solid pill, matching node 54:308 exactly). The Our Team page is this
@@ -324,7 +324,17 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'toggle_slug'  => 'colors',
 				'default'      => '#6985c3',
 			),
-			'button_text_color'    => array(
+			// Named `button_label_color`, not `button_text_color` -- init()
+			// declares a font group named `button`, and Divi's font-group
+			// generator auto-creates a `"{group}_text_color"` prop for every
+			// font group, so `button_text_color` is an exact collision with a
+			// prop this module itself causes Divi to generate. It happens to
+			// be suppressed today by `hide_text_color => true` on that group,
+			// but that makes the field name's safety contingent on an
+			// unrelated flag staying set. CallToAction.php was renamed away
+			// from exactly this name for exactly this reason; this module now
+			// matches it.
+			'button_label_color'   => array(
 				'label'        => esc_html__( 'Button Text Color', 'honest-divi-modules' ),
 				'description'  => esc_html__( 'Label colour of the "view all" button.', 'honest-divi-modules' ),
 				'type'         => 'color',
@@ -358,7 +368,18 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 	 * @return WP_Post[]
 	 */
 	protected function get_posts_for_source() {
-		$limit = max( 1, (int) $this->props['limit'] );
+		// Re-validated against the SAME 1-12 bounds the field advertises, not
+		// merely clamped at the bottom: a hand-edited shortcode or a stale
+		// saved value bypasses the builder UI entirely, and `limit="9999"`
+		// passed the old `max( 1, ... )` guard untouched and ran an unbounded
+		// query. Anything non-numeric or outside the advertised range falls
+		// back to the documented default rather than being snapped to a
+		// bound, matching how LeadershipByMarket::render() validates
+		// `map_speed`.
+		$limit = (int) $this->props['limit'];
+		if ( $limit < 1 || $limit > 12 ) {
+			$limit = 3;
+		}
 
 		switch ( $this->props['source'] ) {
 			case 'current_member':
@@ -531,7 +552,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'--hh-insights-heading'       => $this->props['heading_color'],
 				'--hh-insights-intro'         => $this->props['intro_color'],
 				'--hh-insights-button-bg'     => $this->props['button_bg_color'],
-				'--hh-insights-button-text'   => $this->props['button_text_color'],
+				'--hh-insights-button-text'   => $this->props['button_label_color'],
 				'--hh-insights-button-border' => $this->props['button_border_color'],
 			)
 		);
