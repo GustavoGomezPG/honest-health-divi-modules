@@ -65,10 +65,10 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 		// defeat the single-source-of-truth colour rule.
 		$this->advanced_fields = $this->base_advanced_fields(
 			array(
-				'heading' => array( 'label' => esc_html__( 'Heading', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-market__heading" ), 'toggle_slug' => 'heading', 'hide_text_color' => true ),
-				'intro'   => array( 'label' => esc_html__( 'Intro', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-market__intro" ), 'toggle_slug' => 'intro', 'hide_text_color' => true ),
-				'tab'     => array( 'label' => esc_html__( 'Tabs', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-market__tab" ), 'toggle_slug' => 'tab', 'hide_text_color' => true ),
-				'caption' => array( 'label' => esc_html__( 'Caption', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-market__caption" ), 'toggle_slug' => 'caption', 'hide_text_color' => true ),
+				'heading' => array( 'label' => esc_html__( 'Heading', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-market__heading" ), 'toggle_slug' => 'heading', 'hide_text_color' => true, 'font_size' => array( 'default' => '48px' ), 'font' => array( 'default' => '|700|||||||' ), 'line_height' => array( 'default' => '1.27em' ), 'letter_spacing' => array( 'default' => '0px' ) ),
+				'intro' => array( 'label' => esc_html__( 'Intro', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-market__intro" ), 'toggle_slug' => 'intro', 'hide_text_color' => true, 'font_size' => array( 'default' => '18px' ), 'font' => array( 'default' => '|400|||||||' ), 'line_height' => array( 'default' => '1.45em' ), 'letter_spacing' => array( 'default' => '0px' ) ),
+				'tab' => array( 'label' => esc_html__( 'Tabs', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-market__tab" ), 'toggle_slug' => 'tab', 'hide_text_color' => true, 'font_size' => array( 'default' => '24px' ), 'font' => array( 'default' => '|700|||||||' ), 'line_height' => array( 'default' => '1.958em' ), 'letter_spacing' => array( 'default' => '0px' ) ),
+				'caption' => array( 'label' => esc_html__( 'Caption', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-market__caption" ), 'toggle_slug' => 'caption', 'hide_text_color' => true, 'font_size' => array( 'default' => '16px' ), 'font' => array( 'default' => '|500|||||||' ), 'line_height' => array( 'default' => '1.15em' ), 'letter_spacing' => array( 'default' => '0px' ) ),
 			)
 		);
 	}

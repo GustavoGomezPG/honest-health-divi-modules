@@ -1041,3 +1041,92 @@
     transform: none !important;
   }
 }
+
+/* Leadership by Market — card entrance on region change.
+   Not Divi's waypoint system: three of the four panels are `hidden` at load, so
+   a waypoint fires while they cannot be painted and the card is left stranded at
+   opacity 0 (measured: 6 of 19 stuck invisible). The tab change is the trigger
+   instead, applied by replayCards() in assets/js/market-map.js.
+   Stagger is nth-child here rather than an inline delay, because the same cards
+   are re-shown many times and the markup should stay static. */
+@keyframes honest-market-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.honest-market__grid .honest-member-card.honest-market-enter {
+  animation: honest-market-card-in 0.55s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+.honest-market__grid .honest-member-card.honest-market-enter:nth-child(2) {
+  animation-delay: 90ms;
+}
+.honest-market__grid .honest-member-card.honest-market-enter:nth-child(3) {
+  animation-delay: 180ms;
+}
+.honest-market__grid .honest-member-card.honest-market-enter:nth-child(4) {
+  animation-delay: 270ms;
+}
+.honest-market__grid .honest-member-card.honest-market-enter:nth-child(n + 5) {
+  animation-delay: 360ms;
+}
+
+/* Figma node 5:731: the map's region label is 35px bold at 1.27. */
+.honest-market-map__label {
+  font-size: 35px;
+  font-weight: 700;
+  line-height: 1.27;
+}
+
+/* Figma nodes 1:228 / 1:229: both card lines are 18px at 1.45. Weight and
+   colour already come from the shared card rules above. */
+.honest-member-card__name,
+.honest-member-card__title {
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .honest-market__grid .honest-member-card.honest-market-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Leadership by Market — typography from Figma node 5:731.
+   The module's Divi font groups carry these same values as their defaults so the
+   Design tab opens on the right numbers, but a default alone does not emit CSS
+   for an instance that was saved before the default existed — measured: heading
+   rendered at the theme's 26px, not 48px. These declarations are the floor; any
+   value an editor sets in the Design tab still wins, because Divi emits that as
+   a higher-specificity `.et_pb_*` rule. */
+.honest-market__heading {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.27;
+  letter-spacing: normal;
+}
+.honest-market__intro {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: normal;
+}
+.honest-market__tab {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.958;
+  letter-spacing: normal;
+}
+.honest-market__caption {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: normal;
+}

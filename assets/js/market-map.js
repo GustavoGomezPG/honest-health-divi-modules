@@ -224,6 +224,34 @@
 		var captions = [].slice.call( root.querySelectorAll( '.honest-market__caption' ) );
 		var map = root.querySelector( '.honest-market-map' );
 
+		// Replay the card entrance for the panel that just became visible.
+		//
+		// These cards deliberately do NOT use Divi's waypoint animation: three of
+		// the four panels are `hidden` at load, so a waypoint fires while they
+		// cannot be painted and they end up stuck at opacity 0. The tab change is
+		// the trigger instead, which is also what the design implies.
+		//
+		// Removing the class, reading offsetWidth, then re-adding it is the
+		// standard way to restart a CSS animation -- the read forces a style
+		// flush, without which the browser coalesces both changes and nothing
+		// replays. The stagger comes from :nth-child delays in the stylesheet.
+		function replayCards( panel ) {
+			var cards = panel.querySelectorAll( '.honest-member-card' );
+			var i;
+
+			for ( i = 0; i < cards.length; i++ ) {
+				cards[ i ].classList.remove( 'honest-market-enter' );
+			}
+
+			if ( cards.length ) {
+				void panel.offsetWidth;
+			}
+
+			for ( i = 0; i < cards.length; i++ ) {
+				cards[ i ].classList.add( 'honest-market-enter' );
+			}
+		}
+
 		function select( index ) {
 			if ( index < 0 || index >= tabs.length ) { return; }
 
@@ -232,7 +260,9 @@
 				tab.setAttribute( 'aria-selected', on ? 'true' : 'false' );
 				tab.setAttribute( 'tabindex', on ? '0' : '-1' );
 				var panel = document.getElementById( tab.getAttribute( 'aria-controls' ) );
-				if ( panel ) { panel.hidden = ! on; }
+				if ( ! panel ) { return; }
+				panel.hidden = ! on;
+				if ( on ) { replayCards( panel ); }
 			} );
 
 			captions.forEach( function ( caption, i ) {
