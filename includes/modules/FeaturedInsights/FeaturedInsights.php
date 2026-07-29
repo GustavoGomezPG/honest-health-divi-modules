@@ -13,8 +13,49 @@
  *   inside a Divi Theme Builder body template for the `article-author` post
  *   type -- `get_the_ID()` there resolves to the member, which is exactly
  *   what `honest_team_get_articles_by_member()` needs. The design shows 8
- *   cards there. `heading` is expected to carry dynamic content (or be typed
- *   per template) so it can read "Articles by Aaron" etc.
+ *   cards there, under a heading reading "Articles by Aaron" -- the member's
+ *   FIRST name. See the `%first_name%` token below for how one shared
+ *   template heading produces a different name on every member's page.
+ *
+ * `%first_name%` heading token
+ * ----------------------------
+ * One Theme Builder body template renders every team member's page, so the
+ * heading it carries cannot be a hardcoded name. Typing
+ * `Articles by %first_name%` into the `heading` field substitutes the current
+ * member's first name at render time (`resolve_heading()` /
+ * `get_member_first_name()`).
+ *
+ * A visible token was chosen over "auto-fill the heading when it is left
+ * blank" for three reasons:
+ *
+ *   - It is discoverable and self-documenting. An editor opening the module
+ *     in Divi sees the literal heading text that produces the output, plus
+ *     the field description explaining the token. A blank field that silently
+ *     grows copy of its own is invisible in the UI and reads as a bug to
+ *     whoever inherits the page.
+ *   - It keeps the surrounding wording editable. "Articles by Aaron",
+ *     "Insights from Aaron", "More from Aaron" and any translated word order
+ *     are all reachable without a code change; an automatic default would
+ *     hardcode one English phrasing in PHP.
+ *   - Blank still means blank. `heading` is an optional field and always has
+ *     been: leaving it empty renders no heading at all, in every source mode.
+ *     Auto-filling it would change that established behaviour for the two
+ *     other source modes too.
+ *
+ * Degradation, in every direction:
+ *
+ *   - Token present, no member in context (wrong template, unpublished or
+ *     deleted member, or `source` is `latest`/`manual` where "current member"
+ *     is not a meaningful concept): the heading is dropped entirely rather
+ *     than rendered with a hole in it. A heading reading "Articles by " with
+ *     a dangling preposition is worse than no heading, and printing the raw
+ *     `%first_name%` token to a site visitor is worse still.
+ *   - Token absent: nothing changes at all. The heading is used verbatim, so
+ *     `latest` and `manual` instances (the Our Team page) behave exactly as
+ *     they did before the token existed.
+ *   - Member title with no whitespace ("Cher") yields that whole title;
+ *     an empty title yields an empty first name, which drops the heading
+ *     under the first rule above. Neither path emits a PHP notice.
  *
  * Whatever the source, an empty result renders nothing at all: no heading, no
  * intro, no stranded empty grid, no button -- `render()` returns `''`. This
@@ -89,6 +130,14 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 
 	public $slug = 'honest_featured_insights';
 
+	/**
+	 * Placeholder an editor can type into the `heading` field to have the
+	 * current team member's first name substituted at render time -- see the
+	 * file header comment for why this is a visible token rather than an
+	 * automatic default, and resolve_heading() for the substitution rules.
+	 */
+	const FIRST_NAME_TOKEN = '%first_name%';
+
 	public function init() {
 		$this->name             = esc_html__( 'Featured Insights', 'honest-divi-modules' );
 		$this->main_css_element = '%%order_class%%';
@@ -138,6 +187,13 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'label'           => esc_html__( 'Heading', 'honest-divi-modules' ),
 				'type'            => 'text',
 				'option_category' => 'basic_option',
+				// Translators: %s: the literal %first_name% token, not a value.
+				'description'     => sprintf(
+					/* translators: %s: the literal placeholder token an editor types, e.g. %first_name% */
+					esc_html__( 'Optional. Leave blank to hide the heading. With Source set to Current Team Member, %s is replaced by that member\'s first name, e.g. "Articles by %s" becomes "Articles by Aaron". The whole heading is hidden if no member is in context.', 'honest-divi-modules' ),
+					esc_html( self::FIRST_NAME_TOKEN ),
+					esc_html( self::FIRST_NAME_TOKEN )
+				),
 				'toggle_slug'     => 'main_content',
 				'dynamic_content' => 'text',
 			),
@@ -337,6 +393,69 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 		}
 	}
 
+	/**
+	 * The current team member's first name, for the `%first_name%` heading
+	 * token. Returns `''` whenever there is no member in context, which is the
+	 * single signal resolve_heading() uses to drop the heading entirely.
+	 *
+	 * Deliberately limited to `source === 'current_member'`: "the current
+	 * member" is not a meaningful concept in `latest` or `manual` mode (those
+	 * instances live on the Our Team page, where get_the_ID() is the page
+	 * itself), so the token resolves to nothing there rather than to the page
+	 * title's first word.
+	 *
+	 * First name = the first whitespace-delimited token of the member's post
+	 * title, which is how the real titles are shaped: "Aaron DeBoer, MBA" ->
+	 * "Aaron", "Greg Johnson, MD, MBA, CMD" -> "Greg". A single-word title
+	 * ("Cher") yields itself; an empty or whitespace-only title yields '' --
+	 * preg_split() on '' returns array( '' ), so index 0 always exists and no
+	 * notice is ever raised.
+	 *
+	 * @return string First name, or '' if there is no member in context.
+	 */
+	protected function get_member_first_name() {
+		if ( 'current_member' !== $this->props['source'] ) {
+			return '';
+		}
+
+		$member = honest_team_get_member( get_the_ID() );
+
+		if ( ! $member ) {
+			return '';
+		}
+
+		$parts = preg_split( '/\s+/', trim( (string) $member['name'] ) );
+
+		return isset( $parts[0] ) ? (string) $parts[0] : '';
+	}
+
+	/**
+	 * Resolve the `%first_name%` token in a heading, if it carries one.
+	 *
+	 * A heading with no token is returned verbatim (trimmed) -- the `latest`
+	 * and `manual` source modes are completely unaffected by this method. A
+	 * heading that does carry the token but cannot resolve it returns '',
+	 * which render() treats exactly like a blank heading field: no heading
+	 * markup at all. See the file header comment for why that is the chosen
+	 * degradation rather than substituting an empty string in place.
+	 *
+	 * @param string $heading Raw heading as typed into the field.
+	 * @return string Heading to render, or '' to render no heading.
+	 */
+	protected function resolve_heading( $heading ) {
+		if ( false === strpos( $heading, self::FIRST_NAME_TOKEN ) ) {
+			return trim( $heading );
+		}
+
+		$first_name = $this->get_member_first_name();
+
+		if ( '' === $first_name ) {
+			return '';
+		}
+
+		return trim( str_replace( self::FIRST_NAME_TOKEN, $first_name, $heading ) );
+	}
+
 	public function render( $attrs, $content, $render_slug ) {
 		$posts = $this->get_posts_for_source();
 
@@ -354,9 +473,13 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 			$eyebrow = sprintf( '<p class="honest-insights__eyebrow">%s</p>', esc_html( $this->props['eyebrow'] ) );
 		}
 
-		$heading = '';
-		if ( '' !== trim( (string) $this->props['heading'] ) ) {
-			$heading = sprintf( '<h2 class="honest-insights__heading">%s</h2>', esc_html( $this->props['heading'] ) );
+		// resolve_heading() returns '' both for a blank field and for a
+		// `%first_name%` heading with no member in context -- one branch
+		// covers both, so neither can leave a partial heading behind.
+		$heading      = '';
+		$heading_text = $this->resolve_heading( (string) $this->props['heading'] );
+		if ( '' !== $heading_text ) {
+			$heading = sprintf( '<h2 class="honest-insights__heading">%s</h2>', esc_html( $heading_text ) );
 		}
 
 		$intro = '';
