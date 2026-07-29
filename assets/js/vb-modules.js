@@ -117,6 +117,31 @@
 			return style;
 		}
 
+		/**
+		 * A CSS <image> value for a custom property, from a raw URL prop.
+		 *
+		 * Only http(s) and protocol-relative URLs are accepted, and the quotes
+		 * are added here, so a value carrying `)` or a `javascript:` scheme cannot
+		 * break out of the url() and inject further declarations. Mirrors
+		 * Honest_Divi_Module_Base::is_valid_css_url().
+		 *
+		 * PHP additionally resolves the URL back to a media-library attachment and
+		 * drops anything that is not one. That check needs the database, so the
+		 * builder preview accepts the field's URL as given -- a URL from outside
+		 * the library would preview here and not render on the front end. It is a
+		 * preview-only difference on a decorative background, not a divergence in
+		 * what ships.
+		 */
+		function cssImage( value ) {
+			var url = text( value );
+
+			if ( ! url || ! /^(https?:)?\/\//i.test( url ) || /["')\\]|\s/.test( url ) ) {
+				return '';
+			}
+
+			return 'url("' + url + '")';
+		}
+
 		var modules = [];
 
 		/**
@@ -187,6 +212,149 @@
 						} )
 					},
 					e( 'div', { className: 'honest-text-hero__inner' }, parts )
+				);
+			}
+		} );
+
+		/**
+		 * Call To Action.
+		 *
+		 * Prop-driven like Text Hero, so it is mirrored in full and edits are
+		 * instant. Mirrors Honest_Divi_Module_Call_To_Action::render().
+		 *
+		 * The media div is decorative -- the design's photo carries nothing the
+		 * copy does not already say -- so it stays a CSS background rather than an
+		 * <img> needing alt text, and keeps its aria-hidden.
+		 *
+		 * The alignment modifier falls back to 'right' on any unrecognised value,
+		 * matching the PHP whitelist rather than trusting the stored attribute.
+		 */
+		modules.push( {
+			slug: 'honest_call_to_action',
+
+			render: function () {
+				var props = this.props || {};
+				var align = ( 'left' === props.alignment || 'right' === props.alignment ) ? props.alignment : 'right';
+				var parts = [];
+
+				var heading = text( props.heading );
+				var body = html( props.content );
+				var buttonText = text( props.button_text );
+
+				if ( heading ) {
+					parts.push( e( 'h2', { className: 'honest-cta__heading', key: 'heading' }, heading ) );
+				}
+
+				if ( body ) {
+					parts.push( e( 'div', {
+						className: 'honest-cta__body',
+						key: 'body',
+						dangerouslySetInnerHTML: body
+					} ) );
+				}
+
+				if ( buttonText ) {
+					var url = text( props.button_url );
+
+					parts.push( e( 'a', {
+						className: 'honest-cta__button',
+						key: 'button',
+						href: url ? url : '#'
+					}, buttonText ) );
+				}
+
+				var style = cssVars( {
+					'--hh-cta-heading': props.heading_color,
+					'--hh-cta-body': props.content_color,
+					'--hh-cta-button-bg': props.button_bg_color,
+					'--hh-cta-button-text': props.button_label_color,
+					'--hh-cta-overlay': props.overlay_color,
+					'--hh-cta-bg': props.cta_bg_color
+				} );
+
+				var image = cssImage( props.cta_image );
+
+				if ( image ) {
+					style['--hh-cta-bg-image'] = image;
+				}
+
+				return e(
+					'div',
+					{ className: 'honest-cta honest-cta--align-' + align, style: style },
+					e( 'div', { className: 'honest-cta__media', 'aria-hidden': 'true' } ),
+					e( 'div', { className: 'honest-cta__inner' },
+						e( 'div', { className: 'honest-cta__content' }, parts )
+					)
+				);
+			}
+		} );
+
+		/**
+		 * Executive Leadership.
+		 *
+		 * The heading and intro are prop-driven and mirrored here, so editing
+		 * either is instant. The card grid is not re-implemented: it arrives as
+		 * server-rendered HTML in the `__cards` computed property, straight from
+		 * the same get_cards_html() the front end uses, so there is one source of
+		 * truth for that markup. This is the pattern Divi's own Blog module uses
+		 * for `__posts`.
+		 *
+		 * PHP returns nothing at all when the roster is empty. That is mirrored,
+		 * but only once the cards are known to be empty -- an undefined `__cards`
+		 * means the round-trip has not landed yet, and blanking the module then
+		 * would make it flash out and back on every builder load.
+		 */
+		modules.push( {
+			slug: 'honest_executive_leadership',
+
+			render: function () {
+				var props = this.props || {};
+				var cards = props.__cards;
+
+				if ( '' === cards ) {
+					return null;
+				}
+
+				var parts = [];
+				var heading = text( props.heading );
+				var intro = html( props.content );
+
+				if ( heading ) {
+					parts.push( e( 'h2', { className: 'honest-exec__heading', key: 'heading' }, heading ) );
+				}
+
+				if ( intro ) {
+					parts.push( e( 'div', {
+						className: 'honest-exec__intro',
+						key: 'intro',
+						dangerouslySetInnerHTML: intro
+					} ) );
+				}
+
+				var columns = text( props.columns ) || '4';
+				var grid = computed( cards );
+
+				parts.push( e( 'div', {
+					className: 'honest-exec__grid honest-exec__grid--' + columns,
+					key: 'grid',
+					dangerouslySetInnerHTML: grid
+				} ) );
+
+				return e(
+					'div',
+					{
+						className: 'honest-exec',
+						style: cssVars( {
+							'--hh-exec-heading': props.heading_color,
+							'--hh-exec-intro': props.intro_color,
+							'--hh-card-bg': props.card_bg_color,
+							'--hh-card-hover-bg': props.card_hover_bg_color,
+							'--hh-card-hover-shadow': props.card_hover_shadow_color,
+							'--hh-card-name': props.card_name_color,
+							'--hh-card-title': props.card_title_color
+						} )
+					},
+					parts
 				);
 			}
 		} );

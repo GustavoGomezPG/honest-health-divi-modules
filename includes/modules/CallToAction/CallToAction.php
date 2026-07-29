@@ -105,6 +105,15 @@ class Honest_Divi_Module_Call_To_Action extends Honest_Divi_Module_Base {
 
 	public $slug = 'honest_call_to_action';
 
+	/**
+	 * Full builder compatibility; component in assets/js/vb-modules.js under
+	 * this slug. See the note in Honest_Divi_Module_Base on why the level is
+	 * declared per module.
+	 *
+	 * @var string
+	 */
+	public $vb_support = 'on';
+
 	public function init() {
 		$this->name             = esc_html__( 'Call To Action', 'honest-divi-modules' );
 		$this->main_css_element = '%%order_class%%';

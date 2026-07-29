@@ -26,6 +26,51 @@ class Honest_Divi_Module_Executive_Leadership extends Honest_Divi_Module_Base {
 
 	public $slug = 'honest_executive_leadership';
 
+	/**
+	 * Full builder compatibility; component in assets/js/vb-modules.js under this
+	 * slug. The card grid reaches the builder as server-rendered HTML through the
+	 * `__cards` computed property below rather than being re-implemented in
+	 * JavaScript, so the markup has exactly one source: get_cards_html().
+	 *
+	 * @var string
+	 */
+	public $vb_support = 'on';
+
+	/**
+	 * The member cards, rendered server-side.
+	 *
+	 * Shared by render() and by the `__cards` computed property, so the builder
+	 * and the front end cannot drift. The animation classes differ between the
+	 * two automatically and correctly: honest_team_animation_attrs() withholds
+	 * them for builder renders, and the computed property is delivered by the
+	 * et_pb_process_computed_property action that honest_team_is_builder_render()
+	 * recognises -- so the front end animates and the builder shows the cards
+	 * outright instead of stranding them at opacity 0.
+	 *
+	 * Static because Divi calls computed callbacks as plain callables, with no
+	 * module instance: call_user_func( $callback, $depends_on, $conditional_tags,
+	 * $current_page ). It needs no props -- the roster comes from the Teams
+	 * settings screen, not from the module.
+	 *
+	 * @return string
+	 */
+	public static function get_cards_html() {
+		$members = honest_team_get_members( honest_team_get_executive_members() );
+
+		if ( empty( $members ) ) {
+			return '';
+		}
+
+		$cards      = '';
+		$card_index = 0;
+
+		foreach ( $members as $member ) {
+			$cards .= honest_team_render_member_card( $member, $card_index++ );
+		}
+
+		return $cards;
+	}
+
 	public function init() {
 		$this->name             = esc_html__( 'Executive Leadership', 'honest-divi-modules' );
 		$this->main_css_element = '%%order_class%%';
@@ -98,6 +143,18 @@ class Honest_Divi_Module_Executive_Leadership extends Honest_Divi_Module_Base {
 				'option_category' => 'basic_option',
 				'toggle_slug'     => 'main_content',
 				'dynamic_content' => 'text',
+			),
+			// Delivers the card grid's HTML to the builder's React component.
+			// `columns` is the only module prop the grid depends on, and only for
+			// its wrapper class -- which the component renders itself -- so this
+			// re-fetches rarely. The roster itself lives in the Teams settings
+			// screen, outside the builder entirely, so a change there shows up on
+			// the next builder load rather than instantly; that is the correct
+			// trade for not duplicating the card markup in JavaScript.
+			'__cards'              => array(
+				'type'                => 'computed',
+				'computed_callback'   => array( 'Honest_Divi_Module_Executive_Leadership', 'get_cards_html' ),
+				'computed_depends_on' => array( 'columns' ),
 			),
 			'columns'              => array(
 				'label'           => esc_html__( 'Columns', 'honest-divi-modules' ),
@@ -211,16 +268,10 @@ class Honest_Divi_Module_Executive_Leadership extends Honest_Divi_Module_Base {
 	}
 
 	public function render( $attrs, $content, $render_slug ) {
-		$members = honest_team_get_members( honest_team_get_executive_members() );
+		$cards = self::get_cards_html();
 
-		if ( empty( $members ) ) {
+		if ( '' === $cards ) {
 			return '';
-		}
-
-		$cards      = '';
-		$card_index = 0;
-		foreach ( $members as $member ) {
-			$cards .= honest_team_render_member_card( $member, $card_index++ );
 		}
 
 		$header = '';
