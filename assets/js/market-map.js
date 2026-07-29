@@ -139,3 +139,95 @@
 		if ( el ) { init( el ); }
 	} );
 }() );
+
+/**
+ * Tab controller for the Leadership by Market module.
+ *
+ * Kept separate from the playback driver above: this only knows about DOM
+ * state (which tab is selected, which panel and caption are visible, what the
+ * map's text alternative says) and asks HonestMarketMap for the animation. It
+ * deliberately does not touch the driver's internals -- rapid clicking is
+ * already handled there by retargeting the in-flight reversal, so every click
+ * can just fire showSegment() and the panel/caption swap stays instant.
+ *
+ * The driver is single-instance by design (one `anim`, bound to the first
+ * `.honest-market-map` on the page). Only the module containing that element
+ * drives the map; any further instance still gets working tabs, panels and
+ * captions rather than dead buttons.
+ */
+( function () {
+	'use strict';
+
+	function setup( root, drivesMap ) {
+		var tabs = [].slice.call( root.querySelectorAll( '.honest-market__tab' ) );
+
+		if ( ! tabs.length ) { return; }
+
+		var captions = [].slice.call( root.querySelectorAll( '.honest-market__caption' ) );
+		var map = root.querySelector( '.honest-market-map' );
+
+		function select( index ) {
+			if ( index < 0 || index >= tabs.length ) { return; }
+
+			tabs.forEach( function ( tab, i ) {
+				var on = i === index;
+				tab.setAttribute( 'aria-selected', on ? 'true' : 'false' );
+				tab.setAttribute( 'tabindex', on ? '0' : '-1' );
+				var panel = document.getElementById( tab.getAttribute( 'aria-controls' ) );
+				if ( panel ) { panel.hidden = ! on; }
+			} );
+
+			captions.forEach( function ( caption, i ) {
+				caption.hidden = i !== index;
+			} );
+
+			if ( map ) {
+				var label = tabs[ index ].getAttribute( 'data-map-label' );
+				if ( label ) { map.setAttribute( 'aria-label', label ); }
+
+				// The visible caption is the map's description. An empty one
+				// describes nothing, so the attribute is dropped rather than
+				// pointed at a blank node.
+				var current = captions[ index ];
+				if ( current && current.id && '' !== current.textContent.replace( /\s+/g, '' ) ) {
+					map.setAttribute( 'aria-describedby', current.id );
+				} else {
+					map.removeAttribute( 'aria-describedby' );
+				}
+			}
+
+			if ( drivesMap && window.HonestMarketMap ) {
+				var segment = parseInt( tabs[ index ].getAttribute( 'data-segment' ), 10 );
+				window.HonestMarketMap.showSegment( isNaN( segment ) ? index : segment );
+			}
+		}
+
+		tabs.forEach( function ( tab, i ) {
+			tab.addEventListener( 'click', function () { select( i ); } );
+
+			tab.addEventListener( 'keydown', function ( event ) {
+				var next = null;
+
+				if ( 'ArrowRight' === event.key ) { next = i + 1; }
+				else if ( 'ArrowLeft' === event.key ) { next = i - 1; }
+				else if ( 'Home' === event.key ) { next = 0; }
+				else if ( 'End' === event.key ) { next = tabs.length - 1; }
+
+				if ( null === next ) { return; }
+
+				event.preventDefault();
+				next = ( next + tabs.length ) % tabs.length;
+				tabs[ next ].focus();
+				select( next );
+			} );
+		} );
+	}
+
+	document.addEventListener( 'DOMContentLoaded', function () {
+		var driven = document.querySelector( '.honest-market-map' );
+
+		[].slice.call( document.querySelectorAll( '.honest-market' ) ).forEach( function ( root ) {
+			setup( root, !! driven && root.contains( driven ) );
+		} );
+	} );
+}() );

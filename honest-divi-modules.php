@@ -36,6 +36,7 @@ function honest_divi_modules_map() {
 		'TestBlock'           => 'Honest_Divi_Module_Test_Block',
 		'TextHero'            => 'Honest_Divi_Module_Text_Hero',
 		'ExecutiveLeadership' => 'Honest_Divi_Module_Executive_Leadership',
+		'LeadershipByMarket'  => 'Honest_Divi_Module_Leadership_By_Market',
 	);
 }
 

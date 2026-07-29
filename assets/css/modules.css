@@ -22,11 +22,17 @@
  *
  *    => When adding a token: write `var(--hh-thing, <default>)` at the point of
  *       use. Never add a declaration block for `--hh-*`.
+ *
+ * 3. FALLBACKS ARE THE FIGMA VALUE. A fallback is what a standalone consumer of
+ *    a shared partial actually renders, so it must be the same Figma-verified
+ *    hex the modules use as their field defaults -- not a historical value.
+ *    (The four card fallbacks below were reconciled to the Figma hexes already
+ *    carried by ExecutiveLeadership.php's field defaults.)
  */
 
 .honest-member-card {
 	display: block;
-	background: var(--hh-card-bg, #d5d0ea);
+	background: var(--hh-card-bg, #d2d8ee);
 	border-radius: 12px;
 	padding: 20px;
 	text-decoration: none;
@@ -35,9 +41,9 @@
 .honest-member-card__media { display: block; position: relative; aspect-ratio: 1; overflow: hidden; }
 .honest-member-card__image { display: block; width: 100%; height: 100%; object-fit: contain; }
 .honest-member-card__body { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; }
-.honest-member-card__name { display: block; font-weight: 700; color: var(--hh-card-name, #6b4e9e); }
-.honest-member-card__title { display: block; font-weight: 600; color: var(--hh-card-title, #070707); }
-.honest-member-card:hover { background: var(--hh-card-hover-bg, #6b4e9e); box-shadow: -8px 8px 0 0 var(--hh-card-hover-shadow, #6985c3); }
+.honest-member-card__name { display: block; font-weight: 700; color: var(--hh-card-name, #6a4c91); }
+.honest-member-card__title { display: block; font-weight: 600; color: var(--hh-card-title, #1e1e1e); }
+.honest-member-card:hover { background: var(--hh-card-hover-bg, #6a4c91); box-shadow: -8px 8px 0 0 var(--hh-card-hover-shadow, #6985c3); }
 .honest-member-card:hover .honest-member-card__name,
 .honest-member-card:hover .honest-member-card__title { color: var(--hh-white, #ffffff); }
 .honest-member-card:focus-visible { outline: 3px solid var(--hh-blue, #6985c3); outline-offset: 2px; }
@@ -112,3 +118,63 @@
 .honest-exec__grid--2 { grid-template-columns: repeat(2, 1fr); }
 @media (max-width: 1024px) { .honest-exec__grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 600px) { .honest-exec__grid { grid-template-columns: 1fr; } }
+
+/* Leadership by Market.
+   Two columns, matching the Figma section (node 145:413): heading + intro over
+   the member grid on the left, region tabs over the map + caption on the right.
+   Row 1 is the two headers; row 2 spans both tracks and re-splits so the grid
+   and the map share the same gutter. The member grid sets no `align-items` at
+   all, so it keeps the default `stretch` and cards in a row stay equal height;
+   the only `align-items` in this section is on the tab row (see below). */
+.honest-market__inner { max-width: 1245px; margin: 0 auto; padding: 0 20px; display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 50px; row-gap: 40px; }
+.honest-market__head { grid-column: 1; grid-row: 1; }
+.honest-market__heading { color: var(--hh-market-heading, #1e1e1e); margin: 0 0 16px; }
+.honest-market__intro { color: var(--hh-market-intro, #1e1e1e); margin: 0; }
+.honest-market__body { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 50px; row-gap: 40px; }
+
+/* align-items/align-content are pinned to flex-start ON THE TAB ROW ONLY. This
+   is a control strip, not a card grid: the row shares a grid track with the
+   heading and intro, so the default `stretch` blows each pill up to the full
+   track height. The member grid below deliberately keeps the default stretch so
+   cards in a row stay equal height. */
+.honest-market__tabs { grid-column: 2; grid-row: 1; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; align-content: flex-start; }
+.honest-market__tab {
+	-webkit-appearance: none;
+	appearance: none;
+	font: inherit;
+	line-height: 1.4;
+	cursor: pointer;
+	padding: 10px 20px;
+	border-radius: 999px;
+	border: 2px solid var(--hh-market-tab, #6985c3);
+	background: var(--hh-market-tab-bg, #ffffff);
+	color: var(--hh-market-tab, #6985c3);
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.honest-market__tab[aria-selected="true"] {
+	background: var(--hh-market-tab-active-bg, #6985c3);
+	border-color: var(--hh-market-tab-active-bg, #6985c3);
+	color: var(--hh-market-tab-active, #ffffff);
+}
+.honest-market__tab:focus-visible { outline: 3px solid var(--hh-market-tab-active-bg, #6985c3); outline-offset: 3px; }
+
+.honest-market__panel[hidden] { display: none; }
+.honest-market__grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; }
+
+/* Reserve the map's box from the Lottie composition's own 1319x814 canvas so
+   the layout does not jump when the animation finishes loading. lottie-web
+   injects an <svg> with width/height 100% but leaves it inline-level, whose
+   line box adds ~15px of descender space under the map and makes the container
+   overflow its own aspect ratio -- hence the display:block on the injected svg. */
+.honest-market-map { width: 100%; aspect-ratio: 1319 / 814; }
+.honest-market-map svg { display: block; }
+.honest-market__caption { color: var(--hh-market-caption, #6a8090); margin: 24px 0 0; }
+.honest-market__caption[hidden] { display: none; }
+
+@media (max-width: 1024px) {
+	.honest-market__inner { grid-template-columns: 1fr; row-gap: 30px; }
+	.honest-market__head { grid-column: 1; grid-row: auto; }
+	.honest-market__tabs { grid-column: 1; grid-row: auto; }
+	.honest-market__body { grid-column: 1; grid-row: auto; grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) { .honest-market__grid { grid-template-columns: 1fr; } }

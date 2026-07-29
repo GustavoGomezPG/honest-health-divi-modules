@@ -85,3 +85,31 @@ function honest_team_get_article_authors( $post_id ) {
 
 	return honest_team_get_members( (array) maybe_unserialize( $ids ) );
 }
+
+/**
+ * Segment frame ranges from the Lottie manifest, cached per request.
+ *
+ * Returns only the `segments` array, in repeater-row order. The manifest's own
+ * `index` is 1-based; array position is 0-based and is what the module uses.
+ *
+ * @return array[] Each: { index, name, slug, in, out, emptyFrame, frames, states, labelFrame }
+ */
+function honest_team_map_segment_ranges() {
+	static $cache = null;
+
+	if ( null !== $cache ) {
+		return $cache;
+	}
+
+	$path = HONEST_DIVI_MODULES_DIR . 'assets/lottie/market-map-segments.json';
+
+	if ( ! file_exists( $path ) ) {
+		$cache = array();
+		return $cache;
+	}
+
+	$data  = json_decode( (string) file_get_contents( $path ), true );
+	$cache = isset( $data['segments'] ) && is_array( $data['segments'] ) ? $data['segments'] : array();
+
+	return $cache;
+}
