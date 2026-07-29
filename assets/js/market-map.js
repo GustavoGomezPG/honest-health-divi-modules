@@ -17,6 +17,13 @@
  * `showSegment(index)`, where `index` is the 0-based position in the
  * segments array (not the manifest's 1-based `index` field).
  *
+ * `init()` also reads `data-speed` off the container and applies it via
+ * lottie-web's `setSpeed()` -- a plain playback-rate multiplier, not a change
+ * to the segment frame ranges above. It is parsed defensively (see
+ * `parseSpeed`) because `setSpeed(0)` freezes the animation and a negative
+ * value reverses it; anything missing, non-numeric, non-positive or absurd
+ * falls back to `DEFAULT_SPEED`.
+ *
  * Playback state is tracked as two separate things on purpose:
  * - `displayed`: the segment actually rendered on screen right now (only
  *   ever updated once a `playSegments` call for it has actually been
@@ -37,6 +44,20 @@
 	var displayed = -1;
 	var pendingTarget = -1;
 	var completeHandler = null;
+
+	// Fallback used whenever `data-speed` is missing or unusable. lottie-web's
+	// setSpeed(0) freezes playback and negative values reverse it, so anything
+	// that isn't a sane positive multiplier must not reach setSpeed() as-is.
+	var DEFAULT_SPEED = 2;
+	var MAX_SPEED = 16;
+
+	function parseSpeed( raw ) {
+		var value = parseFloat( raw );
+		if ( ! isFinite( value ) || value <= 0 || value > MAX_SPEED ) {
+			return DEFAULT_SPEED;
+		}
+		return value;
+	}
 
 	function isPlayable( index ) {
 		return typeof index === 'number' &&
@@ -129,6 +150,7 @@
 			autoplay: false,
 			path: container.getAttribute( 'data-lottie' )
 		} );
+		anim.setSpeed( parseSpeed( container.getAttribute( 'data-speed' ) ) );
 		anim.addEventListener( 'DOMLoaded', function () { showSegment( 0 ); } );
 	}
 

@@ -51,6 +51,7 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 					'intro'   => esc_html__( 'Intro', 'honest-divi-modules' ),
 					'tab'     => esc_html__( 'Tabs', 'honest-divi-modules' ),
 					'caption' => esc_html__( 'Caption', 'honest-divi-modules' ),
+					'map'     => esc_html__( 'Map', 'honest-divi-modules' ),
 					'colors'  => esc_html__( 'Colors', 'honest-divi-modules' ),
 				),
 			),
@@ -87,6 +88,28 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 				'option_category' => 'basic_option',
 				'toggle_slug'     => 'main_content',
 				'dynamic_content' => 'text',
+			),
+			// Playback speed multiplier for the Lottie map, forwarded to the front
+			// end as a plain data attribute (assets/js/market-map.js applies it via
+			// lottie-web's setSpeed()). This does not touch the manifest's frame
+			// ranges or re-render any Lottie asset -- it only changes how fast the
+			// existing frames play. Unitless per Divi's own convention for
+			// non-CSS-unit range fields (see Divi core's CircleCounter module's
+			// `circle_color_alpha`).
+			'map_speed'               => array(
+				'label'           => esc_html__( 'Map Animation Speed', 'honest-divi-modules' ),
+				'description'     => esc_html__( 'Playback speed multiplier for the animated market map. 1 is the Lottie asset\'s native speed; higher numbers play faster.', 'honest-divi-modules' ),
+				'type'            => 'range',
+				'option_category' => 'configuration',
+				'range_settings'  => array(
+					'min'  => '1',
+					'max'  => '4',
+					'step' => '0.25',
+				),
+				'unitless'        => true,
+				'default'         => '2',
+				'tab_slug'        => 'advanced',
+				'toggle_slug'     => 'map',
 			),
 			// Section colour fields. Defaults are the hexes extracted from Figma
 			// (file 6LBpKOMFlN8KxaKbut00YW, market section node 145:413) by
@@ -306,15 +329,28 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 			}
 		}
 
+		// Playback speed multiplier, forwarded as a plain data attribute the same
+		// way data-lottie/data-segments already are (see market-map.js init()).
+		// Defensively re-validated here even though the Divi field itself is
+		// bounded 1-4: a raw shortcode edit or a stale/mismatched saved value
+		// could still carry something non-numeric or out of range through to
+		// render, and a bad value must not reach the front end where a 0 or
+		// negative speed would halt or reverse the animation.
+		$speed = isset( $this->props['map_speed'] ) ? (float) $this->props['map_speed'] : 2.0;
+		if ( ! is_finite( $speed ) || $speed <= 0 ) {
+			$speed = 2.0;
+		}
+
 		// The caption already names the states in the selected market, so it is
 		// wired up as the map's description rather than duplicated into the
 		// label. When a market has no caption there is nothing to point at, and
 		// the attribute is omitted rather than left dangling at an empty node.
 		$map = sprintf(
-			'<div class="honest-market__map"><div class="honest-market-map" id="%1$s-map" data-lottie="%2$s" data-segments="%3$s" role="img" aria-label="%4$s"%5$s></div>%6$s</div>',
+			'<div class="honest-market__map"><div class="honest-market-map" id="%1$s-map" data-lottie="%2$s" data-segments="%3$s" data-speed="%4$s" role="img" aria-label="%5$s"%6$s></div>%7$s</div>',
 			esc_attr( $uid ),
 			esc_url( HONEST_DIVI_MODULES_URL . 'assets/lottie/market-map.json' ),
 			esc_attr( (string) wp_json_encode( $ranges ) ),
+			esc_attr( (string) $speed ),
 			esc_attr( $this->map_label( $markets[0]['name'], (int) $markets[0]['segment'], $ranges ) ),
 			'' === $first_cap_id ? '' : sprintf( ' aria-describedby="%s"', esc_attr( $first_cap_id ) ),
 			$captions
