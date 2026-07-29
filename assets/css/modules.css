@@ -67,25 +67,6 @@
 	pointer-events: none;
 }
 
-/* Test Block */
-.honest-test-block__heading {
-	margin: 0 0 0.5em;
-}
-
-.honest-test-block__body > *:last-child {
-	margin-bottom: 0;
-}
-
-.honest-test-block--boxed {
-	padding: 30px;
-	background-color: #f5f7f9;
-}
-
-.honest-test-block--bordered {
-	padding: 30px;
-	border: 1px solid #d8dee4;
-}
-
 /* Article Card */
 .honest-article-card { background: var(--hh-white, #ffffff); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; }
 /* Neutral light grey, deliberately NOT the member card's lavender: an article

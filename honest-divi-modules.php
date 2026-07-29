@@ -33,7 +33,6 @@ require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/article-card.php';
  */
 function honest_divi_modules_map() {
 	return array(
-		'TestBlock'           => 'Honest_Divi_Module_Test_Block',
 		'TextHero'            => 'Honest_Divi_Module_Text_Hero',
 		'ExecutiveLeadership' => 'Honest_Divi_Module_Executive_Leadership',
 		'LeadershipByMarket'  => 'Honest_Divi_Module_Leadership_By_Market',
