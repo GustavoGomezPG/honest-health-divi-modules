@@ -367,6 +367,7 @@ Prepend to `assets/css/modules.css`. These are only fallbacks — modules overri
 	--hh-green: #37a38f;
 	--hh-grey: #6a8090;
 	--hh-black: #070707;
+	--hh-white: #ffffff;
 	--hh-font: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -385,7 +386,7 @@ Prepend to `assets/css/modules.css`. These are only fallbacks — modules overri
 .honest-member-card__title { display: block; font-weight: 600; color: var(--hh-black); }
 .honest-member-card:hover { background: var(--hh-purple); }
 .honest-member-card:hover .honest-member-card__name,
-.honest-member-card:hover .honest-member-card__title { color: #fff; }
+.honest-member-card:hover .honest-member-card__title { color: var(--hh-white, #fff); }
 .honest-member-card:focus-visible { outline: 3px solid var(--hh-blue); outline-offset: 2px; }
 ```
 
