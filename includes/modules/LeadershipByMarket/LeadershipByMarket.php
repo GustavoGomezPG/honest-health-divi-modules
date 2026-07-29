@@ -107,7 +107,7 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 					'step' => '0.25',
 				),
 				'unitless'        => true,
-				'default'         => '2',
+				'default'         => '3',
 				'tab_slug'        => 'advanced',
 				'toggle_slug'     => 'map',
 			),
@@ -336,9 +336,9 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 		// could still carry something non-numeric or out of range through to
 		// render, and a bad value must not reach the front end where a 0 or
 		// negative speed would halt or reverse the animation.
-		$speed = isset( $this->props['map_speed'] ) ? (float) $this->props['map_speed'] : 2.0;
+		$speed = isset( $this->props['map_speed'] ) ? (float) $this->props['map_speed'] : 3.0;
 		if ( ! is_finite( $speed ) || $speed <= 0 ) {
-			$speed = 2.0;
+			$speed = 3.0;
 		}
 
 		// The caption already names the states in the selected market, so it is

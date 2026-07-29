@@ -48,7 +48,7 @@
 	// Fallback used whenever `data-speed` is missing or unusable. lottie-web's
 	// setSpeed(0) freezes playback and negative values reverse it, so anything
 	// that isn't a sane positive multiplier must not reach setSpeed() as-is.
-	var DEFAULT_SPEED = 2;
+	var DEFAULT_SPEED = 3;
 	var MAX_SPEED = 16;
 
 	function parseSpeed( raw ) {
