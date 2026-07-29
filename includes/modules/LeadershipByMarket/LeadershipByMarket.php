@@ -101,10 +101,20 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 				'description'     => esc_html__( 'Playback speed multiplier for the animated market map. 1 is the Lottie asset\'s native speed; higher numbers play faster.', 'honest-divi-modules' ),
 				'type'            => 'range',
 				'option_category' => 'configuration',
+				// min_limit/max_limit, not just min/max: min/max only bound the
+				// slider track, so a user typing into the paired number box (or a
+				// hand-edited shortcode) can still submit a value outside it.
+				// The *_limit pair is what Divi actually validates against -- the
+				// same pattern Divi core uses on its own range fields (e.g. the
+				// CircleCounter module's `circle_color_alpha`). Kept in step with
+				// the render-time clamp below, which is the backstop for anything
+				// that never went through this UI at all.
 				'range_settings'  => array(
-					'min'  => '1',
-					'max'  => '4',
-					'step' => '0.25',
+					'min'       => '1',
+					'max'       => '4',
+					'step'      => '0.25',
+					'min_limit' => '1',
+					'max_limit' => '4',
 				),
 				'unitless'        => true,
 				'default'         => '3',
@@ -331,13 +341,16 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 
 		// Playback speed multiplier, forwarded as a plain data attribute the same
 		// way data-lottie/data-segments already are (see market-map.js init()).
-		// Defensively re-validated here even though the Divi field itself is
-		// bounded 1-4: a raw shortcode edit or a stale/mismatched saved value
-		// could still carry something non-numeric or out of range through to
-		// render, and a bad value must not reach the front end where a 0 or
-		// negative speed would halt or reverse the animation.
+		// Re-validated here against the SAME 1-4 bounds the field advertises,
+		// not merely against `<= 0`: a raw shortcode edit or a stale/mismatched
+		// saved value bypasses the builder UI entirely, and a fractional value
+		// such as 0.0001 is > 0 yet slow enough to freeze the map in practice --
+		// it would have passed the old guard untouched. Anything non-numeric or
+		// outside the advertised range falls back to the documented default
+		// rather than being silently snapped to a bound, so a nonsense value
+		// produces the normal animation instead of a surprising one.
 		$speed = isset( $this->props['map_speed'] ) ? (float) $this->props['map_speed'] : 3.0;
-		if ( ! is_finite( $speed ) || $speed <= 0 ) {
+		if ( ! is_finite( $speed ) || $speed < 1.0 || $speed > 4.0 ) {
 			$speed = 3.0;
 		}
 

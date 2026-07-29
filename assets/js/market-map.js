@@ -151,7 +151,43 @@
 			path: container.getAttribute( 'data-lottie' )
 		} );
 		anim.setSpeed( parseSpeed( container.getAttribute( 'data-speed' ) ) );
-		anim.addEventListener( 'DOMLoaded', function () { showSegment( 0 ); } );
+
+		// Settle onto whatever segment is actually wanted, once the composition
+		// is real.
+		//
+		// The tab controller becomes clickable the moment DOMContentLoaded
+		// fires, which is before market-map.json finishes downloading, so a
+		// click can legitimately arrive while the animation is still empty.
+		// Two things are true of that window on lottie-web 5.12.2, both
+		// measured rather than assumed:
+		//
+		//   1. playSegments() IS accepted synchronously -- straight after the
+		//      click, firstFrame/totalFrames read 148/86 for segment 2.
+		//   2. It does NOT survive the data load. When the JSON arrives lottie
+		//      installs the full composition and firstFrame/totalFrames snap
+		//      back to 0/316, discarding the requested segment while leaving
+		//      the animation playing, so the whole map animates through and
+		//      parks on the final frame.
+		//
+		// So neither "always showSegment(0)" nor "showSegment(0) only if
+		// nothing was requested" is correct: the first reverses the user's
+		// choice back out, the second leaves the full composition playing.
+		// The request has to be re-issued here instead. `displayed` is reset
+		// first so showSegment() takes its "nothing shown yet" branch and
+		// plays the target forward -- there is no meaningful segment to
+		// reverse out of, since the timeline is sitting at the end of the
+		// whole composition rather than on a segment. pendingTarget wins when
+		// set, because two clicks during loading leave the second one there.
+		anim.addEventListener( 'DOMLoaded', function () {
+			var target = -1 !== pendingTarget
+				? pendingTarget
+				: ( -1 === displayed ? 0 : displayed );
+
+			detachHandler();
+			displayed = -1;
+			pendingTarget = -1;
+			showSegment( target );
+		} );
 	}
 
 	window.HonestMarketMap = { init: init, showSegment: showSegment };
