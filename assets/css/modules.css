@@ -37,7 +37,7 @@
 .honest-member-card__body { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; }
 .honest-member-card__name { display: block; font-weight: 700; color: var(--hh-card-name, #6b4e9e); }
 .honest-member-card__title { display: block; font-weight: 600; color: var(--hh-card-title, #070707); }
-.honest-member-card:hover { background: var(--hh-card-hover-bg, #6b4e9e); }
+.honest-member-card:hover { background: var(--hh-card-hover-bg, #6b4e9e); box-shadow: -8px 8px 0 0 var(--hh-card-hover-shadow, #6985c3); }
 .honest-member-card:hover .honest-member-card__name,
 .honest-member-card:hover .honest-member-card__title { color: var(--hh-white, #ffffff); }
 .honest-member-card:focus-visible { outline: 3px solid var(--hh-blue, #6985c3); outline-offset: 2px; }

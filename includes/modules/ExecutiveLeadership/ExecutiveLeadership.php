@@ -115,20 +115,27 @@ class Honest_Divi_Module_Executive_Leadership extends Honest_Divi_Module_Base {
 			// 145:291 ("Member Inactive") for the resting-state background
 			// (#d2d8ee), name text (#6a4c91), and title text (#1e1e1e); the
 			// hover-state example node 224:2431 for the hover background
-			// (#6a4c91). All extracted by pixel-sampling the rendered node
-			// screenshots -- see the task report for the full method and the
-			// discrepancy against the pre-existing (pre-refactor) token
-			// values, which this module's defaults intentionally do NOT match.
+			// (#6a4c91) and the hover drop-shadow colour (#6985c3). All
+			// extracted by pixel-sampling the rendered node screenshots --
+			// see the task report for the full method and the discrepancy
+			// against the pre-existing (pre-refactor) token values, which
+			// this module's defaults intentionally do NOT match.
 			//
 			// NOTE on the hover state: an earlier report described node
 			// 224:2431 as a two-tone horizontal gradient (#6985c3 -> #6a4c91).
-			// That was a misreading. get_design_context on the node returns a
-			// FLAT `bg-[#6a4c91]` fill plus a hard offset shadow
-			// `shadow-[-8px_8px_0px_0px_#6985c3]`, and a per-pixel scan of the
-			// rendered node confirms it: #6985c3 occupies exactly x=0..7 and
-			// y=16..394 (an 8px band, offset down by 8px), with the card body a
-			// uniform #6a4c91 from x=8 to x=296. There is no gradient ramp.
-			// The flat hover colour below therefore matches Figma as-is.
+			// That was a misreading. Independently re-confirmed here via
+			// get_design_context on the node: it returns a FLAT
+			// `bg-[#6a4c91]` fill plus a hard offset shadow
+			// `shadow-[-8px_8px_0px_0px_#6985c3]` (left 8px, down 8px, no
+			// blur, no spread), and a per-pixel scan of the rendered node
+			// confirms it: #6985c3 occupies exactly x=0..7 and y=16..394 (an
+			// 8px band, offset down by 8px), with the card body a uniform
+			// #6a4c91 from x=8 to x=296. There is no gradient ramp. The name
+			// and job-title text also switch to solid white on hover in this
+			// node (`text-white`), matching the existing CSS. The flat hover
+			// colour and shadow colour below therefore match Figma as-is; the
+			// literal `-8px 8px 0 0` offsets live in modules.css and only the
+			// two colours travel as custom properties.
 			'card_bg_color'        => array(
 				'label'        => esc_html__( 'Card Background', 'honest-divi-modules' ),
 				'description'  => esc_html__( 'Background colour of each member card.', 'honest-divi-modules' ),
@@ -146,6 +153,15 @@ class Honest_Divi_Module_Executive_Leadership extends Honest_Divi_Module_Base {
 				'tab_slug'     => 'advanced',
 				'toggle_slug'  => 'card_colors',
 				'default'      => '#6a4c91',
+			),
+			'card_hover_shadow_color' => array(
+				'label'        => esc_html__( 'Card Shadow (Hover)', 'honest-divi-modules' ),
+				'description'  => esc_html__( 'Colour of the hard offset drop-shadow behind a member card on hover.', 'honest-divi-modules' ),
+				'type'         => 'color',
+				'custom_color' => true,
+				'tab_slug'     => 'advanced',
+				'toggle_slug'  => 'card_colors',
+				'default'      => '#6985c3',
 			),
 			'card_name_color'      => array(
 				'label'        => esc_html__( 'Card Name Color', 'honest-divi-modules' ),
@@ -200,12 +216,13 @@ class Honest_Divi_Module_Executive_Leadership extends Honest_Divi_Module_Base {
 			$inner,
 			array( 'honest-exec' ),
 			array(
-				'--hh-exec-heading'  => $this->props['heading_color'],
-				'--hh-exec-intro'    => $this->props['intro_color'],
-				'--hh-card-bg'       => $this->props['card_bg_color'],
-				'--hh-card-hover-bg' => $this->props['card_hover_bg_color'],
-				'--hh-card-name'     => $this->props['card_name_color'],
-				'--hh-card-title'    => $this->props['card_title_color'],
+				'--hh-exec-heading'      => $this->props['heading_color'],
+				'--hh-exec-intro'        => $this->props['intro_color'],
+				'--hh-card-bg'           => $this->props['card_bg_color'],
+				'--hh-card-hover-bg'     => $this->props['card_hover_bg_color'],
+				'--hh-card-hover-shadow' => $this->props['card_hover_shadow_color'],
+				'--hh-card-name'         => $this->props['card_name_color'],
+				'--hh-card-title'        => $this->props['card_title_color'],
 			)
 		);
 	}
