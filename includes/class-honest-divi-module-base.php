@@ -184,11 +184,37 @@ abstract class Honest_Divi_Module_Base extends ET_Builder_Module {
 			// the property is left unset so the module's own var(..., fallback)
 			// at the point of use decides what renders instead.
 			if ( is_array( $value ) ) {
-				if ( ! array_key_exists( 'url', $value ) || ! $this->is_valid_css_url( $value['url'] ) ) {
+				if ( array_key_exists( 'url', $value ) ) {
+					if ( ! $this->is_valid_css_url( $value['url'] ) ) {
+						continue;
+					}
+
+					$declarations[] = sprintf( '%s:url("%s");', $name, trim( (string) $value['url'] ) );
 					continue;
 				}
 
-				$declarations[] = sprintf( '%s:url("%s");', $name, trim( (string) $value['url'] ) );
+				// Duration form: array( 'ms' => $milliseconds ). Emitted as a CSS
+				// <time>, so a module never assembles the unit itself. Bounded at
+				// one minute: the values behind this are animation durations, and a
+				// larger number is a mistake or a stuck transition rather than an
+				// intent. Anything non-numeric, negative or out of range is dropped
+				// like an invalid colour, leaving the stylesheet's
+				// var(--token, fallback) to decide.
+				if ( array_key_exists( 'ms', $value ) ) {
+					if ( ! is_numeric( $value['ms'] ) ) {
+						continue;
+					}
+
+					$ms = (int) round( (float) $value['ms'] );
+
+					if ( $ms < 0 || $ms > 60000 ) {
+						continue;
+					}
+
+					$declarations[] = sprintf( '%s:%dms;', $name, $ms );
+					continue;
+				}
+
 				continue;
 			}
 

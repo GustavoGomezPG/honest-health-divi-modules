@@ -86,6 +86,59 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 			//   attribution text     node 50:817         -> #ffffff
 			//   dot (inactive)       node 54:290         -> #ffffff
 			//   dot (active)         node 54:290         -> #6a4c91
+			// Playback. Autoplay defaults on because the section is a passive
+			// quote rotator, but it yields to the visitor: it pauses on hover and
+			// on keyboard focus, stops while the tab is in the background, and
+			// restarts the clock whenever a dot is used so a chosen quote gets a
+			// full reading interval rather than the remainder of the last one.
+			// prefers-reduced-motion disables it outright.
+			'autoplay'           => array(
+				'label'           => esc_html__( 'Autoplay', 'honest-divi-modules' ),
+				'description'     => esc_html__( 'Advance the quotes automatically. Pauses while a visitor hovers or focuses the carousel, and is disabled for visitors who ask for reduced motion.', 'honest-divi-modules' ),
+				'type'            => 'yes_no_button',
+				'option_category' => 'configuration',
+				'options'         => array(
+					'on'  => esc_html__( 'Yes', 'honest-divi-modules' ),
+					'off' => esc_html__( 'No', 'honest-divi-modules' ),
+				),
+				'default'         => 'on',
+				'toggle_slug'     => 'main_content',
+			),
+			// Seconds rather than milliseconds: this is a reading interval, and an
+			// editor picking how long a quote stays up thinks in seconds. Floor of
+			// 2s because anything quicker cannot be read; re-validated in render()
+			// because a raw shortcode edit bypasses this UI entirely.
+			'slide_duration'     => array(
+				'label'           => esc_html__( 'Slide Duration (seconds)', 'honest-divi-modules' ),
+				'description'     => esc_html__( 'How long each quote stays on screen before the next one fades in.', 'honest-divi-modules' ),
+				'type'            => 'range',
+				'option_category' => 'configuration',
+				'default'         => '6',
+				'unitless'        => true,
+				'range_settings'  => array(
+					'min'  => '2',
+					'max'  => '20',
+					'step' => '0.5',
+				),
+				'toggle_slug'     => 'main_content',
+				'show_if'         => array( 'autoplay' => 'on' ),
+			),
+			// Milliseconds here, because a crossfade is not a thing anyone counts
+			// in seconds. 0 is allowed and means an instant cut.
+			'fade_duration'      => array(
+				'label'           => esc_html__( 'Fade Duration (ms)', 'honest-divi-modules' ),
+				'description'     => esc_html__( 'Length of the crossfade between quotes. Set to 0 for an instant change.', 'honest-divi-modules' ),
+				'type'            => 'range',
+				'option_category' => 'configuration',
+				'default'         => '400',
+				'unitless'        => true,
+				'range_settings'  => array(
+					'min'  => '0',
+					'max'  => '2000',
+					'step' => '50',
+				),
+				'toggle_slug'     => 'main_content',
+			),
 			'quote_color'        => array(
 				'label'        => esc_html__( 'Quote Color', 'honest-divi-modules' ),
 				'description'  => esc_html__( 'Colour of the pull-quote text.', 'honest-divi-modules' ),
@@ -174,15 +227,20 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 			/* translators: 1: slide position (1-based), 2: total number of slides. */
 			$slide_label = sprintf( __( 'Quote %1$d of %2$d', 'honest-divi-modules' ), $i + 1, $count );
 
+			// `is-current` rather than the `hidden` attribute: hidden means
+			// display:none, which cannot crossfade. The stylesheet keeps a
+			// non-current slide invisible and out of the accessibility tree via
+			// visibility, so the first slide is still the only one exposed even
+			// with no JavaScript at all.
 			$slides_html .= sprintf(
-				'<div class="honest-testimonials__slide" id="%1$s" role="group" aria-roledescription="%2$s" aria-label="%3$s"%4$s>
+				'<div class="honest-testimonials__slide%4$s" id="%1$s" role="group" aria-roledescription="%2$s" aria-label="%3$s">
 					<blockquote class="honest-testimonials__quote">%5$s</blockquote>
 					<cite class="honest-testimonials__cite">%6$s</cite>
 				</div>',
 				esc_attr( $slide_id ),
 				esc_attr__( 'slide', 'honest-divi-modules' ),
 				esc_attr( $slide_label ),
-				$active ? '' : ' hidden',
+				$active ? ' is-current' : '',
 				esc_html( $member['quote'] ),
 				esc_html( $attribution )
 			);
@@ -198,12 +256,32 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 			);
 		}
 
+		// Both durations are re-validated against the same bounds the fields
+		// advertise, not merely for being numeric: a raw shortcode edit or a
+		// value saved before these fields existed bypasses the builder UI, and a
+		// slide duration of 0 would advance the carousel every tick. Out-of-range
+		// values fall back to the documented default rather than being snapped to
+		// a bound, so a nonsense number behaves normally instead of surprisingly.
+		$seconds = isset( $this->props['slide_duration'] ) ? (float) $this->props['slide_duration'] : 6.0;
+		if ( ! is_finite( $seconds ) || $seconds < 2.0 || $seconds > 20.0 ) {
+			$seconds = 6.0;
+		}
+
+		$fade = isset( $this->props['fade_duration'] ) ? (float) $this->props['fade_duration'] : 400.0;
+		if ( ! is_finite( $fade ) || $fade < 0.0 || $fade > 2000.0 ) {
+			$fade = 400.0;
+		}
+
+		$autoplay = 'off' === $this->props['autoplay'] ? 'off' : 'on';
+
 		$inner = sprintf(
-			'<div class="honest-testimonials__inner"><div class="honest-testimonials__region" role="region" aria-roledescription="carousel" aria-label="%1$s"><div class="honest-testimonials__slides">%2$s</div><div class="honest-testimonials__dots" role="group" aria-label="%3$s">%4$s</div></div></div>',
+			'<div class="honest-testimonials__inner"><div class="honest-testimonials__region" role="region" aria-roledescription="carousel" aria-label="%1$s" data-autoplay="%5$s" data-slide-duration="%6$d"><div class="honest-testimonials__slides">%2$s</div><div class="honest-testimonials__dots" role="group" aria-label="%3$s">%4$s</div></div></div>',
 			esc_attr__( 'Testimonials', 'honest-divi-modules' ),
 			$slides_html,
 			esc_attr__( 'Choose which quote to display', 'honest-divi-modules' ),
-			$dots_html
+			$dots_html,
+			esc_attr( $autoplay ),
+			(int) round( $seconds * 1000 )
 		);
 
 		return $this->wrap(
@@ -215,6 +293,7 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 				'--hh-testimonials-attribution' => $this->props['attribution_color'],
 				'--hh-testimonials-dot'         => $this->props['dot_color'],
 				'--hh-testimonials-dot-active'  => $this->props['dot_active_color'],
+				'--hh-testimonials-fade'        => array( 'ms' => $fade ),
 			)
 		);
 	}

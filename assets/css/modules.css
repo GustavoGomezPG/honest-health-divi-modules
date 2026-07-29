@@ -608,8 +608,38 @@
   text-align: center;
 }
 
-.honest-testimonials__slide[hidden] {
-  display: none;
+/* Crossfade, not a swap. All slides share one grid cell, so the track is as
+   tall as the tallest quote and nothing jumps as they change -- and unlike
+   absolute positioning, the container still has an intrinsic height.
+   `display: none` (what the `hidden` attribute used to do here) cannot be
+   transitioned and would remove the slide from the grid cell entirely, so the
+   out-going slide fades on opacity instead. visibility is what keeps a faded
+   slide out of the accessibility tree and out of the tab order, the job `hidden`
+   was doing; it is switched with a 0s transition delayed by the fade length so
+   it flips only once the slide is already invisible. */
+.honest-testimonials__slides {
+  display: grid;
+}
+.honest-testimonials__slide {
+  grid-area: 1 / 1;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--hh-testimonials-fade, 400ms) ease,
+    visibility 0s linear var(--hh-testimonials-fade, 400ms);
+}
+.honest-testimonials__slide.is-current {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--hh-testimonials-fade, 400ms) ease,
+    visibility 0s linear 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .honest-testimonials__slide,
+  .honest-testimonials__slide.is-current {
+    transition: none;
+  }
 }
 .honest-testimonials__quote {
   margin: 0 0 32px;
