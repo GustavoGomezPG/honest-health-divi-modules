@@ -47,11 +47,53 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 		// per group that emits a directly-targeted CSS rule, which would
 		// silently beat the inherited custom-property value and defeat the
 		// single-source-of-truth colour rule.
+		//
+		// font_size / letter_spacing / line_height defaults, and the weight
+		// carried in `font`'s default, are the values extracted straight off
+		// the Figma text nodes (file q1MGpWgDpBoZeS6dgrddjB, hero frame
+		// 1:729): eyebrow node 1:203 (56px / 900 / 1em / normal), headline
+		// node 1:205 (28px / 600 / 1.45em / normal), body node 1:204 (20px /
+		// 400 / 1.45em / normal). `font`'s default is deliberately
+		// `|<weight>|||||||` -- an empty first (font-family) segment -- so
+		// only font-weight is set and the family keeps inheriting from Divi;
+		// see et_builder_set_element_font(), which skips the font-family
+		// declaration entirely when that segment is blank. These same
+		// numbers are also hard-coded in assets/css/modules.css, because
+		// Divi only emits CSS from a font-group field when its stored value
+		// differs from this default -- the default alone renders nothing on
+		// the front end.
 		$this->advanced_fields = $this->base_advanced_fields(
 			array(
-				'eyebrow'  => array( 'label' => esc_html__( 'Eyebrow', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-text-hero__eyebrow" ), 'toggle_slug' => 'eyebrow', 'hide_text_color' => true ),
-				'headline' => array( 'label' => esc_html__( 'Headline', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-text-hero__headline" ), 'toggle_slug' => 'headline', 'hide_text_color' => true ),
-				'body'     => array( 'label' => esc_html__( 'Body', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-text-hero__body" ), 'toggle_slug' => 'body', 'hide_text_color' => true ),
+				'eyebrow'  => array(
+					'label'          => esc_html__( 'Eyebrow', 'honest-divi-modules' ),
+					'css'            => array( 'main' => "{$this->main_css_element} .honest-text-hero__eyebrow" ),
+					'toggle_slug'    => 'eyebrow',
+					'hide_text_color' => true,
+					'font_size'      => array( 'default' => '56px' ),
+					'letter_spacing' => array( 'default' => '0px' ),
+					'line_height'    => array( 'default' => '1em' ),
+					'font'           => array( 'default' => '|900|||||||' ),
+				),
+				'headline' => array(
+					'label'          => esc_html__( 'Headline', 'honest-divi-modules' ),
+					'css'            => array( 'main' => "{$this->main_css_element} .honest-text-hero__headline" ),
+					'toggle_slug'    => 'headline',
+					'hide_text_color' => true,
+					'font_size'      => array( 'default' => '28px' ),
+					'letter_spacing' => array( 'default' => '0px' ),
+					'line_height'    => array( 'default' => '1.45em' ),
+					'font'           => array( 'default' => '|600|||||||' ),
+				),
+				'body'     => array(
+					'label'          => esc_html__( 'Body', 'honest-divi-modules' ),
+					'css'            => array( 'main' => "{$this->main_css_element} .honest-text-hero__body" ),
+					'toggle_slug'    => 'body',
+					'hide_text_color' => true,
+					'font_size'      => array( 'default' => '20px' ),
+					'letter_spacing' => array( 'default' => '0px' ),
+					'line_height'    => array( 'default' => '1.45em' ),
+					'font'           => array( 'default' => '|400|||||||' ),
+				),
 			)
 		);
 	}

@@ -170,7 +170,7 @@
 	position: relative;
 }
 .honest-text-hero__inner { text-align: center; position: relative; z-index: 1; }
-.honest-text-hero__eyebrow { font-size: 48px; font-weight: 700; line-height: 1; margin: 0 0 17px; }
+.honest-text-hero__eyebrow { font-size: 56px; font-weight: 900; line-height: 1; letter-spacing: normal; margin: 0 0 17px; }
 
 /* Eyebrow highlight -- the blue banner behind "Our Team." (Figma frame
    1:199). It is two overlapping shapes in the design: a plain 315x38 block
@@ -212,7 +212,8 @@
 	mask-repeat: no-repeat;
 	mask-size: 100% 100%;
 }
-.honest-text-hero__headline { color: var(--hh-hero-headline, #c7e4ff); margin: 0 0 24px; }
+.honest-text-hero__headline { color: var(--hh-hero-headline, #c7e4ff); font-size: 28px; font-weight: 600; line-height: 1.45; letter-spacing: normal; margin: 0 0 24px; }
+.honest-text-hero__body { font-size: 20px; font-weight: 400; line-height: 1.45; letter-spacing: normal; }
 
 /* Executive Leadership.
    No wrapper element between the module and its heading/intro/grid: there is
