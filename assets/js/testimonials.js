@@ -165,7 +165,44 @@
 		start();
 	}
 
-	document.addEventListener( 'DOMContentLoaded', function () {
-		[].slice.call( document.querySelectorAll( '.honest-testimonials' ) ).forEach( setup );
-	} );
+	// Booting is idempotent and repeatable rather than a one-shot on
+	// DOMContentLoaded, because Divi's builder renders module HTML into its
+	// preview iframe well after that event and replaces it on every settings
+	// change. A one-shot boot leaves the carousel inert there: dots that do
+	// nothing and no autoplay.
+	//
+	// The flag lives on the element, so a re-render -- which produces a new one --
+	// is wired again automatically while the existing instance is left alone.
+	function boot() {
+		[].slice.call( document.querySelectorAll( '.honest-testimonials' ) ).forEach( function ( root ) {
+			if ( root.honestTestimonialsReady ) { return; }
+			root.honestTestimonialsReady = true;
+			setup( root );
+		} );
+	}
+
+	document.addEventListener( 'DOMContentLoaded', boot );
+
+	// Also boot immediately when the document is already past parsing, which is
+	// the case inside the builder's iframe.
+	if ( 'loading' !== document.readyState ) { boot(); }
+
+	// Coalesced to one pass per batch of mutations. setTimeout and NOT
+	// requestAnimationFrame: rAF does not fire in a hidden document, and the
+	// builder builds its preview iframe offscreen -- a mutation arriving then
+	// would latch the queued flag and no later mutation would ever be examined.
+	if ( window.MutationObserver ) {
+		var queued = false;
+		new MutationObserver( function () {
+			// Mid-parse a root can be visible to querySelector before its slides
+			// are; DOMContentLoaded is about to boot it properly anyway.
+			if ( 'loading' === document.readyState ) { return; }
+			if ( queued ) { return; }
+			queued = true;
+			setTimeout( function () {
+				queued = false;
+				boot();
+			}, 0 );
+		} ).observe( document.documentElement, { childList: true, subtree: true } );
+	}
 }() );

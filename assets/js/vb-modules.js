@@ -592,6 +592,131 @@
 			}
 		} );
 
+		/**
+		 * Testimonials.
+		 *
+		 * The quotes come from the executive roster, so the slides and their dots
+		 * arrive as server-rendered HTML in the `__testimonials` computed property
+		 * -- that keeps the quote markup and the ARIA wiring tying each dot to its
+		 * slide in PHP alone.
+		 *
+		 * The carousel region is built here rather than injected so the playback
+		 * settings stay prop-driven: autoplay and the durations are plain
+		 * attributes and a CSS custom property, and routing them through a server
+		 * round-trip would make every nudge of a slider wait on AJAX.
+		 *
+		 * Durations are clamped to the same bounds the PHP enforces, so a value
+		 * from a hand-edited shortcode cannot preview differently to how it ships.
+		 */
+		modules.push( {
+			slug: 'honest_testimonials',
+
+			render: function () {
+				var props = this.props || {};
+				var parts = computedData( props.__testimonials );
+
+				if ( false === parts ) {
+					return null;
+				}
+
+				var seconds = parseFloat( props.slide_duration );
+				if ( ! isFinite( seconds ) || seconds < 2 || seconds > 20 ) {
+					seconds = 6;
+				}
+
+				var fade = parseFloat( props.fade_duration );
+				if ( ! isFinite( fade ) || fade < 0 || fade > 2000 ) {
+					fade = 400;
+				}
+
+				var region = [];
+
+				if ( parts ) {
+					region.push( e( 'div', {
+						className: 'honest-testimonials__slides',
+						key: 'slides',
+						dangerouslySetInnerHTML: computed( parts.slides )
+					} ) );
+
+					region.push( e( 'div', {
+						className: 'honest-testimonials__dots',
+						key: 'dots',
+						role: 'group',
+						'aria-label': 'Choose which quote to display',
+						dangerouslySetInnerHTML: computed( parts.dots )
+					} ) );
+				}
+
+				return e(
+					'div',
+					{
+						className: 'honest-testimonials',
+						style: cssVars( {
+							'--hh-testimonials-quote': props.quote_color,
+							'--hh-testimonials-attribution': props.attribution_color,
+							'--hh-testimonials-dot': props.dot_color,
+							'--hh-testimonials-dot-active': props.dot_active_color,
+							'--hh-testimonials-fade': fade + 'ms'
+						} )
+					},
+					e( 'div', { className: 'honest-testimonials__inner' },
+						e( 'div', {
+							className: 'honest-testimonials__region',
+							role: 'region',
+							'aria-roledescription': 'carousel',
+							'aria-label': 'Testimonials',
+							'data-autoplay': 'off' === props.autoplay ? 'off' : 'on',
+							'data-slide-duration': String( Math.round( seconds * 1000 ) )
+						}, region )
+					)
+				);
+			}
+		} );
+
+		/**
+		 * Team Member Header.
+		 *
+		 * Everything drawn here belongs to the member being viewed, so the whole
+		 * body -- back bar included -- arrives as one server-rendered string and
+		 * this is a thin shell around it. Folding the back bar in keeps its two
+		 * inline SVGs out of JavaScript, at the cost of a round-trip when its label
+		 * or URL changes, which is a fair trade for a field edited once.
+		 *
+		 * Colours and the portrait ring stay instant: they are custom properties
+		 * and a modifier class on the wrapper built here.
+		 */
+		modules.push( {
+			slug: 'honest_team_member_header',
+
+			render: function () {
+				var props = this.props || {};
+				var body = props.__body;
+
+				// '' means the post in context is not a team member, which is what
+				// PHP renders nothing for. undefined only means the round-trip has
+				// not landed yet.
+				if ( '' === body ) {
+					return null;
+				}
+
+				return e( 'div', {
+					className: 'honest-member' + ( 'on' === props.portrait_ring ? ' honest-member--portrait-ring' : '' ),
+					style: cssVars( {
+						'--hh-member-name': props.name_color,
+						'--hh-member-title': props.job_title_color,
+						'--hh-member-bio': props.bio_color,
+						'--hh-member-quote': props.quote_color,
+						'--hh-member-linkedin': props.linkedin_color,
+						'--hh-member-back-bg': props.back_bg_color,
+						'--hh-member-back-label': props.back_label_color,
+						'--hh-member-portrait-ring': props.portrait_ring_color,
+						'--hh-member-portrait-bg': props.portrait_bg_color
+					} ),
+					dangerouslySetInnerHTML: computed( body )
+				} );
+			}
+		} );
+
 		API.registerModules( modules );
 
 		registerFields( API );

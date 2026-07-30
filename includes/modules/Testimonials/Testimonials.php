@@ -42,6 +42,16 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 	 */
 	private static $instances = 0;
 
+	/**
+	 * Full builder compatibility; component in assets/js/vb-modules.js under this
+	 * slug. The slides and dots reach the builder as server-rendered HTML through
+	 * the `__testimonials` computed property, so the quote markup and the ARIA
+	 * wiring that ties each dot to its slide exist only in PHP.
+	 *
+	 * @var string
+	 */
+	public $vb_support = 'on';
+
 	public function init() {
 		$this->name             = esc_html__( 'Testimonials', 'honest-divi-modules' );
 		$this->main_css_element = '%%order_class%%';
@@ -92,6 +102,16 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 			// restarts the clock whenever a dot is used so a chosen quote gets a
 			// full reading interval rather than the remainder of the last one.
 			// prefers-reduced-motion disables it outright.
+			// Delivers the slides and dots to the builder's React component. Reads
+			// no props -- the quotes come from the Teams settings screen -- but a
+			// computed property needs a dependency to be re-fetched at all, and
+			// autoplay is the cheapest honest one: it costs a re-render that was
+			// happening anyway when playback settings change.
+			'__testimonials'     => array(
+				'type'                => 'computed',
+				'computed_callback'   => array( 'Honest_Divi_Module_Testimonials', 'get_carousel_parts' ),
+				'computed_depends_on' => array( 'autoplay' ),
+			),
 			'autoplay'           => array(
 				'label'           => esc_html__( 'Autoplay', 'honest-divi-modules' ),
 				'description'     => esc_html__( 'Advance the quotes automatically. Pauses while a visitor hovers or focuses the carousel, and is disabled for visitors who ask for reduced motion.', 'honest-divi-modules' ),
@@ -178,35 +198,44 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 		);
 	}
 
+
 	/**
-	 * Slide source: every Executive Team member with a non-empty quote, in
-	 * relationship order. Members without a quote are excluded. Ordering is
-	 * explicitly not a requirement here (Open Assumption 3) -- relationship
-	 * order is used as-is.
+	 * The slides and their dots, rendered server-side.
 	 *
-	 * @return array[] Member arrays, shape per honest_team_get_member().
+	 * Shared by render() and by the `__testimonials` computed property so the
+	 * builder and the front end cannot drift.
+	 *
+	 * Returned as two strings rather than one block because they are separate
+	 * children of the carousel region, and the React component builds that region
+	 * itself in order to keep the playback settings on it prop-driven -- autoplay
+	 * and the durations are plain attributes, and routing them through a
+	 * server round-trip would make every nudge of a slider wait on AJAX.
+	 *
+	 * Static because Divi calls computed callbacks as plain callables with no
+	 * module instance. It reads no props: the quotes come from the executive
+	 * roster on the Teams settings screen.
+	 *
+	 * Same caveat as the market map's ids -- $uid comes from a per-request
+	 * counter, so two copies of this module on one page would collide in the
+	 * builder preview, where each module's computed value is fetched in its own
+	 * request. The front end renders both in one request and is unaffected.
+	 *
+	 * @return array{slides:string,dots:string} Empty array when no member has a quote.
 	 */
-	protected function get_slides() {
+	public static function get_carousel_parts() {
 		$slides = array();
 
 		foreach ( honest_team_get_members( honest_team_get_executive_members() ) as $member ) {
 			if ( '' === trim( (string) $member['quote'] ) ) {
 				continue;
 			}
+
 			$slides[] = $member;
 		}
 
-		return $slides;
-	}
-
-	public function render( $attrs, $content, $render_slug ) {
-		$slides = $this->get_slides();
-
 		if ( empty( $slides ) ) {
-			return '';
+			return array();
 		}
-
-		wp_enqueue_script( 'honest-testimonials' );
 
 		$uid   = 'honest-testimonials-' . ( ++self::$instances );
 		$count = count( $slides );
@@ -256,6 +285,21 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 			);
 		}
 
+		return array(
+			'slides' => $slides_html,
+			'dots'   => $dots_html,
+		);
+	}
+
+	public function render( $attrs, $content, $render_slug ) {
+		$parts = self::get_carousel_parts();
+
+		if ( empty( $parts ) ) {
+			return '';
+		}
+
+		wp_enqueue_script( 'honest-testimonials' );
+
 		// Both durations are re-validated against the same bounds the fields
 		// advertise, not merely for being numeric: a raw shortcode edit or a
 		// value saved before these fields existed bypasses the builder UI, and a
@@ -277,9 +321,9 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 		$inner = sprintf(
 			'<div class="honest-testimonials__inner"><div class="honest-testimonials__region" role="region" aria-roledescription="carousel" aria-label="%1$s" data-autoplay="%5$s" data-slide-duration="%6$d"><div class="honest-testimonials__slides">%2$s</div><div class="honest-testimonials__dots" role="group" aria-label="%3$s">%4$s</div></div></div>',
 			esc_attr__( 'Testimonials', 'honest-divi-modules' ),
-			$slides_html,
+			$parts['slides'],
 			esc_attr__( 'Choose which quote to display', 'honest-divi-modules' ),
-			$dots_html,
+			$parts['dots'],
 			esc_attr( $autoplay ),
 			(int) round( $seconds * 1000 )
 		);
