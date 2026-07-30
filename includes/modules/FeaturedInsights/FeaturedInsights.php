@@ -265,9 +265,18 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 			),
 			'manual_ids'           => array(
 				'label'           => esc_html__( 'Posts', 'honest-divi-modules' ),
-				'type'            => 'multiple_checkboxes',
+				// Custom control, registered in assets/js/vb-modules.js under this
+				// same name. Divi has no ordered multi-select of its own, and the
+				// order posts appear in is the point of a "featured" section --
+				// multiple_checkboxes could pick them but not sequence them.
+				//
+				// The stored value stays a plain pipe-delimited string, exactly
+				// what Divi's own multi-value controls save, so it round-trips
+				// through the shortcode like any built-in field and the render path
+				// is unchanged.
+				'type'            => 'honest_post_picker',
 				'option_category' => 'configuration',
-				'description'     => esc_html__( 'Tick the articles to feature. Cards appear newest first, and the Number of Articles setting still caps how many are shown.', 'honest-divi-modules' ),
+				'description'     => esc_html__( 'Choose the articles to feature and drag them into order with the arrows.', 'honest-divi-modules' ),
 				'options'         => self::get_post_options(),
 				'toggle_slug'     => 'main_content',
 				'show_if'         => array(

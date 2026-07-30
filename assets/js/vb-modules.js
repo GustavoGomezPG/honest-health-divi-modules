@@ -593,6 +593,151 @@
 		} );
 
 		API.registerModules( modules );
+
+		registerFields( API );
+	}
+
+	/**
+	 * Custom settings-modal fields.
+	 *
+	 * Registered through `API.registerModalFields`, which the builder resolves by
+	 * matching a component's slug against a field's `type` in get_fields(). A
+	 * registered field component is handed, among others:
+	 *
+	 *   name            the attribute name, e.g. 'manual_ids'
+	 *   value           its current stored value
+	 *   fieldDefinition the PHP definition, including `options`
+	 *   _onChange       ( name, value ) -- how a field writes back
+	 *
+	 * Note the modal renders in the builder's TOP window while this file runs in
+	 * the preview iframe, and the two hold separate React instances. Registration
+	 * still happens from here because that is the only window where
+	 * `ET_Builder.API` exists at all -- on the top window it is an empty object.
+	 */
+	function registerFields( API ) {
+		if ( ! API.registerModalFields ) {
+			return;
+		}
+
+		var e = window.React.createElement;
+
+		// Divi's multi-value controls store a pipe-delimited string. Kept in that
+		// shape so the value stays a plain scalar attribute, and so it round-trips
+		// through the shortcode exactly like any built-in field. The PHP side
+		// (Honest_Divi_Module_Featured_Insights::parse_post_ids) accepts this and
+		// the older comma form.
+		function ids( value ) {
+			if ( ! value || 'undefined' === value ) {
+				return [];
+			}
+
+			return String( value ).split( /[|,]/ )
+				.map( function ( id ) { return parseInt( id, 10 ); } )
+				.filter( function ( id ) { return id > 0; } );
+		}
+
+		function move( list, from, to ) {
+			var next = list.slice();
+			var moved = next.splice( from, 1 )[ 0 ];
+
+			next.splice( to, 0, moved );
+
+			return next;
+		}
+
+		API.registerModalFields( [ {
+			slug: 'honest_post_picker',
+
+			render: function () {
+				var props = this.props || {};
+				var options = ( props.fieldDefinition && props.fieldDefinition.options ) || {};
+				var chosen = ids( props.value );
+
+				// Every interaction is a whole new value written straight back, so
+				// the control keeps no state of its own and always redraws from
+				// what is actually stored.
+				var commit = function ( list ) {
+					props._onChange( props.name, list.join( '|' ) );
+				};
+
+				var titleOf = function ( id ) {
+					return options[ String( id ) ] || ( '#' + id );
+				};
+
+				var chosenRows = chosen.map( function ( id, index ) {
+					return e( 'li', { className: 'honest-picker__item', key: 'sel-' + id },
+						e( 'span', { className: 'honest-picker__position' }, ( index + 1 ) + '.' ),
+						e( 'span', { className: 'honest-picker__title', title: titleOf( id ) }, titleOf( id ) ),
+						e( 'button', {
+							type: 'button',
+							className: 'honest-picker__button',
+							disabled: 0 === index,
+							title: 'Move up',
+							onClick: function () { commit( move( chosen, index, index - 1 ) ); }
+						}, '\u2191' ),
+						e( 'button', {
+							type: 'button',
+							className: 'honest-picker__button',
+							disabled: index === chosen.length - 1,
+							title: 'Move down',
+							onClick: function () { commit( move( chosen, index, index + 1 ) ); }
+						}, '\u2193' ),
+						e( 'button', {
+							type: 'button',
+							className: 'honest-picker__button honest-picker__button--remove',
+							title: 'Remove',
+							onClick: function () {
+								commit( chosen.filter( function ( other ) { return other !== id; } ) );
+							}
+						}, '\u00d7' )
+					);
+				} );
+
+				var availableRows = Object.keys( options )
+					.filter( function ( id ) { return -1 === chosen.indexOf( parseInt( id, 10 ) ); } )
+					.map( function ( id ) {
+						return e( 'li', {
+							className: 'honest-picker__item honest-picker__item--available',
+							key: 'opt-' + id,
+							onClick: function () { commit( chosen.concat( [ parseInt( id, 10 ) ] ) ); }
+						},
+							e( 'span', { className: 'honest-picker__title', title: options[ id ] }, options[ id ] ),
+							e( 'button', {
+								type: 'button',
+								className: 'honest-picker__button',
+								title: 'Add',
+								onClick: function ( event ) {
+									// The row already handles the click; without this the
+									// post would be added twice.
+									event.stopPropagation();
+									commit( chosen.concat( [ parseInt( id, 10 ) ] ) );
+								}
+							}, '+' )
+						);
+					} );
+
+				return e( 'div', { className: 'honest-picker' },
+					e( 'div', { className: 'honest-picker__group' },
+						e( 'span', { className: 'honest-picker__label' },
+							'Chosen ',
+							e( 'span', { className: 'honest-picker__count' }, '(' + chosen.length + ', in order)' )
+						),
+						chosen.length
+							? e( 'ul', { className: 'honest-picker__list' }, chosenRows )
+							: e( 'div', { className: 'honest-picker__list honest-picker__empty' }, 'Nothing chosen yet.' )
+					),
+					e( 'div', { className: 'honest-picker__group' },
+						e( 'span', { className: 'honest-picker__label' }, 'Available posts' ),
+						availableRows.length
+							? e( 'ul', { className: 'honest-picker__list honest-picker__list--available' }, availableRows )
+							: e( 'div', { className: 'honest-picker__list honest-picker__empty' }, 'Every listed post has been chosen.' )
+					),
+					e( 'p', { className: 'honest-picker__hint' },
+						'Cards appear in the order above. The Number of Articles setting still caps how many are shown.'
+					)
+				);
+			}
+		} ] );
 	}
 
 	function boot() {

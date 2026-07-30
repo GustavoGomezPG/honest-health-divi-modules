@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HONEST_DIVI_MODULES_VERSION', '1.18.0' );
+define( 'HONEST_DIVI_MODULES_VERSION', '1.19.0' );
 define( 'HONEST_DIVI_MODULES_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HONEST_DIVI_MODULES_URL', plugin_dir_url( __FILE__ ) );
 // plugin_basename() needs this file's own path, and the activation callback lives
@@ -185,6 +185,15 @@ function honest_divi_modules_builder_assets() {
 	wp_enqueue_script( 'lottie-web' );
 	wp_enqueue_script( 'honest-market-map' );
 	wp_enqueue_script( 'honest-testimonials' );
+
+	// Styles the custom settings-modal fields. Builder-only, and separate from
+	// modules.css because none of it is ever rendered on the front end.
+	wp_enqueue_style(
+		'honest-divi-vb-fields',
+		HONEST_DIVI_MODULES_URL . 'assets/css/vb-fields.css',
+		array(),
+		HONEST_DIVI_MODULES_VERSION
+	);
 
 	wp_enqueue_script(
 		'honest-divi-vb-modules',

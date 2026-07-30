@@ -1,0 +1,127 @@
+/**
+ * Styles for this plugin's custom Divi settings-modal fields.
+ *
+ * Builder-only, and kept out of assets/css/modules.css deliberately: that
+ * stylesheet ships to every front-end page view, and none of this is ever
+ * rendered there.
+ *
+ * Every selector is prefixed `honest-picker` so nothing here can reach Divi's
+ * own modal chrome, which this markup sits inside.
+ */
+
+.honest-picker {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.honest-picker__group + .honest-picker__group {
+  margin-top: 14px;
+}
+
+.honest-picker__label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #6c7896;
+}
+
+.honest-picker__count {
+  font-weight: 400;
+  color: #8f9bb3;
+}
+
+.honest-picker__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid #d8e0ee;
+  border-radius: 3px;
+  background: #fff;
+}
+
+/* The available list is the long one, so it scrolls; the chosen list grows with
+   the selection, which is short by nature. */
+.honest-picker__list--available {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.honest-picker__empty {
+  padding: 10px;
+  color: #8f9bb3;
+  font-style: italic;
+}
+
+.honest-picker__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid #eef2f8;
+}
+
+.honest-picker__item:last-child {
+  border-bottom: 0;
+}
+
+.honest-picker__item--available {
+  cursor: pointer;
+}
+
+.honest-picker__item--available:hover {
+  background: #f4f7fc;
+}
+
+/* The running order is the whole point of this control, so each chosen row is
+   numbered rather than leaving the order implied by position alone. */
+.honest-picker__position {
+  flex: 0 0 auto;
+  min-width: 18px;
+  color: #8f9bb3;
+  font-variant-numeric: tabular-nums;
+}
+
+.honest-picker__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #4c5675;
+}
+
+.honest-picker__button {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #d8e0ee;
+  border-radius: 3px;
+  background: #fff;
+  color: #6c7896;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.honest-picker__button:hover:not(:disabled) {
+  border-color: #8f9bb3;
+  color: #2b87da;
+}
+
+/* Disabled rather than hidden at the ends of the list, so the controls do not
+   shift position as a row moves. */
+.honest-picker__button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.honest-picker__button--remove:hover {
+  border-color: #e02b20;
+  color: #e02b20;
+}
+
+.honest-picker__hint {
+  margin: 8px 0 0;
+  color: #8f9bb3;
+}
