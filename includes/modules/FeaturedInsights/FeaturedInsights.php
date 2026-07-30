@@ -317,7 +317,27 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 			'__cards'              => array(
 				'type'                => 'computed',
 				'computed_callback'   => array( 'Honest_Divi_Module_Featured_Insights', 'get_cards_html' ),
-				'computed_depends_on' => array( 'source', 'manual_ids', 'limit' ),
+				'computed_depends_on' => array( 'source', 'manual_ids', 'limit', 'show_all' ),
+			),
+			// Only offered for the two selection-based sources. "All" is a
+			// meaningful, bounded answer when an editor has picked the list --
+			// against Latest Posts it would mean every published post on the site,
+			// which is why render() re-checks the source rather than trusting this
+			// flag on its own.
+			'show_all'             => array(
+				'label'           => esc_html__( 'Show All Selected', 'honest-divi-modules' ),
+				'description'     => esc_html__( 'Ignore the article limit and show everything in the selection, however many that turns out to be.', 'honest-divi-modules' ),
+				'type'            => 'yes_no_button',
+				'option_category' => 'configuration',
+				'options'         => array(
+					'on'  => esc_html__( 'Yes', 'honest-divi-modules' ),
+					'off' => esc_html__( 'No', 'honest-divi-modules' ),
+				),
+				'default'         => 'off',
+				'toggle_slug'     => 'main_content',
+				'show_if'         => array(
+					'source' => array( 'manual', 'current_member_custom' ),
+				),
 			),
 			'limit'                => array(
 				'label'           => esc_html__( 'Number of Articles', 'honest-divi-modules' ),
@@ -334,6 +354,14 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'unitless'        => true,
 				'default'         => '3',
 				'toggle_slug'     => 'main_content',
+				// Hidden while it has no effect. Note show_all is itself only
+				// visible for the two selection sources, so switching to Latest
+				// Posts with it left on hides this control while the limit is once
+				// again in force -- render() ignores show_all there. Turning it back
+				// off restores the field.
+				'show_if_not'     => array(
+					'show_all' => 'on',
+				),
 			),
 			'button_text'          => array(
 				'label'           => esc_html__( 'Button Text', 'honest-divi-modules' ),
@@ -576,9 +604,12 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 	 * @param array $args         source / manual_ids / limit.
 	 * @param array $current_page Builder page context, if any.
 	 * @param int   $limit        Already-validated maximum.
+	 * @param bool  $unlimited    When true the limit is ignored and the whole
+	 *                            selection renders, however long it turns out to
+	 *                            be once the token has expanded.
 	 * @return WP_Post[]
 	 */
-	protected static function query_member_with_custom( $args, $current_page, $limit ) {
+	protected static function query_member_with_custom( $args, $current_page, $limit, $unlimited = false ) {
 		$items = self::parse_selection( isset( $args['manual_ids'] ) ? $args['manual_ids'] : '' );
 
 		if ( empty( $items ) ) {
@@ -607,20 +638,20 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 		$seen      = array();
 
 		foreach ( $items as $item ) {
-			if ( count( $out ) >= $limit ) {
+			if ( ! $unlimited && count( $out ) >= $limit ) {
 				break;
 			}
 
 			$batch = array();
 
 			if ( self::MEMBER_TOKEN === $item ) {
-				$batch = honest_team_get_articles_by_member( $member_id, $limit );
+				$batch = honest_team_get_articles_by_member( $member_id, $unlimited ? -1 : $limit );
 			} elseif ( isset( $chosen[ $item ] ) ) {
 				$batch = array( $chosen[ $item ] );
 			}
 
 			foreach ( $batch as $post ) {
-				if ( count( $out ) >= $limit ) {
+				if ( ! $unlimited && count( $out ) >= $limit ) {
 					break;
 				}
 
@@ -700,6 +731,15 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 
 		$source = isset( $args['source'] ) ? (string) $args['source'] : 'latest';
 
+		// "Show all" is honoured only where the editor has actually named the
+		// posts. On Latest Posts or Current Team Member it would mean an unbounded
+		// query, so the source is re-checked here rather than trusting the flag --
+		// the field is hidden for those sources, but a hand-edited shortcode or a
+		// value left over from a source change bypasses the UI entirely.
+		$unlimited = isset( $args['show_all'] )
+			&& 'on' === $args['show_all']
+			&& in_array( $source, array( 'manual', 'current_member_custom' ), true );
+
 		switch ( $source ) {
 			case 'current_member':
 				// During a computed-property request the queried object is not the
@@ -710,7 +750,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				return honest_team_get_articles_by_member( $member_id, $limit );
 
 			case 'current_member_custom':
-				return self::query_member_with_custom( $args, $current_page, $limit );
+				return self::query_member_with_custom( $args, $current_page, $limit, $unlimited );
 
 			case 'manual':
 				$ids = self::parse_post_ids( isset( $args['manual_ids'] ) ? $args['manual_ids'] : '' );
@@ -728,7 +768,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 						'post_status'    => 'publish',
 						'post__in'       => $ids,
 						'orderby'        => 'post__in',
-						'posts_per_page' => $limit,
+						'posts_per_page' => $unlimited ? -1 : $limit,
 					)
 				);
 
@@ -812,6 +852,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'source'     => $this->props['source'],
 				'manual_ids' => $this->props['manual_ids'],
 				'limit'      => $this->props['limit'],
+				'show_all'   => $this->props['show_all'],
 			)
 		);
 
