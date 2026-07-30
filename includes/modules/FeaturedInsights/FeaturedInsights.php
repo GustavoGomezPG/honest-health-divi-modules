@@ -319,14 +319,17 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'computed_callback'   => array( 'Honest_Divi_Module_Featured_Insights', 'get_cards_html' ),
 				'computed_depends_on' => array( 'source', 'manual_ids', 'limit', 'show_all' ),
 			),
-			// Only offered for the two selection-based sources. "All" is a
-			// meaningful, bounded answer when an editor has picked the list --
-			// against Latest Posts it would mean every published post on the site,
-			// which is why render() re-checks the source rather than trusting this
-			// flag on its own.
+			// Applies to every source, and is therefore always visible. That
+			// visibility is what makes it safe for Number of Articles to hide while
+			// this is on: the control that restores it can always be reached, which
+			// was not true while this field was itself conditional.
+			//
+			// Note what "all" means per source: the whole selection for the two
+			// manual ones, every article credited to the member for Current Team
+			// Member, and EVERY PUBLISHED POST for Latest Posts.
 			'show_all'             => array(
-				'label'           => esc_html__( 'Show All Selected', 'honest-divi-modules' ),
-				'description'     => esc_html__( 'Ignore Number of Articles and show everything in the selection, however many that turns out to be. Applies only to this source; switching Source back to Latest Posts or Current Team Member puts the limit in force again.', 'honest-divi-modules' ),
+				'label'           => esc_html__( 'Show All', 'honest-divi-modules' ),
+				'description'     => esc_html__( 'Ignore Number of Articles and show everything the chosen Source returns. On Latest Posts that means every published post, so use it with a source that is naturally bounded.', 'honest-divi-modules' ),
 				'type'            => 'yes_no_button',
 				'option_category' => 'configuration',
 				'options'         => array(
@@ -335,13 +338,10 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				),
 				'default'         => 'off',
 				'toggle_slug'     => 'main_content',
-				'show_if'         => array(
-					'source' => array( 'manual', 'current_member_custom' ),
-				),
 			),
 			'limit'                => array(
 				'label'           => esc_html__( 'Number of Articles', 'honest-divi-modules' ),
-				'description'     => esc_html__( 'How many article cards to show. The design uses 3 on the Our Team page and 8 on a member page. Ignored while Show All Selected is on.', 'honest-divi-modules' ),
+				'description'     => esc_html__( 'How many article cards to show. The design uses 3 on the Our Team page and 8 on a member page.', 'honest-divi-modules' ),
 				'type'            => 'range',
 				'option_category' => 'configuration',
 				'range_settings'  => array(
@@ -354,21 +354,16 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'unitless'        => true,
 				'default'         => '3',
 				'toggle_slug'     => 'main_content',
-				// Deliberately NOT hidden while Show All Selected is on.
-				//
-				// Hiding it stranded the control. Show All Selected is itself only
-				// visible for the two selection sources, so turning it on and then
-				// changing Source took away the toggle AND the limit at once, with
-				// no way back except changing Source again, switching the toggle
-				// off, and changing Source a third time.
-				//
-				// It cannot be fixed by making this field's condition smarter:
-				// canShowField() in Divi's bundle ANDs every show_if / show_if_not
-				// key, so "hide only when show_all is on AND the source is one of
-				// the two" is not expressible -- there is no OR. Leaving the field
-				// visible and inert is the state that can always be recovered from,
-				// which matters more than hiding a control that is momentarily
-				// ignored. The description says when it does nothing.
+				// Safe to hide only because Show All is now unconditional. While
+				// that toggle was itself source-dependent, hiding this field could
+				// strand it: both controls disappeared together and neither could be
+				// reached to undo it. Divi cannot express the condition that would
+				// have fixed that -- canShowField() ANDs every show_if /
+				// show_if_not key, so there is no OR -- so the answer was to remove
+				// the dependency rather than refine it.
+				'show_if_not'     => array(
+					'show_all' => 'on',
+				),
 			),
 			'button_text'          => array(
 				'label'           => esc_html__( 'Button Text', 'honest-divi-modules' ),
@@ -738,14 +733,11 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 
 		$source = isset( $args['source'] ) ? (string) $args['source'] : 'latest';
 
-		// "Show all" is honoured only where the editor has actually named the
-		// posts. On Latest Posts or Current Team Member it would mean an unbounded
-		// query, so the source is re-checked here rather than trusting the flag --
-		// the field is hidden for those sources, but a hand-edited shortcode or a
-		// value left over from a source change bypasses the UI entirely.
-		$unlimited = isset( $args['show_all'] )
-			&& 'on' === $args['show_all']
-			&& in_array( $source, array( 'manual', 'current_member_custom' ), true );
+		// Applies to every source. What it costs varies: the two manual sources
+		// are bounded by the editor's own list, Current Team Member by how much
+		// that person has written, and Latest Posts by nothing at all -- there it
+		// really does query every published post.
+		$unlimited = isset( $args['show_all'] ) && 'on' === $args['show_all'];
 
 		switch ( $source ) {
 			case 'current_member':
@@ -754,7 +746,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				// and get_the_ID() is only the front-end path.
 				$member_id = ! empty( $current_page['id'] ) ? (int) $current_page['id'] : (int) get_the_ID();
 
-				return honest_team_get_articles_by_member( $member_id, $limit );
+				return honest_team_get_articles_by_member( $member_id, $unlimited ? -1 : $limit );
 
 			case 'current_member_custom':
 				return self::query_member_with_custom( $args, $current_page, $limit, $unlimited );
@@ -784,7 +776,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 					array(
 						'post_type'      => 'post',
 						'post_status'    => 'publish',
-						'posts_per_page' => $limit,
+						'posts_per_page' => $unlimited ? -1 : $limit,
 					)
 				);
 		}
