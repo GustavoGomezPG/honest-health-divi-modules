@@ -1,0 +1,153 @@
+name: Release
+
+# Two entry points, deliberately doing different amounts:
+#
+# - Pushing a `v*` tag builds the zip AND publishes a GitHub release with it.
+# - Running this manually builds the zip and attaches it as a workflow artifact
+#   only. Nothing is published. That gives a way to inspect exactly what would
+#   ship without creating a release, and makes an accidental release impossible
+#   from the Actions tab.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Package plugin
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      # The plugin needs no build step -- no bundler, no compiler, no
+      # dependencies. Packaging is therefore a copy and a zip, and the only real
+      # work here is making sure the right files are in it.
+      - name: Read version from the plugin header
+        id: plugin
+        run: |
+          version="$(sed -n 's/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*//p' honest-divi-modules.php | head -1 | tr -d '[:space:]')"
+
+          if [ -z "$version" ]; then
+            echo "::error::Could not read Version from the plugin header in honest-divi-modules.php."
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Plugin header version: $version"
+
+      # The header is what WordPress shows on the Plugins screen, and it has
+      # drifted from the internal constant before now (header said 1.0.1 while
+      # the code was at 1.15.0). Releasing v1.2.0 from a header that says
+      # something else produces a zip nobody can identify, so the tag and the
+      # header have to agree before anything is published.
+      - name: Verify the tag matches the plugin header
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          header="${{ steps.plugin.outputs.version }}"
+
+          if [ "$tag" != "$header" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} implies version '${tag}' but the plugin header says '${header}'. Update the header (and HONEST_DIVI_MODULES_VERSION) or retag."
+            exit 1
+          fi
+
+          echo "Tag ${GITHUB_REF_NAME} matches the plugin header."
+
+      - name: Lint every PHP file
+        run: |
+          # Cheap, and it is the difference between shipping a zip and shipping a
+          # zip that fatals on activation.
+          find . -path ./build -prune -o -name '*.php' -print0 \
+            | xargs -0 -n1 -P4 php -l > /dev/null
+          echo "All PHP files parse."
+
+      - name: Build the zip
+        id: build
+        run: |
+          slug=honest-divi-modules
+          version="${{ steps.plugin.outputs.version }}"
+          zipname="${slug}-${version}.zip"
+
+          # WordPress installs a plugin by its directory, so the archive has to
+          # contain one top-level folder named for the plugin -- not its loose
+          # contents.
+          mkdir -p "build/${slug}"
+
+          rsync -a ./ "build/${slug}/" \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.gitignore' \
+            --exclude '.superpowers' \
+            --exclude 'docs' \
+            --exclude 'build' \
+            --exclude '.DS_Store'
+
+          ( cd build && zip -rq "$zipname" "$slug" )
+
+          echo "zipname=$zipname" >> "$GITHUB_OUTPUT"
+          echo "zippath=build/$zipname" >> "$GITHUB_OUTPUT"
+
+      # Asserts the package is actually installable and that no development
+      # material leaked into it. A silent packaging mistake is otherwise only
+      # discovered by whoever installs the zip.
+      - name: Verify the zip contents
+        run: |
+          slug=honest-divi-modules
+          zip="${{ steps.build.outputs.zippath }}"
+
+          echo "--- archive contents (top two levels) ---"
+          unzip -Z1 "$zip" | cut -d/ -f1-2 | sort -u
+
+          required=(
+            "$slug/honest-divi-modules.php"
+            "$slug/includes/dependencies.php"
+            "$slug/includes/class-honest-divi-module-base.php"
+            "$slug/assets/css/modules.css"
+            "$slug/assets/js/vb-modules.js"
+            "$slug/assets/js/market-map.js"
+            "$slug/assets/js/lottie.min.js"
+            "$slug/assets/lottie/market-map.json"
+          )
+
+          for path in "${required[@]}"; do
+            if ! unzip -Z1 "$zip" | grep -qxF "$path"; then
+              echo "::error::Missing from the package: $path"
+              exit 1
+            fi
+          done
+
+          # Anything matching these would mean the excludes above stopped working.
+          if unzip -Z1 "$zip" | grep -Eq '(^|/)(\.git/|\.github/|docs/|\.superpowers/|\.DS_Store$)'; then
+            echo "::error::Development files leaked into the package:"
+            unzip -Z1 "$zip" | grep -E '(^|/)(\.git/|\.github/|docs/|\.superpowers/|\.DS_Store$)'
+            exit 1
+          fi
+
+          echo "Package looks correct: $(unzip -Z1 "$zip" | wc -l) entries, $(du -h "$zip" | cut -f1)."
+
+      - name: Upload the zip as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build.outputs.zipname }}
+          path: ${{ steps.build.outputs.zippath }}
+          if-no-files-found: error
+
+      # Tag pushes only. gh is preinstalled on the runner, so this needs no
+      # third-party action and adds no supply-chain surface to a step that holds
+      # a write token.
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "${{ steps.build.outputs.zippath }}" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag
