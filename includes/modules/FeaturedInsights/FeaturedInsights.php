@@ -131,6 +131,16 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 	public $slug = 'honest_featured_insights';
 
 	/**
+	 * Full builder compatibility; component in assets/js/vb-modules.js under this
+	 * slug. The card grid reaches the builder as server-rendered HTML through the
+	 * `__cards` computed property, so the article card markup is never duplicated
+	 * in JavaScript.
+	 *
+	 * @var string
+	 */
+	public $vb_support = 'on';
+
+	/**
 	 * Placeholder an editor can type into the `heading` field to have the
 	 * current team member's first name substituted at render time -- see the
 	 * file header comment for why this is a visible token rather than an
@@ -239,7 +249,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 			),
 			// Source mode. `current_member` is what powers the "Articles by
 			// [First Name]" section on the single team-member page -- see
-			// get_posts_for_source() below for how it reads get_the_ID().
+			// query_posts_for_source() below for how the member is resolved.
 			'source'               => array(
 				'label'           => esc_html__( 'Source', 'honest-divi-modules' ),
 				'type'            => 'select',
@@ -254,10 +264,11 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'toggle_slug'     => 'main_content',
 			),
 			'manual_ids'           => array(
-				'label'           => esc_html__( 'Post IDs', 'honest-divi-modules' ),
-				'type'            => 'text',
+				'label'           => esc_html__( 'Posts', 'honest-divi-modules' ),
+				'type'            => 'multiple_checkboxes',
 				'option_category' => 'configuration',
-				'description'     => esc_html__( 'Comma-separated post IDs, in the order they should appear.', 'honest-divi-modules' ),
+				'description'     => esc_html__( 'Tick the articles to feature. Cards appear newest first, and the Number of Articles setting still caps how many are shown.', 'honest-divi-modules' ),
+				'options'         => self::get_post_options(),
 				'toggle_slug'     => 'main_content',
 				'show_if'         => array(
 					'source' => 'manual',
@@ -268,8 +279,17 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 			// shortcode, is still bounded by Divi's own validation -- the
 			// same pattern used by the Leadership by Market module's
 			// map_speed field. The render-time clamp in
-			// get_posts_for_source() is the backstop for anything that
+			// query_posts_for_source() is the backstop for anything that
 			// bypassed this UI entirely.
+			// Delivers the card grid's HTML to the builder's React component, so
+			// the article card markup lives only in PHP. Depends on everything
+			// that changes which posts are shown; heading, colours and button
+			// settings are prop-driven and stay instant.
+			'__cards'              => array(
+				'type'                => 'computed',
+				'computed_callback'   => array( 'Honest_Divi_Module_Featured_Insights', 'get_cards_html' ),
+				'computed_depends_on' => array( 'source', 'manual_ids', 'limit' ),
+			),
 			'limit'                => array(
 				'label'           => esc_html__( 'Number of Articles', 'honest-divi-modules' ),
 				'description'     => esc_html__( 'How many article cards to show. The design uses 3 on the Our Team page and 8 on a member page.', 'honest-divi-modules' ),
@@ -401,7 +421,125 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 	 *
 	 * @return WP_Post[]
 	 */
-	protected function get_posts_for_source() {
+	/**
+	 * The article cards, rendered server-side.
+	 *
+	 * Shared by render() and by the `__cards` computed property so the builder and
+	 * the front end cannot drift, and so the card partial stays the single source
+	 * of that markup.
+	 *
+	 * Static because Divi calls computed callbacks as plain callables with no
+	 * module instance: call_user_func( $callback, $depends_on, $conditional_tags,
+	 * $current_page ).
+	 *
+	 * @param array $args         Depends-on values: source, manual_ids, limit.
+	 * @param array $conditional_tags Unused; part of Divi's callback signature.
+	 * @param array $current_page Divi's description of the page being edited. Used
+	 *                            for the `current_member` source, where the post in
+	 *                            context is the member -- get_the_ID() is not that
+	 *                            post during a computed-property AJAX request.
+	 * @return string
+	 */
+	public static function get_cards_html( $args = array(), $conditional_tags = array(), $current_page = array() ) {
+		$posts = self::query_posts_for_source( $args, $current_page );
+
+		if ( empty( $posts ) ) {
+			return '';
+		}
+
+		$cards      = '';
+		$card_index = 0;
+
+		foreach ( $posts as $post ) {
+			$cards .= honest_team_render_article_card( $post, $card_index++ );
+		}
+
+		return $cards;
+	}
+
+	/**
+	 * Published posts as checkbox options, keyed by ID.
+	 *
+	 * Two things make this safe to call from get_fields(), which Divi runs for
+	 * every module on every request that registers them:
+	 *
+	 * - It returns nothing outside a builder request. The options list only
+	 *   populates a control in the settings modal; rendering the module needs the
+	 *   stored value, not the catalogue. Without this guard every front-end page
+	 *   view would run an extra post query for a control nobody is looking at.
+	 * - It is memoised for the request, because get_fields() can be called more
+	 *   than once per page load.
+	 *
+	 * Capped rather than unbounded: a site with thousands of posts would otherwise
+	 * put thousands of checkboxes in a settings modal, which is neither usable nor
+	 * cheap. The cap is generous next to the number of articles this section
+	 * features, and the Source field's other modes exist for anything broader.
+	 *
+	 * @return array<string,string> Post ID => title.
+	 */
+	protected static function get_post_options() {
+		static $options = null;
+
+		if ( null !== $options ) {
+			return $options;
+		}
+
+		if ( ! function_exists( 'honest_team_is_builder_render' ) || ! honest_team_is_builder_render() ) {
+			return array();
+		}
+
+		$options = array();
+
+		foreach ( get_posts(
+			array(
+				'post_type'        => 'post',
+				'post_status'      => 'publish',
+				'posts_per_page'   => 100,
+				'orderby'          => 'date',
+				'order'            => 'DESC',
+				'suppress_filters' => false,
+			)
+		) as $post ) {
+			$title = trim( wp_strip_all_tags( get_the_title( $post ) ) );
+
+			$options[ (string) $post->ID ] = '' !== $title
+				/* translators: %d: post ID, shown when a post has no title. */
+				? $title
+				: sprintf( __( '(no title) #%d', 'honest-divi-modules' ), $post->ID );
+		}
+
+		return $options;
+	}
+
+	/**
+	 * Post IDs from a stored selection.
+	 *
+	 * Accepts both separators so a value saved before the picker existed still
+	 * works: the field was a comma-separated list typed by hand, and Divi's
+	 * multi-select controls store their value delimited by `|`. Duplicates are
+	 * dropped, order is preserved, and anything non-numeric disappears.
+	 *
+	 * @param mixed $raw Stored field value.
+	 * @return int[]
+	 */
+	protected static function parse_post_ids( $raw ) {
+		$parts = preg_split( '/[|,]/', (string) $raw );
+
+		if ( ! is_array( $parts ) ) {
+			return array();
+		}
+
+		return array_values( array_unique( array_filter( array_map( 'intval', $parts ) ) ) );
+	}
+
+	/**
+	 * Resolve the configured source to a list of posts.
+	 *
+	 * @param array $args         source / manual_ids / limit.
+	 * @param array $current_page Optional builder page context.
+	 * @return WP_Post[]
+	 */
+	protected static function query_posts_for_source( $args = array(), $current_page = array() ) {
 		// Re-validated against the SAME 1-12 bounds the field advertises, not
 		// merely clamped at the bottom: a hand-edited shortcode or a stale
 		// saved value bypasses the builder UI entirely, and `limit="9999"`
@@ -410,22 +548,32 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 		// back to the documented default rather than being snapped to a
 		// bound, matching how LeadershipByMarket::render() validates
 		// `map_speed`.
-		$limit = (int) $this->props['limit'];
+		$limit = isset( $args['limit'] ) ? (int) $args['limit'] : 3;
 		if ( $limit < 1 || $limit > 12 ) {
 			$limit = 3;
 		}
 
-		switch ( $this->props['source'] ) {
+		$source = isset( $args['source'] ) ? (string) $args['source'] : 'latest';
+
+		switch ( $source ) {
 			case 'current_member':
-				return honest_team_get_articles_by_member( get_the_ID(), $limit );
+				// During a computed-property request the queried object is not the
+				// member being previewed, so Divi's own page context is preferred
+				// and get_the_ID() is only the front-end path.
+				$member_id = ! empty( $current_page['id'] ) ? (int) $current_page['id'] : (int) get_the_ID();
+
+				return honest_team_get_articles_by_member( $member_id, $limit );
 
 			case 'manual':
-				$ids = array_filter( array_map( 'intval', explode( ',', (string) $this->props['manual_ids'] ) ) );
+				$ids = self::parse_post_ids( isset( $args['manual_ids'] ) ? $args['manual_ids'] : '' );
 
 				if ( empty( $ids ) ) {
 					return array();
 				}
 
+				// orderby post__in keeps whatever order the stored value carries,
+				// so the selection's own sequence survives rather than being
+				// re-sorted by date.
 				return get_posts(
 					array(
 						'post_type'      => 'post',
@@ -511,16 +659,16 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 	}
 
 	public function render( $attrs, $content, $render_slug ) {
-		$posts = $this->get_posts_for_source();
+		$cards = self::get_cards_html(
+			array(
+				'source'     => $this->props['source'],
+				'manual_ids' => $this->props['manual_ids'],
+				'limit'      => $this->props['limit'],
+			)
+		);
 
-		if ( empty( $posts ) ) {
+		if ( '' === $cards ) {
 			return '';
-		}
-
-		$cards      = '';
-		$card_index = 0;
-		foreach ( $posts as $post ) {
-			$cards .= honest_team_render_article_card( $post, $card_index++ );
 		}
 
 		$eyebrow = '';

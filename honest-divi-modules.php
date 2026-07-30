@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HONEST_DIVI_MODULES_VERSION', '1.16.0' );
+define( 'HONEST_DIVI_MODULES_VERSION', '1.18.0' );
 define( 'HONEST_DIVI_MODULES_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HONEST_DIVI_MODULES_URL', plugin_dir_url( __FILE__ ) );
 // plugin_basename() needs this file's own path, and the activation callback lives

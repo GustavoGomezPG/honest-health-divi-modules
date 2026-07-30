@@ -497,6 +497,101 @@
 			}
 		} );
 
+		/**
+		 * Featured Insights.
+		 *
+		 * Eyebrow, heading, intro and button are prop-driven and mirrored here, so
+		 * those edits are instant. The card grid arrives as server-rendered HTML in
+		 * the `__cards` computed property, from the same get_cards_html() the front
+		 * end calls, so the article card markup exists in one place.
+		 *
+		 * Two layouts, chosen by `button_position`, exactly as the PHP builds them:
+		 * `top` folds the button into the head row beside the heading (the member
+		 * page), anything else drops it into a centred foot below the grid (Our
+		 * Team). The `--top-button` modifier only applies when there is actually a
+		 * button to place.
+		 *
+		 * The heading is rendered as typed, including a literal `%first_name%`.
+		 * Resolving that needs the member in context, which is a server concern;
+		 * showing the token is also the more useful thing for whoever is editing,
+		 * since it is what they wrote.
+		 */
+		modules.push( {
+			slug: 'honest_featured_insights',
+
+			render: function () {
+				var props = this.props || {};
+				var cards = props.__cards;
+
+				if ( '' === cards ) {
+					return null;
+				}
+
+				var headtext = [];
+				var eyebrow = text( props.eyebrow );
+				var heading = text( props.heading );
+				var intro = contentBlock( props.content, 'honest-insights__intro', 'intro' );
+
+				if ( eyebrow ) {
+					headtext.push( e( 'p', { className: 'honest-insights__eyebrow', key: 'eyebrow' }, eyebrow ) );
+				}
+
+				if ( heading ) {
+					headtext.push( e( 'h2', { className: 'honest-insights__heading', key: 'heading' }, heading ) );
+				}
+
+				if ( intro ) {
+					headtext.push( intro );
+				}
+
+				var label = text( props.button_text );
+				var button = label
+					? e( 'a', {
+						className: 'honest-insights__button',
+						key: 'button',
+						href: text( props.button_url ) || '#'
+					}, label )
+					: null;
+
+				var topButton = 'top' === props.button_position && !! button;
+
+				var head = [ e( 'div', { className: 'honest-insights__headtext', key: 'headtext' }, headtext ) ];
+
+				if ( topButton ) {
+					head.push( button );
+				}
+
+				var children = [
+					e( 'div', { className: 'honest-insights__head', key: 'head' }, head ),
+					e( 'div', {
+						className: 'honest-insights__grid',
+						key: 'grid',
+						dangerouslySetInnerHTML: computed( cards )
+					} )
+				];
+
+				if ( ! topButton && button ) {
+					children.push( e( 'div', { className: 'honest-insights__foot', key: 'foot' }, button ) );
+				}
+
+				return e(
+					'div',
+					{
+						className: 'honest-insights' + ( topButton ? ' honest-insights--top-button' : '' ),
+						style: cssVars( {
+							'--hh-insights-eyebrow': props.eyebrow_color,
+							'--hh-insights-heading': props.heading_color,
+							'--hh-insights-intro': props.intro_color,
+							'--hh-insights-button-bg': props.button_bg_color,
+							'--hh-insights-button-text': props.button_label_color,
+							'--hh-insights-button-border': props.button_border_color
+						} )
+					},
+					children
+				);
+			}
+		} );
+
 		API.registerModules( modules );
 	}
 
