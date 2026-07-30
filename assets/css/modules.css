@@ -704,6 +704,24 @@
   }
 }
 
+/* Divi's theme stylesheet sets `h1, h2, h3, h4, h5, h6 { padding-bottom: 10px }`,
+   which lands on every heading these modules render and silently adds 10px under
+   each one -- on top of whatever margin the design calls for. Every
+   heading-to-body gap measured against Figma was therefore rendering 10px larger
+   than intended.
+   Zeroed here rather than per module so the correction cannot be missed on the
+   next heading added, and enumerated by our own class names rather than by tag,
+   so nothing outside these components is touched. */
+.honest-text-hero__headline,
+.honest-cta__heading,
+.honest-exec__heading,
+.honest-insights__heading,
+.honest-market__heading,
+.honest-article-card__title,
+.honest-member__name {
+  padding: 0;
+}
+
 /* Testimonials.
    Renders no band of its own: no background, no viewport breakout, no outer
    padding. The surrounding Divi Section owns all of that -- on the Our Team page
@@ -995,24 +1013,49 @@
   background-position: center, center;
   background-size: cover, cover;
 }
-/* Gradient direction mirrors `alignment`: the overlay always fades from
-   transparent (image side) to opaque (content side) -- matching the real
-   Figma fill exactly for the `right` default, mirrored for `left`. */
+/* Gradient direction mirrors `alignment`: the overlay always fades from clear
+   (image side) to opaque (content side) -- Figma node 1:190 for the `right`
+   default, mirrored for `left`.
+   The clear end is the OVERLAY COLOUR at zero alpha, not the `transparent`
+   keyword. `transparent` is rgba(0, 0, 0, 0), so a fade from it runs the
+   midtones through darkened grey and dirties the photo underneath; Figma's fill
+   is rgba(184, 200, 231, 0) -> rgb(184, 200, 231), the same colour throughout.
+   Written twice on purpose: the first declaration is the old keyword version for
+   engines without relative colour syntax, the second overrides it everywhere
+   that supports `rgb(from ...)`.
+   Figma's angle is 89.69deg rather than a clean 90; the 0.31deg difference is
+   about 2.7px of vertical drift across a 1440px band, so `to right` stands. */
 .honest-cta--align-right .honest-cta__media {
   background-image:
     linear-gradient(to right, transparent, var(--hh-cta-overlay, #b8c8e7)),
+    var(--hh-cta-bg-image, none);
+  background-image:
+    linear-gradient(
+      to right,
+      rgb(from var(--hh-cta-overlay, #b8c8e7) r g b / 0) 0%,
+      var(--hh-cta-overlay, #b8c8e7) 99.9%
+    ),
     var(--hh-cta-bg-image, none);
 }
 .honest-cta--align-left .honest-cta__media {
   background-image:
     linear-gradient(to left, transparent, var(--hh-cta-overlay, #b8c8e7)),
     var(--hh-cta-bg-image, none);
+  background-image:
+    linear-gradient(
+      to left,
+      rgb(from var(--hh-cta-overlay, #b8c8e7) r g b / 0) 0%,
+      var(--hh-cta-overlay, #b8c8e7) 99.9%
+    ),
+    var(--hh-cta-bg-image, none);
 }
 
 .honest-cta__inner {
   position: relative;
   z-index: 1;
-  padding: 100px 0;
+  /* Figma node 12:765: the heading starts 85px below the band's top edge and the
+     button ends 101px above its bottom. */
+  padding: 85px 0 101px;
   display: flex;
 }
 /* CONTENT MEASURE, not a container (file header rule 4): the whole point of
@@ -1021,7 +1064,9 @@
    `alignment` edge by the flex rules below. Removing it would stretch the copy
    across the photo and destroy the layout. */
 .honest-cta__content {
-  max-width: 480px;
+  /* Figma node 1:191: the heading measures 523px. The body is narrower and
+     constrains itself below. */
+  max-width: 523px;
   text-align: center;
 }
 .honest-cta--align-right .honest-cta__inner {
@@ -1031,23 +1076,53 @@
   justify-content: flex-start;
 }
 
+/* Typography from Figma nodes 1:191 (heading), 1:195 (body) and 1:194 (button
+   label). The heading was rendering at the theme's 26px and the body at
+   22px/1.9 before this. */
 .honest-cta__heading {
   color: var(--hh-cta-heading, #3a61b6);
+  font-size: 50px;
   font-weight: 800;
-  margin: 0 0 20px;
+  line-height: 1;
+  letter-spacing: -0.5px;
+  margin: 0 0 27px;
 }
 .honest-cta__body {
   color: var(--hh-cta-body, #6a8090);
-  margin: 0 0 28px;
+  /* Node 1:195 is 375px wide inside the heading's 523px, and centred in it. */
+  max-width: 375px;
+  margin: 0 auto 45px;
+  font-size: 23px;
+  font-weight: 500;
+  line-height: 1.15;
 }
+/* Figma nodes 1:193/1:194: 283x63 at a 3.667px radius, label 24.444px bold
+   centred. Those decimals are the design's own scaled values, kept literal.
+   min-* with inline-flex centring holds the box without relying on a
+   line-height, and still grows for a longer label. */
 .honest-cta__button {
-  display: inline-block;
-  padding: 18px 32px;
-  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 283px;
+  max-width: 100%;
+  min-height: 63px;
+  padding: 4px 24px;
+  border-radius: 3.667px;
   background: var(--hh-cta-button-bg, #000000);
   color: var(--hh-cta-button-text, #ffffff);
   text-decoration: none;
+  font-size: 24.444px;
   font-weight: 700;
+  line-height: 1.2;
+  transition: background-color 0.2s ease;
+}
+/* No hover state in node 12:765. Lifting the flat black keeps it recognisably
+   the same control, and matches the article card's Read More so the two black
+   buttons on this page behave alike. */
+.honest-cta__button:hover {
+  background: var(--hh-cta-button-hover-bg, #333333);
 }
 .honest-cta__button:focus-visible {
   outline: 3px solid var(--hh-cta-button-bg, #000000);
@@ -1056,7 +1131,7 @@
 
 @media (max-width: 600px) {
   .honest-cta__inner {
-    padding: 60px 0;
+    padding: 60px 0 70px;
   }
   .honest-cta__content {
     max-width: 100%;

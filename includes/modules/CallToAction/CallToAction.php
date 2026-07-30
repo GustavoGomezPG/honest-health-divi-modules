@@ -156,9 +156,42 @@ class Honest_Divi_Module_Call_To_Action extends Honest_Divi_Module_Base {
 		// collision on this group without renaming this comment along with it.
 		$this->advanced_fields = $this->base_advanced_fields(
 			array(
-				'heading' => array( 'label' => esc_html__( 'Heading', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-cta__heading" ), 'toggle_slug' => 'heading', 'hide_text_color' => true ),
-				'content' => array( 'label' => esc_html__( 'Body Copy', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-cta__body" ), 'toggle_slug' => 'content', 'hide_text_color' => true ),
-				'button'  => array( 'label' => esc_html__( 'Button', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-cta__button" ), 'toggle_slug' => 'button', 'hide_text_color' => true ),
+				// font_size / weight / line_height / letter_spacing defaults are the
+				// values on the Figma text nodes in q1MGpWgDpBoZeS6dgrddjB node
+				// 12:765: heading 1:191 (50px / 800 / 1 / -0.5px), body 1:195 (23px
+				// / 500 / 1.15) and the button label 1:194 (24.444px / 700 -- the
+				// design's own scaled value, kept literal). The same numbers appear
+				// in assets/css/modules.css, which is the floor: a Divi default
+				// emits no CSS at all for an instance saved before it existed.
+				'heading' => array(
+					'label'           => esc_html__( 'Heading', 'honest-divi-modules' ),
+					'css'             => array( 'main' => "{$this->main_css_element} .honest-cta__heading" ),
+					'toggle_slug'     => 'heading',
+					'hide_text_color' => true,
+					'font_size'       => array( 'default' => '50px' ),
+					'letter_spacing'  => array( 'default' => '-0.5px' ),
+					'line_height'     => array( 'default' => '1em' ),
+					'font'            => array( 'default' => '|800|||||||' ),
+				),
+				'content' => array(
+					'label'           => esc_html__( 'Body Copy', 'honest-divi-modules' ),
+					'css'             => array( 'main' => "{$this->main_css_element} .honest-cta__body" ),
+					'toggle_slug'     => 'content',
+					'hide_text_color' => true,
+					'font_size'       => array( 'default' => '23px' ),
+					'letter_spacing'  => array( 'default' => '0px' ),
+					'line_height'     => array( 'default' => '1.15em' ),
+					'font'            => array( 'default' => '|500|||||||' ),
+				),
+				'button'  => array(
+					'label'           => esc_html__( 'Button', 'honest-divi-modules' ),
+					'css'             => array( 'main' => "{$this->main_css_element} .honest-cta__button" ),
+					'toggle_slug'     => 'button',
+					'hide_text_color' => true,
+					'font_size'       => array( 'default' => '24.444px' ),
+					'letter_spacing'  => array( 'default' => '0px' ),
+					'font'            => array( 'default' => '|700|||||||' ),
+				),
 			)
 		);
 	}
