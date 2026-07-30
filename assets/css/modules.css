@@ -888,11 +888,19 @@
 }
 
 /* Figma node 1:188 is a fixed 404px wide. Applied only to the `below` (Our Team)
-   layout, and as a min-width capped at the container: the `top` layout on the
-   member pages carries a much longer label in a narrow column, where a 404px
-   floor would push the button out of it. */
+   layout: the `top` layout on the member pages carries a much longer label in a
+   narrow column, where a 404px floor would push it out.
+
+   The floor is min(404px, 100%) rather than a flat 404px because min-width beats
+   max-width in the cascade -- pairing `min-width: 404px` with `max-width: 100%`
+   does NOT keep the button inside its container, it just overflows anything
+   narrower than 404px. Wrapping the floor in min() makes the container the
+   ceiling instead, so the button is 404px wherever that fits and exactly full
+   width everywhere it does not. That degrades continuously rather than snapping
+   at a breakpoint, which matters here because the width that breaks is set by
+   the Row, not the viewport. */
 .honest-insights__foot .honest-insights__button {
-  min-width: 404px;
+  min-width: min(404px, 100%);
   max-width: 100%;
 }
 .honest-insights__button {
