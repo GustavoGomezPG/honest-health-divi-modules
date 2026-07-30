@@ -1089,8 +1089,9 @@
 }
 .honest-cta__body {
   color: var(--hh-cta-body, #6a8090);
-  /* Node 1:195 is 375px wide inside the heading's 523px, and centred in it. */
-  max-width: 375px;
+  /* 440px by request, wider than node 1:195's 375px, still inside the heading's
+     523px and centred in it. */
+  max-width: 440px;
   margin: 0 auto 45px;
   font-size: 23px;
   font-weight: 500;
