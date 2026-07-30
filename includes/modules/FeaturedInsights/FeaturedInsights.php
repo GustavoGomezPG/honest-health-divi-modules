@@ -326,7 +326,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 			// flag on its own.
 			'show_all'             => array(
 				'label'           => esc_html__( 'Show All Selected', 'honest-divi-modules' ),
-				'description'     => esc_html__( 'Ignore the article limit and show everything in the selection, however many that turns out to be.', 'honest-divi-modules' ),
+				'description'     => esc_html__( 'Ignore Number of Articles and show everything in the selection, however many that turns out to be. Applies only to this source; switching Source back to Latest Posts or Current Team Member puts the limit in force again.', 'honest-divi-modules' ),
 				'type'            => 'yes_no_button',
 				'option_category' => 'configuration',
 				'options'         => array(
@@ -341,7 +341,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 			),
 			'limit'                => array(
 				'label'           => esc_html__( 'Number of Articles', 'honest-divi-modules' ),
-				'description'     => esc_html__( 'How many article cards to show. The design uses 3 on the Our Team page and 8 on a member page.', 'honest-divi-modules' ),
+				'description'     => esc_html__( 'How many article cards to show. The design uses 3 on the Our Team page and 8 on a member page. Ignored while Show All Selected is on.', 'honest-divi-modules' ),
 				'type'            => 'range',
 				'option_category' => 'configuration',
 				'range_settings'  => array(
@@ -354,14 +354,21 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'unitless'        => true,
 				'default'         => '3',
 				'toggle_slug'     => 'main_content',
-				// Hidden while it has no effect. Note show_all is itself only
-				// visible for the two selection sources, so switching to Latest
-				// Posts with it left on hides this control while the limit is once
-				// again in force -- render() ignores show_all there. Turning it back
-				// off restores the field.
-				'show_if_not'     => array(
-					'show_all' => 'on',
-				),
+				// Deliberately NOT hidden while Show All Selected is on.
+				//
+				// Hiding it stranded the control. Show All Selected is itself only
+				// visible for the two selection sources, so turning it on and then
+				// changing Source took away the toggle AND the limit at once, with
+				// no way back except changing Source again, switching the toggle
+				// off, and changing Source a third time.
+				//
+				// It cannot be fixed by making this field's condition smarter:
+				// canShowField() in Divi's bundle ANDs every show_if / show_if_not
+				// key, so "hide only when show_all is on AND the source is one of
+				// the two" is not expressible -- there is no OR. Leaving the field
+				// visible and inert is the state that can always be recovered from,
+				// which matters more than hiding a control that is momentarily
+				// ignored. The description says when it does nothing.
 			),
 			'button_text'          => array(
 				'label'           => esc_html__( 'Button Text', 'honest-divi-modules' ),
