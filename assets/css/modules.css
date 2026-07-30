@@ -213,12 +213,19 @@
   height: 100%;
   object-fit: cover;
 }
-/* Figma nodes 1:73/1:74: a plain 335x44 rectangle in #6985c3 -- confirmed by
-   reading the exported asset, which is fully opaque on every row, so there is no
-   slant or radius to reproduce. 335/390 = 85.9% of the card, and the label sits
-   29px in (7.44% of 390) at 22px bold italic with 0.66px tracking. It is a fixed
-   banner rather than a pill hugging its text, so a short category does not
-   shrink it. */
+/* Figma nodes 1:73/1:74: a 335x44 banner in #6985c3 whose right edge is SKEWED,
+   leaning back 10px over the 44px height (about 13 degrees off vertical) -- so
+   335px across the top and 325px across the bottom, echoing the italic label.
+   Measured by sampling the exported asset for its right-most #6985c3 pixel per
+   row. An earlier pass called this a plain rectangle: that test looked for the
+   right-most OPAQUE pixel, and the export fills the area behind the banner with
+   opaque white rather than transparency, so the slant was invisible to it.
+   335/390 = 85.9% of the card, and the label sits 29px in (7.44% of 390) at 22px
+   bold italic with 0.66px tracking. A fixed banner rather than a pill hugging its
+   text, so a short category does not shrink it.
+   The skew is a fixed 10px rather than a percentage: it is the offset the design
+   draws, and holding it constant keeps the lean identical if the banner ever
+   grows taller. */
 .honest-article-card__flag {
   position: absolute;
   top: 0;
@@ -228,7 +235,10 @@
   box-sizing: border-box;
   width: 85.9%;
   min-height: 44px;
-  padding: 4px 12px 4px 29px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+  /* Right padding clears the skew so a long category cannot run into the
+     clipped corner. */
+  padding: 4px 22px 4px 29px;
   background: var(--hh-blue, #6985c3);
   color: var(--hh-white, #ffffff);
   font-size: 22px;
