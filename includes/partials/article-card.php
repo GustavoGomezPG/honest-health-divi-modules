@@ -50,23 +50,33 @@ function honest_team_render_article_card($post, $index = null)
 	}
 
 	// The byline wrapper is omitted entirely when a post has no credited
-	// authors (live example: post 74295), rather than emitted empty. It
-	// carries `margin: 20px` and is a flex item of a column flex container,
-	// where adjacent margins do not collapse -- an empty one left 40px of
-	// dead space between the title and the description.
+	// authors (live example: post 74295), rather than emitted empty. Spacing
+	// inside the head group comes from `gap`, so an empty wrapper would still
+	// take a full gap's worth of dead space under the title.
 	$byline = '' !== $authors
 		? sprintf('<div class="honest-article-card__byline">%s</div>', $authors)
 		: '';
 
 	$animation = honest_team_animation_attrs($index);
 
+	// Two groups inside `__body`, split by space-between: the title and byline
+	// identify the article, the excerpt and its button act on it. Distributing
+	// the free space between the two groups rather than letting it collect above
+	// the button means the buttons line up across a row of cards even when the
+	// titles wrap to different heights.
 	return sprintf(
 		'<article class="honest-article-card%8$s"%9$s>
 			<div class="honest-article-card__media">%1$s%2$s</div>
-			<h3 class="honest-article-card__title">%3$s</h3>
-			%4$s
-			<p class="honest-article-card__desc">%5$s</p>
-			<a class="honest-article-card__link" href="%6$s">%7$s</a>
+			<div class="honest-article-card__body">
+				<div class="honest-article-card__head">
+					<h3 class="honest-article-card__title">%3$s</h3>
+					%4$s
+				</div>
+				<div class="honest-article-card__foot">
+					<p class="honest-article-card__desc">%5$s</p>
+					<a class="honest-article-card__link" href="%6$s">%7$s</a>
+				</div>
+			</div>
 		</article>',
 		$image,
 		$flag,

@@ -238,19 +238,47 @@
   letter-spacing: 0.66px;
   text-transform: uppercase;
 }
+/* Two groups, split by space-between so the free space lands between them
+   rather than collecting above the button. In a row of equal-height cards that
+   keeps the excerpts and buttons on a common line even when the titles wrap to
+   different depths -- which is what the previous `margin-top: auto` on the button
+   could not do, since it pushed only the button down and left the excerpt
+   floating under the title.
+   The padding that used to be repeated as horizontal margins on each of the four
+   text elements now lives here once. */
+.honest-article-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 20px 20px;
+}
+.honest-article-card__head,
+.honest-article-card__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+/* Keeps the button at its own width instead of stretching to the card, and
+   leaves the excerpt full width above it. */
+.honest-article-card__foot {
+  align-items: flex-start;
+}
+
 /* Typography from Figma nodes 1:68 (title), 1:69 (byline) and 1:70
    (description). None of this was set before: every one of them inherited the
    theme's 22px/500 at line-height 1.9, and the title also picked up the theme's
    purple. */
 .honest-article-card__title {
-  margin: 24px 20px 0;
+  margin: 0;
   font-size: 40px;
   font-weight: 800;
   line-height: 1.05;
   color: var(--hh-article-title, #000000);
 }
 .honest-article-card__byline {
-  margin: 20px;
+  margin: 0;
 }
 .honest-article-card__author {
   display: block;
@@ -271,7 +299,7 @@
   color: var(--hh-blue, #6985c3);
 }
 .honest-article-card__desc {
-  margin: 0 20px 20px;
+  margin: 0;
   font-size: 20px;
   font-weight: 400;
   line-height: 1.25;
@@ -288,8 +316,7 @@
    white starting 32px in (19.05% of 168) rather than centred. min-* rather than
    fixed so a longer label grows the button instead of overflowing it. */
 .honest-article-card__link {
-  align-self: flex-start;
-  margin: auto 20px 20px;
+  margin: 0;
   display: inline-flex;
   align-items: center;
   box-sizing: border-box;
