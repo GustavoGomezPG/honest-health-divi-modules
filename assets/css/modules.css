@@ -701,9 +701,31 @@
     grid-template-columns: 1fr;
   }
 }
+/* Mobile keeps TWO member cards per row here, unlike every other grid in this
+   file, and drops the chevron.
+   Both rules are scoped to `.honest-market__grid` on purpose: the member card is
+   a shared partial, and Executive Leadership uses the same markup on the same
+   page. Styling `.honest-member-card` directly would change that section too.
+   Two narrow cards work because this grid only ever holds a handful per market,
+   and the tighter padding keeps the portrait and name legible at roughly half a
+   phone's width. The chevron is the first thing to go: it is a decorative
+   affordance on a card that is entirely a link, and at this size it competes
+   with the name for the same row. */
 @media (max-width: 600px) {
   .honest-market__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  .honest-market__grid .honest-member-card {
+    padding: 14px 14px 18px;
+  }
+  .honest-market__grid .honest-member-card__arrow {
+    display: none;
+  }
+  /* With the chevron gone the text is the only thing left in the row, so it
+     takes the full width instead of leaving a gap where the arrow was. */
+  .honest-market__grid .honest-member-card__text {
+    width: 100%;
   }
 }
 
