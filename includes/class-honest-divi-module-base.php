@@ -293,14 +293,31 @@ abstract class Honest_Divi_Module_Base extends ET_Builder_Module {
 	 *
 	 * @param array $selectors Optional font groups keyed by slug.
 	 */
-	protected function base_advanced_fields( $selectors = array() ) {
-		return array(
-			'fonts'          => $selectors,
-			'background'     => array(),
-			'margin_padding' => array(),
-			'borders'        => array( 'default' => array() ),
-			'box_shadow'     => array( 'default' => array() ),
-			'button'         => false,
+	/**
+	 * @param array $selectors Font-group definitions, keyed by group slug.
+	 * @param array $overrides Advanced-field groups to replace wholesale. Used by
+	 *                         modules that paint their own band: `margin_padding`
+	 *                         defaults to `%%order_class%%`, which at
+	 *                         vb_support='on' is Divi's OUTER wrapper -- outside
+	 *                         the element carrying the background. Padding set on
+	 *                         the Design tab therefore appeared as blank space
+	 *                         above and below the band instead of insetting the
+	 *                         content within it. Such a module redirects
+	 *                         `css.padding` at its own inner element instead; see
+	 *                         Call To Action.
+	 * @return array
+	 */
+	protected function base_advanced_fields( $selectors = array(), $overrides = array() ) {
+		return array_merge(
+			array(
+				'fonts'          => $selectors,
+				'background'     => array(),
+				'margin_padding' => array(),
+				'borders'        => array( 'default' => array() ),
+				'box_shadow'     => array( 'default' => array() ),
+				'button'         => false,
+			),
+			$overrides
 		);
 	}
 }

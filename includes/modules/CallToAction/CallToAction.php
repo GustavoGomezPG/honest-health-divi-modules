@@ -192,6 +192,40 @@ class Honest_Divi_Module_Call_To_Action extends Honest_Divi_Module_Base {
 					'letter_spacing'  => array( 'default' => '0px' ),
 					'font'            => array( 'default' => '|700|||||||' ),
 				),
+			),
+			array(
+				// Point the Design tab's Padding at the module's own inner element
+				// rather than Divi's wrapper.
+				//
+				// The band's background lives on `.honest-cta__media`, which is
+				// `inset: 0` inside `.honest-cta`. At vb_support='on', Divi wraps
+				// third-party output, so `%%order_class%%` -- the default target --
+				// is the wrapper OUTSIDE all of that: padding set there pushed the
+				// whole painted band down and left blank space above and below it,
+				// rather than insetting the content within the band.
+				// `.honest-cta__inner` sits inside the painted box, so padding on
+				// it moves the content while the image and gradient still fill the
+				// full band. Horizontal padding works there too, insetting the
+				// content without disturbing the viewport breakout, which lives on
+				// `.honest-cta` and must keep its own padding-inline to put content
+				// back at Divi's Row width.
+				//
+				// `margin` is deliberately left on the default wrapper: margin
+				// belongs outside the band, and pointing it here would fight that
+				// same breakout.
+				//
+				// `important` is what lets an editor's value beat the stylesheet's
+				// declaration. The stylesheet keeps `padding: 85px 0 101px` as the
+				// floor, because Divi emits no CSS for a field still at its
+				// default -- which is also why the default below repeats the design
+				// values, so the Design tab opens on the numbers actually in force.
+				'margin_padding' => array(
+					'css'            => array(
+						'padding'   => "{$this->main_css_element} .honest-cta__inner",
+						'important' => 'all',
+					),
+					'custom_padding' => array( 'default' => '85px||101px||false|false' ),
+				),
 			)
 		);
 	}
