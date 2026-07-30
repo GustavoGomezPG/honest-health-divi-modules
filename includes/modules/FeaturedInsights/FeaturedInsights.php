@@ -141,6 +141,20 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 	public $vb_support = 'on';
 
 	/**
+	 * Stand-in for "this member's own posts" inside a manual selection.
+	 *
+	 * Stored in the selection like a post ID, but expands at render time to
+	 * whatever honest_team_get_articles_by_member() returns. Its POSITION in the
+	 * list is the point: it lets an editor place chosen articles before it, after
+	 * it, or both, without knowing which posts the member has.
+	 *
+	 * Deliberately not numeric, so it can never collide with a post ID.
+	 *
+	 * @var string
+	 */
+	const MEMBER_TOKEN = 'member';
+
+	/**
 	 * Placeholder an editor can type into the `heading` field to have the
 	 * current team member's first name substituted at render time -- see the
 	 * file header comment for why this is a visible token rather than an
@@ -256,9 +270,10 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'option_category' => 'configuration',
 				'description'     => esc_html__( 'Where the article cards come from.', 'honest-divi-modules' ),
 				'options'         => array(
-					'latest'         => esc_html__( 'Latest Posts', 'honest-divi-modules' ),
-					'manual'         => esc_html__( 'Manual Selection', 'honest-divi-modules' ),
-					'current_member' => esc_html__( 'Current Team Member', 'honest-divi-modules' ),
+					'latest'                => esc_html__( 'Latest Posts', 'honest-divi-modules' ),
+					'manual'                => esc_html__( 'Manual Selection', 'honest-divi-modules' ),
+					'current_member'        => esc_html__( 'Current Team Member', 'honest-divi-modules' ),
+					'current_member_custom' => esc_html__( 'Current Team Member + Custom Posts', 'honest-divi-modules' ),
 				),
 				'default'         => 'latest',
 				'toggle_slug'     => 'main_content',
@@ -276,11 +291,16 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				// is unchanged.
 				'type'            => 'honest_post_picker',
 				'option_category' => 'configuration',
-				'description'     => esc_html__( 'Choose the articles to feature and drag them into order with the arrows.', 'honest-divi-modules' ),
+				'description'     => esc_html__( 'Choose the articles to feature and put them in order with the arrows. With the "+ Custom Posts" source, add the highlighted "Member posts" entry wherever this member\'s own articles should sit -- anything above it appears first, anything below it after. Leave the list empty and only the member\'s posts are shown.', 'honest-divi-modules' ),
 				'options'         => self::get_post_options(),
 				'toggle_slug'     => 'main_content',
+				// Read by the picker in assets/js/vb-modules.js. Passed through the
+				// field definition rather than hard-coded there so the token and its
+				// label stay defined in one place and the label stays translatable.
+				'honest_member_token'       => self::MEMBER_TOKEN,
+				'honest_member_token_label' => esc_html__( 'Member posts', 'honest-divi-modules' ),
 				'show_if'         => array(
-					'source' => 'manual',
+					'source' => array( 'manual', 'current_member_custom' ),
 				),
 			),
 			// range_settings uses min_limit/max_limit (not just min/max) so a
@@ -532,13 +552,129 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 	 * @return int[]
 	 */
 	protected static function parse_post_ids( $raw ) {
+		return array_values( array_filter( self::parse_selection( $raw ), 'is_int' ) );
+	}
+
+	/**
+	 * The `current_member_custom` source: chosen posts with the member's own
+	 * expanded in place.
+	 *
+	 * The selection is walked in order. A post ID contributes that post; the
+	 * member token contributes everything the member wrote, at that point in the
+	 * sequence -- which is what lets an editor put articles both before and after
+	 * it.
+	 *
+	 * An empty selection means the token alone. Without that a freshly added
+	 * module would render nothing at all until something was ticked, and "current
+	 * team member" is the sensible thing for this source to show by default.
+	 *
+	 * Explicitly chosen posts are fetched in ONE query rather than per item, and
+	 * the member's are fetched at most once and only if the token is actually
+	 * reached. Duplicates are dropped, so a post that is both chosen and written
+	 * by the member appears once, at its chosen position.
+	 *
+	 * @param array $args         source / manual_ids / limit.
+	 * @param array $current_page Builder page context, if any.
+	 * @param int   $limit        Already-validated maximum.
+	 * @return WP_Post[]
+	 */
+	protected static function query_member_with_custom( $args, $current_page, $limit ) {
+		$items = self::parse_selection( isset( $args['manual_ids'] ) ? $args['manual_ids'] : '' );
+
+		if ( empty( $items ) ) {
+			$items = array( self::MEMBER_TOKEN );
+		}
+
+		$ids = array_values( array_filter( $items, 'is_int' ) );
+		$chosen = array();
+
+		if ( ! empty( $ids ) ) {
+			foreach ( get_posts(
+				array(
+					'post_type'      => 'post',
+					'post_status'    => 'publish',
+					'post__in'       => $ids,
+					'orderby'        => 'post__in',
+					'posts_per_page' => count( $ids ),
+				)
+			) as $post ) {
+				$chosen[ $post->ID ] = $post;
+			}
+		}
+
+		$member_id = ! empty( $current_page['id'] ) ? (int) $current_page['id'] : (int) get_the_ID();
+		$out       = array();
+		$seen      = array();
+
+		foreach ( $items as $item ) {
+			if ( count( $out ) >= $limit ) {
+				break;
+			}
+
+			$batch = array();
+
+			if ( self::MEMBER_TOKEN === $item ) {
+				$batch = honest_team_get_articles_by_member( $member_id, $limit );
+			} elseif ( isset( $chosen[ $item ] ) ) {
+				$batch = array( $chosen[ $item ] );
+			}
+
+			foreach ( $batch as $post ) {
+				if ( count( $out ) >= $limit ) {
+					break;
+				}
+
+				if ( isset( $seen[ $post->ID ] ) ) {
+					continue;
+				}
+
+				$seen[ $post->ID ] = true;
+				$out[]             = $post;
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * A stored selection as an ordered list of post IDs and tokens.
+	 *
+	 * Unlike parse_post_ids() this keeps MEMBER_TOKEN in place, because where it
+	 * sits in the order is the whole reason it exists.
+	 *
+	 * @param mixed $raw Stored field value.
+	 * @return array<int,int|string> Ints for posts, MEMBER_TOKEN for the member's own.
+	 */
+	protected static function parse_selection( $raw ) {
 		$parts = preg_split( '/[|,]/', (string) $raw );
 
 		if ( ! is_array( $parts ) ) {
 			return array();
 		}
 
-		return array_values( array_unique( array_filter( array_map( 'intval', $parts ) ) ) );
+		$items = array();
+
+		foreach ( $parts as $part ) {
+			$part = trim( (string) $part );
+
+			if ( self::MEMBER_TOKEN === $part ) {
+				// Only meaningful once; a second one would just expand to posts
+				// already placed by the first.
+				if ( ! in_array( self::MEMBER_TOKEN, $items, true ) ) {
+					$items[] = self::MEMBER_TOKEN;
+				}
+
+				continue;
+			}
+
+			$id = (int) $part;
+
+			if ( $id > 0 && ! in_array( $id, $items, true ) ) {
+				$items[] = $id;
+			}
+		}
+
+		return $items;
 	}
 
 	/**
@@ -572,6 +708,9 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				$member_id = ! empty( $current_page['id'] ) ? (int) $current_page['id'] : (int) get_the_ID();
 
 				return honest_team_get_articles_by_member( $member_id, $limit );
+
+			case 'current_member_custom':
+				return self::query_member_with_custom( $args, $current_page, $limit );
 
 			case 'manual':
 				$ids = self::parse_post_ids( isset( $args['manual_ids'] ) ? $args['manual_ids'] : '' );

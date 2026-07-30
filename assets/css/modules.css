@@ -282,7 +282,10 @@
    purple. */
 .honest-article-card__title {
   margin: 0;
-  font-size: 40px;
+  /* 30px by request. Figma node 1:68 draws it at 40px, but that is sized against
+     the design's short placeholder title; real headlines run to four and five
+     lines at that size. */
+  font-size: 30px;
   font-weight: 800;
   line-height: 1.05;
   color: var(--hh-article-title, #000000);

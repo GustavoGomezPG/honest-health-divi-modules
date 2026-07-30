@@ -626,14 +626,34 @@
 		// through the shortcode exactly like any built-in field. The PHP side
 		// (Honest_Divi_Module_Featured_Insights::parse_post_ids) accepts this and
 		// the older comma form.
-		function ids( value ) {
+		function items( value, token ) {
 			if ( ! value || 'undefined' === value ) {
 				return [];
 			}
 
+			var seen = {};
+
 			return String( value ).split( /[|,]/ )
-				.map( function ( id ) { return parseInt( id, 10 ); } )
-				.filter( function ( id ) { return id > 0; } );
+				.map( function ( part ) {
+					part = String( part ).trim();
+
+					// The token is kept as-is; everything else is a post ID. It is
+					// non-numeric by design, so the two can never be confused.
+					return ( token && token === part ) ? part : parseInt( part, 10 );
+				} )
+				.filter( function ( item ) {
+					if ( item !== token && ! ( item > 0 ) ) {
+						return false;
+					}
+
+					if ( seen[ item ] ) {
+						return false;
+					}
+
+					seen[ item ] = true;
+
+					return true;
+				} );
 		}
 
 		function move( list, from, to ) {
@@ -650,8 +670,19 @@
 
 			render: function () {
 				var props = this.props || {};
-				var options = ( props.fieldDefinition && props.fieldDefinition.options ) || {};
-				var chosen = ids( props.value );
+				var definition = props.fieldDefinition || {};
+				var options = definition.options || {};
+
+				// The member token is only meaningful for the source that expands
+				// it, so it is offered only there rather than sitting in the list
+				// as a dead entry under plain manual selection.
+				var settings = props.moduleSettings || {};
+				var token = 'current_member_custom' === settings.source
+					? ( definition.honest_member_token || 'member' )
+					: null;
+				var tokenLabel = definition.honest_member_token_label || 'Member posts';
+
+				var chosen = items( props.value, token );
 
 				// Every interaction is a whole new value written straight back, so
 				// the control keeps no state of its own and always redraws from
@@ -660,12 +691,23 @@
 					props._onChange( props.name, list.join( '|' ) );
 				};
 
-				var titleOf = function ( id ) {
-					return options[ String( id ) ] || ( '#' + id );
+				var isToken = function ( item ) {
+					return null !== token && token === item;
+				};
+
+				var titleOf = function ( item ) {
+					if ( isToken( item ) ) {
+						return tokenLabel;
+					}
+
+					return options[ String( item ) ] || ( '#' + item );
 				};
 
 				var chosenRows = chosen.map( function ( id, index ) {
-					return e( 'li', { className: 'honest-picker__item', key: 'sel-' + id },
+					return e( 'li', {
+						className: 'honest-picker__item' + ( isToken( id ) ? ' honest-picker__item--token' : '' ),
+						key: 'sel-' + id
+					},
 						e( 'span', { className: 'honest-picker__position' }, ( index + 1 ) + '.' ),
 						e( 'span', { className: 'honest-picker__title', title: titleOf( id ) }, titleOf( id ) ),
 						e( 'button', {
@@ -693,27 +735,41 @@
 					);
 				} );
 
-				var availableRows = Object.keys( options )
+				var addRow = function ( value, label, extraClass ) {
+					var add = function () { commit( chosen.concat( [ value ] ) ); };
+
+					return e( 'li', {
+						className: 'honest-picker__item honest-picker__item--available' + ( extraClass || '' ),
+						key: 'opt-' + value,
+						onClick: add
+					},
+						e( 'span', { className: 'honest-picker__title', title: label }, label ),
+						e( 'button', {
+							type: 'button',
+							className: 'honest-picker__button',
+							title: 'Add',
+							onClick: function ( event ) {
+								// The row already handles the click; without this the
+								// entry would be added twice.
+								event.stopPropagation();
+								add();
+							}
+						}, '+' )
+					);
+				};
+
+				var availableRows = [];
+
+				// Offered first so it is the obvious thing to place, and only while
+				// it is not already in the running order.
+				if ( token && -1 === chosen.indexOf( token ) ) {
+					availableRows.push( addRow( token, tokenLabel, ' honest-picker__item--token' ) );
+				}
+
+				Object.keys( options )
 					.filter( function ( id ) { return -1 === chosen.indexOf( parseInt( id, 10 ) ); } )
-					.map( function ( id ) {
-						return e( 'li', {
-							className: 'honest-picker__item honest-picker__item--available',
-							key: 'opt-' + id,
-							onClick: function () { commit( chosen.concat( [ parseInt( id, 10 ) ] ) ); }
-						},
-							e( 'span', { className: 'honest-picker__title', title: options[ id ] }, options[ id ] ),
-							e( 'button', {
-								type: 'button',
-								className: 'honest-picker__button',
-								title: 'Add',
-								onClick: function ( event ) {
-									// The row already handles the click; without this the
-									// post would be added twice.
-									event.stopPropagation();
-									commit( chosen.concat( [ parseInt( id, 10 ) ] ) );
-								}
-							}, '+' )
-						);
+					.forEach( function ( id ) {
+						availableRows.push( addRow( parseInt( id, 10 ), options[ id ] ) );
 					} );
 
 				return e( 'div', { className: 'honest-picker' },
@@ -733,7 +789,9 @@
 							: e( 'div', { className: 'honest-picker__list honest-picker__empty' }, 'Every listed post has been chosen.' )
 					),
 					e( 'p', { className: 'honest-picker__hint' },
-						'Cards appear in the order above. The Number of Articles setting still caps how many are shown.'
+						token
+							? 'Cards appear in the order above, with "' + tokenLabel + '" standing in for this member\'s own articles. Leave the list empty to show only theirs. The Number of Articles setting still caps the total.'
+							: 'Cards appear in the order above. The Number of Articles setting still caps how many are shown.'
 					)
 				);
 			}

@@ -121,6 +121,18 @@
   color: #e02b20;
 }
 
+/* The member-posts token is not a post -- it is a placeholder that expands to
+   whatever the member has written. Marked out so it never reads as just another
+   article in either list. */
+.honest-picker__item--token {
+  background: #eef4ff;
+}
+
+.honest-picker__item--token .honest-picker__title {
+  color: #2b87da;
+  font-style: italic;
+}
+
 .honest-picker__hint {
   margin: 8px 0 0;
   color: #8f9bb3;
