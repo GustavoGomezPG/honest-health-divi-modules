@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Honest Divi Modules
  * Description: Custom Divi Builder modules for the Honest Health site.
- * Version:     1.0.1
+ * Version:     1.16.0
  * Author:      Honest Health
  * Text Domain: honest-divi-modules
  */
@@ -11,19 +11,54 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HONEST_DIVI_MODULES_VERSION', '1.15.0' );
+define( 'HONEST_DIVI_MODULES_VERSION', '1.16.0' );
 define( 'HONEST_DIVI_MODULES_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HONEST_DIVI_MODULES_URL', plugin_dir_url( __FILE__ ) );
+// plugin_basename() needs this file's own path, and the activation callback lives
+// in another file, so the path is shared through a constant.
+define( 'HONEST_DIVI_MODULES_FILE', __FILE__ );
 
-require_once HONEST_DIVI_MODULES_DIR . 'includes/admin/team-settings.php';
-require_once HONEST_DIVI_MODULES_DIR . 'includes/admin/member-fields.php';
-require_once HONEST_DIVI_MODULES_DIR . 'includes/admin/slug-migration.php';
-require_once HONEST_DIVI_MODULES_DIR . 'includes/data/team-data.php';
-require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/animation.php';
-require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/media-placeholder.php';
-require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/card-chevron.php';
-require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/member-card.php';
-require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/article-card.php';
+require_once HONEST_DIVI_MODULES_DIR . 'includes/dependencies.php';
+
+// Refuses activation outright while Divi or ACF Pro is missing.
+register_activation_hook( __FILE__, 'honest_divi_modules_activation_check' );
+
+/**
+ * Load the plugin, but only when what it depends on is actually present.
+ *
+ * Deferred to `plugins_loaded` rather than running at file scope so every other
+ * plugin has declared itself before ACF Pro is looked for -- inter-plugin load
+ * order is alphabetical and not worth relying on. Nothing here needs to run
+ * sooner: every hook registered below fires after `plugins_loaded`.
+ *
+ * When a dependency is missing this returns before requiring anything. That is
+ * not just tidiness -- the admin screens call ACF functions at load time and the
+ * module base class extends ET_Builder_Module, so including those files without
+ * their dependency is exactly how a missing plugin becomes a fatal error rather
+ * than a notice.
+ */
+function honest_divi_modules_bootstrap() {
+	if ( honest_divi_modules_missing_dependencies() ) {
+		add_action( 'admin_notices', 'honest_divi_modules_dependency_notice' );
+
+		return;
+	}
+
+	require_once HONEST_DIVI_MODULES_DIR . 'includes/admin/team-settings.php';
+	require_once HONEST_DIVI_MODULES_DIR . 'includes/admin/member-fields.php';
+	require_once HONEST_DIVI_MODULES_DIR . 'includes/admin/slug-migration.php';
+	require_once HONEST_DIVI_MODULES_DIR . 'includes/data/team-data.php';
+	require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/animation.php';
+	require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/media-placeholder.php';
+	require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/card-chevron.php';
+	require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/member-card.php';
+	require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/article-card.php';
+
+	add_action( 'et_builder_ready', 'honest_divi_modules_register' );
+	add_action( 'wp_enqueue_scripts', 'honest_divi_modules_assets' );
+	add_action( 'et_fb_enqueue_assets', 'honest_divi_modules_builder_assets' );
+}
+add_action( 'plugins_loaded', 'honest_divi_modules_bootstrap' );
 
 /**
  * Registered modules, as directory name => class name.
@@ -72,7 +107,6 @@ function honest_divi_modules_register() {
 		}
 	}
 }
-add_action( 'et_builder_ready', 'honest_divi_modules_register' );
 
 /**
  * Enqueue module styles.
@@ -90,9 +124,18 @@ function honest_divi_modules_assets() {
 
 	// Registered only; the Leadership by Market module enqueues these
 	// itself so the library loads only on pages that use it.
+	//
+	// Served from the plugin rather than a CDN: the map would otherwise depend on
+	// an outbound request that a strict CSP, an offline environment or a blocked
+	// host can each deny. The version stays in the handle's version argument, so
+	// the cache key still moves if the library is replaced.
+	//
+	// Bundled library: lottie-web 5.12.2 (airbnb/lottie-web), MIT licensed, used
+	// unmodified. Replace by dropping in a new build and updating the version
+	// string below -- there is no build step here to regenerate it.
 	wp_register_script(
 		'lottie-web',
-		'https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js',
+		HONEST_DIVI_MODULES_URL . 'assets/js/lottie.min.js',
 		array(),
 		'5.12.2',
 		true
@@ -115,7 +158,6 @@ function honest_divi_modules_assets() {
 		true
 	);
 }
-add_action( 'wp_enqueue_scripts', 'honest_divi_modules_assets' );
 
 /**
  * Enqueue the builder-only assets.
@@ -152,21 +194,4 @@ function honest_divi_modules_builder_assets() {
 		true
 	);
 }
-add_action( 'et_fb_enqueue_assets', 'honest_divi_modules_builder_assets' );
 
-/**
- * Warn when the active theme is not Divi, since the modules cannot register.
- */
-function honest_divi_modules_theme_notice() {
-	$theme = wp_get_theme();
-
-	if ( 'Divi' === $theme->get( 'Name' ) || 'Divi' === $theme->get( 'Template' ) ) {
-		return;
-	}
-
-	printf(
-		'<div class="notice notice-warning"><p>%s</p></div>',
-		esc_html__( 'Honest Divi Modules requires the Divi theme (or a Divi child theme) to be active. Its modules are not registered.', 'honest-divi-modules' )
-	);
-}
-add_action( 'admin_notices', 'honest_divi_modules_theme_notice' );
