@@ -727,6 +727,23 @@
   .honest-market__grid .honest-member-card__text {
     width: 100%;
   }
+  /* The pills keep their desktop sizing otherwise -- 24px type in 15/20 padding,
+     which measures 54px tall and made "Southwest" 160px wide on its own. Four of
+     those wrap to three rows on a phone and push the map down the page. Smaller
+     type and tighter padding fit two per row.
+     10px of vertical padding on 16px type still leaves a 36px target, above the
+     24px WCAG 2.5.8 asks for, so the pills stay comfortably tappable. */
+  .honest-market__tabs {
+    gap: 10px;
+  }
+  /* Qualified by the parent rather than left as `.honest-market__tab`, which
+     would tie this to source order: the pill's Figma typography block sits far
+     below this media query at equal specificity, so a plain selector here loses
+     the font-size and silently keeps the 24px. */
+  .honest-market__tabs .honest-market__tab {
+    padding: 10px 16px;
+    font-size: 16px;
+  }
 }
 
 /* Divi's theme stylesheet sets `h1, h2, h3, h4, h5, h6 { padding-bottom: 10px }`,
