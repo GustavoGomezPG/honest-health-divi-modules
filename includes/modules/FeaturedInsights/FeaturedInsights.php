@@ -166,9 +166,43 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 		$this->advanced_fields = $this->base_advanced_fields(
 			array(
 				'eyebrow' => array( 'label' => esc_html__( 'Eyebrow', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-insights__eyebrow" ), 'toggle_slug' => 'eyebrow', 'hide_text_color' => true ),
-				'heading' => array( 'label' => esc_html__( 'Heading', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-insights__heading" ), 'toggle_slug' => 'heading', 'hide_text_color' => true ),
-				'intro'   => array( 'label' => esc_html__( 'Intro', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-insights__intro" ), 'toggle_slug' => 'intro', 'hide_text_color' => true ),
-				'button'  => array( 'label' => esc_html__( 'Button', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-insights__button" ), 'toggle_slug' => 'button', 'hide_text_color' => true ),
+				// font_size / weight / line_height defaults are the values on the
+				// Figma text nodes in q1MGpWgDpBoZeS6dgrddjB node 11:761: heading
+				// 1:63 (70px / 800), intro 1:64 (18px / 400 / 1.45) and the
+				// secondary button 1:188 (24px / 700). The heading carries no
+				// line_height default because the design specifies `normal`, which
+				// Divi's control cannot express -- the stylesheet sets it instead.
+				// These same numbers are duplicated in assets/css/modules.css,
+				// which is the floor: a Divi default emits no CSS at all for an
+				// instance saved before the default existed.
+				'heading' => array(
+					'label'           => esc_html__( 'Heading', 'honest-divi-modules' ),
+					'css'             => array( 'main' => "{$this->main_css_element} .honest-insights__heading" ),
+					'toggle_slug'     => 'heading',
+					'hide_text_color' => true,
+					'font_size'       => array( 'default' => '70px' ),
+					'letter_spacing'  => array( 'default' => '0px' ),
+					'font'            => array( 'default' => '|800|||||||' ),
+				),
+				'intro'   => array(
+					'label'           => esc_html__( 'Intro', 'honest-divi-modules' ),
+					'css'             => array( 'main' => "{$this->main_css_element} .honest-insights__intro" ),
+					'toggle_slug'     => 'intro',
+					'hide_text_color' => true,
+					'font_size'       => array( 'default' => '18px' ),
+					'letter_spacing'  => array( 'default' => '0px' ),
+					'line_height'     => array( 'default' => '1.45em' ),
+					'font'            => array( 'default' => '|400|||||||' ),
+				),
+				'button'  => array(
+					'label'           => esc_html__( 'Button', 'honest-divi-modules' ),
+					'css'             => array( 'main' => "{$this->main_css_element} .honest-insights__button" ),
+					'toggle_slug'     => 'button',
+					'hide_text_color' => true,
+					'font_size'       => array( 'default' => '24px' ),
+					'letter_spacing'  => array( 'default' => '0px' ),
+					'font'            => array( 'default' => '|700|||||||' ),
+				),
 			)
 		);
 	}
