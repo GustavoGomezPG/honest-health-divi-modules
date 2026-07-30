@@ -1148,6 +1148,23 @@
   .honest-cta__content {
     max-width: 100%;
   }
+  /* Solid overlay instead of the gradient, and the photo drops out with it.
+     The gradient is horizontal: it is clear on the image side and opaque on the
+     content side, which works only while the copy is held in a column on that
+     side. At this width `__content` goes full width (directly above), so the
+     copy crosses the clear end and sits straight on the photograph -- the
+     heading and body were reading over a face.
+     Painted with the OVERLAY colour, not the band's background colour, because
+     that is the colour the copy already sits on at desktop, so the two stay
+     consistent if either is re-picked. Dropping the image layer also means the
+     photograph is never fetched at this width. */
+  .honest-cta--align-right .honest-cta__media,
+  .honest-cta--align-left .honest-cta__media {
+    background-image: linear-gradient(
+      var(--hh-cta-overlay, #b8c8e7),
+      var(--hh-cta-overlay, #b8c8e7)
+    );
+  }
 }
 
 /* Team Member Header.
