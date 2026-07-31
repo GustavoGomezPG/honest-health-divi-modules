@@ -1,0 +1,148 @@
+/**
+ * Builder-only counter-rules for Divi's own builder-scoped base styles.
+ *
+ * WHY THIS FILE EXISTS
+ *
+ * Divi ships its base element styles twice: once bare (`h1 { … }`, `a { … }`)
+ * and once prefixed for the builder (`.et-db #et-boc .et-l h1 { … }`). Both
+ * branches sit in the same rule, so the same declaration reaches an element by
+ * whichever branch matches.
+ *
+ * On the front end only the bare branch can match -- no `#et-boc` wrapper
+ * exists -- so it scores (0,0,1) and every one of this plugin's single-class
+ * rules outranks it. Inside the Theme Builder's layout editor the preview IS
+ * wrapped in `.et-db #et-boc .et-l`, so the prefixed branch matches instead and
+ * scores (1,2,1): an ID, two classes and an element. That beats `.honest-…`
+ * at (0,1,0), and Divi's heading colour, weight, size and line-height -- plus
+ * its link colour -- win against ours. Measured symptom: every heading and
+ * every button label rendered in the theme's purple, headings at weight 700
+ * instead of 800, while the front end was correct.
+ *
+ * WHY IT IS SHAPED THIS WAY
+ *
+ * Nothing in CSS lets a lower-specificity rule reclaim a property from a
+ * higher-specificity one. `inherit`, `unset` and `revert` all set a value
+ * rather than stepping aside, and cascade layers rank BELOW unlayered styles,
+ * which is the wrong direction -- Divi's rules are unlayered. That leaves two
+ * mechanisms: `!important`, or restating our declarations at a specificity that
+ * beats Divi's. `!important` would then be fighting the Design-tab values Divi
+ * generates for module settings, which are themselves `!important`, so it is
+ * restatement -- prefixed exactly the way Divi prefixes its own.
+ *
+ * SCOPE
+ *
+ * Only the properties Divi actually claims are restated. Measured in the Theme
+ * Builder editor by matching every `#et-boc` rule against every element inside
+ * our modules:
+ *
+ *   h1-h6      color, font-size, font-weight, line-height, font-family
+ *   a          color
+ *   blockquote border-*-color
+ *   everything box-sizing
+ *
+ * `box-sizing` is `border-box` either way, so it is left alone. The blockquote
+ * colours land on a border this plugin sets to `none`, so they paint nothing --
+ * also left alone. `font-family` is deliberately NOT restated: this plugin
+ * never sets a family, it inherits Divi's, and Divi's builder value is the same
+ * one the front end uses (verified: Nunito Sans in both).
+ *
+ * These declarations are duplicates of modules.css by necessity. Keep them in
+ * step: a value changed there needs the same change here, and the var()
+ * fallbacks must match or the two contexts will disagree when a module's
+ * colour setting is left empty.
+ *
+ * Loaded only in the builder. Every selector here begins with `.et-db #et-boc`,
+ * which cannot match on the front end, so it would be inert there anyway.
+ */
+
+/* Headings ------------------------------------------------------------------
+   `padding: 0` is restated for the same reason as the rest: Divi's base sheet
+   gives every heading `padding-bottom: 10px`, and modules.css cancels it. */
+
+.et-db #et-boc .et-l .honest-text-hero__headline {
+  padding: 0;
+  color: var(--hh-hero-headline, #c7e4ff);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.et-db #et-boc .et-l .honest-exec__heading {
+  padding: 0;
+  color: var(--hh-exec-heading, #1e1e1e);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.27;
+}
+
+.et-db #et-boc .et-l .honest-market__heading {
+  padding: 0;
+  color: var(--hh-market-heading, #1e1e1e);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.27;
+}
+
+.et-db #et-boc .et-l .honest-insights__heading {
+  padding: 0;
+  color: var(--hh-insights-heading, #ffffff);
+  font-size: 70px;
+  font-weight: 800;
+  line-height: normal;
+}
+
+.et-db #et-boc .et-l .honest-cta__heading {
+  padding: 0;
+  color: var(--hh-cta-heading, #3a61b6);
+  font-size: 50px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.et-db #et-boc .et-l .honest-article-card__title {
+  padding: 0;
+  color: var(--hh-article-title, #000000);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.et-db #et-boc .et-l .honest-member__name {
+  padding: 0;
+  color: var(--hh-member-name, #1e1e1e);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.27;
+}
+
+/* Links ---------------------------------------------------------------------
+   Colour only: Divi's builder-scoped `a` rule sets nothing else, so the buttons
+   keep their size, padding and background from modules.css. */
+
+.et-db #et-boc .et-l .honest-article-card__link {
+  color: var(--hh-article-button-text, #ffffff);
+}
+
+.et-db #et-boc .et-l .honest-insights__button {
+  color: var(--hh-insights-button-text, #ffffff);
+}
+
+.et-db #et-boc .et-l .honest-cta__button {
+  color: var(--hh-cta-button-text, #ffffff);
+}
+
+.et-db #et-boc .et-l .honest-member__back-link {
+  color: var(--hh-member-back-label, #ffffff);
+}
+
+.et-db #et-boc .et-l .honest-member__linkedin {
+  color: var(--hh-member-linkedin, #6985c3);
+}
+
+/* The member card is itself an <a> and deliberately declares no colour, so on
+   the front end it inherits one. `inherit` reproduces exactly that, which the
+   arrow needs -- it is drawn in `currentColor`. The name and role inside carry
+   their own colours and are unaffected either way. */
+.et-db #et-boc .et-l .honest-member-card {
+  color: inherit;
+}

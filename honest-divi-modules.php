@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Honest Divi Modules
  * Description: Custom Divi Builder modules for the Honest Health site.
- * Version:     1.16.0
+ * Version:     1.31.2
  * Author:      Honest Health
  * Text Domain: honest-divi-modules
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HONEST_DIVI_MODULES_VERSION', '1.31.1' );
+define( 'HONEST_DIVI_MODULES_VERSION', '1.31.2' );
 define( 'HONEST_DIVI_MODULES_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HONEST_DIVI_MODULES_URL', plugin_dir_url( __FILE__ ) );
 // plugin_basename() needs this file's own path, and the activation callback lives
@@ -192,6 +192,16 @@ function honest_divi_modules_builder_assets() {
 		'honest-divi-vb-fields',
 		HONEST_DIVI_MODULES_URL . 'assets/css/vb-fields.css',
 		array(),
+		HONEST_DIVI_MODULES_VERSION
+	);
+
+	// Restates the handful of declarations Divi's builder-scoped base styles take
+	// off us inside the Theme Builder's layout editor. Depends on modules.css so
+	// it can never be ordered before the rules it is correcting.
+	wp_enqueue_style(
+		'honest-divi-vb-overrides',
+		HONEST_DIVI_MODULES_URL . 'assets/css/vb-overrides.css',
+		array( 'honest-divi-modules' ),
 		HONEST_DIVI_MODULES_VERSION
 	);
 
