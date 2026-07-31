@@ -445,6 +445,16 @@ class Honest_Divi_Module_Team_Member_Header extends Honest_Divi_Module_Base {
 		$member_id = ! empty( $current_page['id'] ) ? (int) $current_page['id'] : (int) get_the_ID();
 		$member    = honest_team_get_member( $member_id );
 
+		// In the Theme Builder's layout editor there is no member in context --
+		// the queried object is the layout itself -- so this would render empty
+		// and the template could not be laid out. Stand a real member in, for
+		// builder requests only: on the front end an unresolved member means the
+		// module genuinely has nothing to show and must stay silent rather than
+		// display somebody unrelated.
+		if ( ! $member && honest_team_is_builder_render() ) {
+			$member = honest_team_get_member( honest_team_get_preview_member_id() );
+		}
+
 		if ( ! $member ) {
 			return '';
 		}

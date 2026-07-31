@@ -113,3 +113,65 @@ function honest_team_map_segment_ranges() {
 
 	return $cache;
 }
+
+/**
+ * A member to stand in for the real one while editing in a builder.
+ *
+ * The Team Member Header and the Featured Insights "current member" sources all
+ * resolve their member from the post being viewed. In the Theme Builder's layout
+ * editor there is no such post -- the queried object is the layout itself -- so
+ * both sections render empty and the template cannot be laid out or styled.
+ * This supplies a real member for that case only.
+ *
+ * ONLY for builder requests. The caller is responsible for that check, and every
+ * caller makes it: a random member appearing on a live page would be a data bug,
+ * not a preview.
+ *
+ * The choice is held in a short transient rather than drawn fresh each time,
+ * because the header and the article grid are fetched in SEPARATE requests. Two
+ * independent draws would put one person in the header and "Articles by" someone
+ * else underneath it, which reads as broken. Sharing the pick keeps the preview
+ * coherent, and letting it expire means a later editing session shows somebody
+ * different -- so the template still gets exercised against more than one member.
+ *
+ * Members with at least one credited article are preferred, so the section below
+ * the header is populated too; on this site that is 15 of 17. Anyone published
+ * is acceptable if none qualify.
+ *
+ * @return int Member post ID, or 0 when there are no published members at all.
+ */
+function honest_team_get_preview_member_id() {
+	$cached = get_transient( 'honest_team_preview_member' );
+
+	if ( $cached && honest_team_get_member( $cached ) ) {
+		return (int) $cached;
+	}
+
+	$members = get_posts(
+		array(
+			'post_type'      => honest_team_member_post_type(),
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		)
+	);
+
+	if ( empty( $members ) ) {
+		return 0;
+	}
+
+	$with_articles = array();
+
+	foreach ( $members as $id ) {
+		if ( honest_team_get_articles_by_member( $id, 1 ) ) {
+			$with_articles[] = $id;
+		}
+	}
+
+	$pool   = ! empty( $with_articles ) ? $with_articles : $members;
+	$choice = (int) $pool[ wp_rand( 0, count( $pool ) - 1 ) ];
+
+	set_transient( 'honest_team_preview_member', $choice, 5 * MINUTE_IN_SECONDS );
+
+	return $choice;
+}

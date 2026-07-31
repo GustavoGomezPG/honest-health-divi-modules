@@ -571,6 +571,36 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 	}
 
 	/**
+	 * The member whose articles a "current member" source should show.
+	 *
+	 * Divi's page context is preferred over get_the_ID(), because during a
+	 * computed-property request the queried object is not the member being
+	 * previewed. When neither resolves to a member AND this is a builder request,
+	 * a stand-in is used so the section is populated while the Theme Builder
+	 * layout is being edited -- see honest_team_get_preview_member_id(), which
+	 * shares its choice with the header module so the two cannot disagree about
+	 * who is being previewed.
+	 *
+	 * Never substitutes on the front end: there, no member means no articles.
+	 *
+	 * @param array $current_page Builder page context, if any.
+	 * @return int
+	 */
+	protected static function resolve_member_id( $current_page ) {
+		$member_id = ! empty( $current_page['id'] ) ? (int) $current_page['id'] : (int) get_the_ID();
+
+		if ( honest_team_get_member( $member_id ) ) {
+			return $member_id;
+		}
+
+		if ( function_exists( 'honest_team_is_builder_render' ) && honest_team_is_builder_render() ) {
+			return honest_team_get_preview_member_id();
+		}
+
+		return $member_id;
+	}
+
+	/**
 	 * Post IDs from a stored selection.
 	 *
 	 * Accepts both separators so a value saved before the picker existed still
@@ -635,7 +665,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 			}
 		}
 
-		$member_id = ! empty( $current_page['id'] ) ? (int) $current_page['id'] : (int) get_the_ID();
+		$member_id = self::resolve_member_id( $current_page );
 		$out       = array();
 		$seen      = array();
 
@@ -741,12 +771,7 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 
 		switch ( $source ) {
 			case 'current_member':
-				// During a computed-property request the queried object is not the
-				// member being previewed, so Divi's own page context is preferred
-				// and get_the_ID() is only the front-end path.
-				$member_id = ! empty( $current_page['id'] ) ? (int) $current_page['id'] : (int) get_the_ID();
-
-				return honest_team_get_articles_by_member( $member_id, $unlimited ? -1 : $limit );
+				return honest_team_get_articles_by_member( self::resolve_member_id( $current_page ), $unlimited ? -1 : $limit );
 
 			case 'current_member_custom':
 				return self::query_member_with_custom( $args, $current_page, $limit, $unlimited );
