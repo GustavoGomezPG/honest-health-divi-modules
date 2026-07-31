@@ -1294,6 +1294,14 @@
   font-weight: 400;
   line-height: 1.45;
 }
+/* The bio comes through wpautop(), so a multi-paragraph biography arrives as
+   several <p> elements -- and Divi's reset zeroes their margins, which ran the
+   paragraphs together into one block of text. One line's worth of space (1em at
+   this size) separates them; the design's own bio is a single paragraph, so it
+   offers no measurement to copy here. */
+.honest-member__bio p {
+  margin: 0 0 1em;
+}
 .honest-member__bio > *:last-child {
   margin-bottom: 0;
 }

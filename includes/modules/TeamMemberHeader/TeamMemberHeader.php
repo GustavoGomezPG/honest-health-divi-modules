@@ -427,6 +427,32 @@ class Honest_Divi_Module_Team_Member_Header extends Honest_Divi_Module_Base {
 	}
 
 	/**
+	 * A member's bio as real paragraphs.
+	 *
+	 * wpautop() only starts a new paragraph on a BLANK line; a single newline
+	 * becomes a <br>. The bios are authored with single newlines between
+	 * paragraphs, so the whole biography arrived as one <p> holding <br>s, and it
+	 * ran together as an unbroken block -- no amount of paragraph styling could
+	 * space it, because there was only ever one paragraph.
+	 *
+	 * Collapsing every run of line breaks to exactly one blank line makes each
+	 * one a paragraph, and handles both authoring styles: a bio already written
+	 * with blank lines is unchanged rather than double-spaced.
+	 *
+	 * @param string $bio Raw bio text.
+	 * @return string Escaped HTML.
+	 */
+	private static function render_bio( $bio ) {
+		$bio = trim( (string) $bio );
+
+		if ( '' === $bio ) {
+			return '';
+		}
+
+		return wpautop( preg_replace( '/\R+/u', "\n\n", esc_html( $bio ) ) );
+	}
+
+	/**
 	 * The whole module body -- back bar and member block -- rendered server-side.
 	 *
 	 * Shared by render() and by the `__body` computed property.
@@ -514,7 +540,7 @@ class Honest_Divi_Module_Team_Member_Header extends Honest_Divi_Module_Base {
 			</div>',
 			esc_html( $member['name'] ),
 			esc_html( $member['job_title'] ),
-			wpautop( esc_html( $member['bio'] ) ),
+			self::render_bio( $member['bio'] ),
 			$quote,
 			$linkedin,
 			$portrait
