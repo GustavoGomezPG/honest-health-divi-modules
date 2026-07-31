@@ -532,6 +532,25 @@
 				var heading = text( props.heading );
 				var intro = contentBlock( props.content, 'honest-insights__intro', 'intro' );
 
+				// %first_name% is resolved server-side on the front end. Here the
+				// name arrives in the `__first_name` computed property, because a
+				// member's name cannot be worked out in JavaScript -- without it the
+				// builder printed the raw token.
+				//
+				// The three states are deliberately distinct: a known name
+				// substitutes, a known-empty name drops the heading entirely (what
+				// PHP does, rather than leave "Articles by " dangling), and an
+				// undefined one leaves the token visible because the round-trip has
+				// not landed yet -- blanking it then would make the heading flicker
+				// away on every load.
+				if ( -1 !== heading.indexOf( '%first_name%' ) ) {
+					if ( 'string' === typeof props.__first_name ) {
+						heading = props.__first_name
+							? heading.split( '%first_name%' ).join( props.__first_name )
+							: '';
+					}
+				}
+
 				if ( eyebrow ) {
 					headtext.push( e( 'p', { className: 'honest-insights__eyebrow', key: 'eyebrow' }, eyebrow ) );
 				}

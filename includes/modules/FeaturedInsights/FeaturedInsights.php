@@ -314,6 +314,14 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 			// the article card markup lives only in PHP. Depends on everything
 			// that changes which posts are shown; heading, colours and button
 			// settings are prop-driven and stay instant.
+			// Lets the builder's React component substitute the %first_name%
+			// heading token, which it otherwise renders literally -- the name is
+			// server data and cannot be worked out in JavaScript.
+			'__first_name'         => array(
+				'type'                => 'computed',
+				'computed_callback'   => array( 'Honest_Divi_Module_Featured_Insights', 'get_first_name' ),
+				'computed_depends_on' => array( 'source' ),
+			),
 			'__cards'              => array(
 				'type'                => 'computed',
 				'computed_callback'   => array( 'Honest_Divi_Module_Featured_Insights', 'get_cards_html' ),
@@ -828,11 +836,38 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 	 * @return string First name, or '' if there is no member in context.
 	 */
 	protected function get_member_first_name() {
-		if ( 'current_member' !== $this->props['source'] ) {
+		return self::get_first_name(
+			array( 'source' => $this->props['source'] )
+		);
+	}
+
+	/**
+	 * The member's first name, for the %first_name% heading token.
+	 *
+	 * Also the `__first_name` computed property, which is what lets the builder's
+	 * React component resolve the token instead of printing it literally.
+	 *
+	 * Static, and reached through resolve_member_id(), so it answers in the Theme
+	 * Builder's layout editor too -- where it returns the stand-in member's name
+	 * rather than nothing.
+	 *
+	 * Both member sources qualify. Only `current_member` did before, so a heading
+	 * on the combined source would have printed the raw token even on a real
+	 * member page.
+	 *
+	 * @param array $args         Depends-on values; only 'source' is read.
+	 * @param array $conditional_tags Unused; part of Divi's callback signature.
+	 * @param array $current_page Builder page context, if any.
+	 * @return string Empty when the source is not member-driven, or no member resolves.
+	 */
+	public static function get_first_name( $args = array(), $conditional_tags = array(), $current_page = array() ) {
+		$source = isset( $args['source'] ) ? (string) $args['source'] : 'latest';
+
+		if ( ! in_array( $source, array( 'current_member', 'current_member_custom' ), true ) ) {
 			return '';
 		}
 
-		$member = honest_team_get_member( get_the_ID() );
+		$member = honest_team_get_member( self::resolve_member_id( $current_page ) );
 
 		if ( ! $member ) {
 			return '';
