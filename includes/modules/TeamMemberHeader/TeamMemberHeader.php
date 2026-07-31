@@ -183,11 +183,64 @@ class Honest_Divi_Module_Team_Member_Header extends Honest_Divi_Module_Base {
 		// why none of this module's colour fields are named that).
 		$this->advanced_fields = $this->base_advanced_fields(
 			array(
-				'name'       => array( 'label' => esc_html__( 'Name', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-member__name" ), 'toggle_slug' => 'name', 'hide_text_color' => true ),
-				'job_title'  => array( 'label' => esc_html__( 'Job Title', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-member__title" ), 'toggle_slug' => 'job_title', 'hide_text_color' => true ),
-				'bio'        => array( 'label' => esc_html__( 'Bio', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-member__bio" ), 'toggle_slug' => 'bio', 'hide_text_color' => true ),
-				'quote'      => array( 'label' => esc_html__( 'Pull Quote', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-member__quote" ), 'toggle_slug' => 'quote', 'hide_text_color' => true ),
-				'linkedin'   => array( 'label' => esc_html__( 'LinkedIn Link', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-member__linkedin" ), 'toggle_slug' => 'linkedin', 'hide_text_color' => true ),
+				// font_size / weight / line_height defaults are the values on the
+				// Figma text nodes in q1MGpWgDpBoZeS6dgrddjB node 21:459: name
+				// 1:339 (48 / 700 / 1.27), job title 1:345 (24.444 / 700), bio
+				// 1:340 (18 / 400 / 1.45), quote 1:341 (24 / 700 / 1.27) and the
+				// LinkedIn link 1:343 (18 / 700). The same numbers live in
+				// assets/css/modules.css, which is the floor -- a Divi default
+				// emits no CSS for an instance saved before the default existed,
+				// and this template was built long before this pass.
+				// No line_height default on the job title or the link: the design
+				// specifies `normal`, which Divi's control cannot express.
+				'name'       => array(
+					'label'           => esc_html__( 'Name', 'honest-divi-modules' ),
+					'css'             => array( 'main' => "{$this->main_css_element} .honest-member__name" ),
+					'toggle_slug'     => 'name',
+					'hide_text_color' => true,
+					'font_size'       => array( 'default' => '48px' ),
+					'letter_spacing'  => array( 'default' => '0px' ),
+					'line_height'     => array( 'default' => '1.27em' ),
+					'font'            => array( 'default' => '|700|||||||' ),
+				),
+				'job_title'  => array(
+					'label'           => esc_html__( 'Job Title', 'honest-divi-modules' ),
+					'css'             => array( 'main' => "{$this->main_css_element} .honest-member__title" ),
+					'toggle_slug'     => 'job_title',
+					'hide_text_color' => true,
+					'font_size'       => array( 'default' => '24.444px' ),
+					'letter_spacing'  => array( 'default' => '0px' ),
+					'font'            => array( 'default' => '|700|||||||' ),
+				),
+				'bio'        => array(
+					'label'           => esc_html__( 'Bio', 'honest-divi-modules' ),
+					'css'             => array( 'main' => "{$this->main_css_element} .honest-member__bio" ),
+					'toggle_slug'     => 'bio',
+					'hide_text_color' => true,
+					'font_size'       => array( 'default' => '18px' ),
+					'letter_spacing'  => array( 'default' => '0px' ),
+					'line_height'     => array( 'default' => '1.45em' ),
+					'font'            => array( 'default' => '|400|||||||' ),
+				),
+				'quote'      => array(
+					'label'           => esc_html__( 'Pull Quote', 'honest-divi-modules' ),
+					'css'             => array( 'main' => "{$this->main_css_element} .honest-member__quote" ),
+					'toggle_slug'     => 'quote',
+					'hide_text_color' => true,
+					'font_size'       => array( 'default' => '24px' ),
+					'letter_spacing'  => array( 'default' => '0px' ),
+					'line_height'     => array( 'default' => '1.27em' ),
+					'font'            => array( 'default' => '|700|||||||' ),
+				),
+				'linkedin'   => array(
+					'label'           => esc_html__( 'LinkedIn Link', 'honest-divi-modules' ),
+					'css'             => array( 'main' => "{$this->main_css_element} .honest-member__linkedin" ),
+					'toggle_slug'     => 'linkedin',
+					'hide_text_color' => true,
+					'font_size'       => array( 'default' => '18px' ),
+					'letter_spacing'  => array( 'default' => '0px' ),
+					'font'            => array( 'default' => '|700|||||||' ),
+				),
 				'back_label' => array( 'label' => esc_html__( 'Back Bar Link', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-member__back-link" ), 'toggle_slug' => 'back_label', 'hide_text_color' => true ),
 			)
 		);

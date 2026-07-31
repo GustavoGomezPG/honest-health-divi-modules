@@ -1260,22 +1260,39 @@
 /* COMPONENT SIZES, not containers (file header rule 4): a flex basis that
    decides when the two columns stop sharing a line, and below it the
    portrait's own diameter. Neither describes the page's width. */
+/* Node 1:338 sets the text column at 744px, which is also the measure the bio
+   and quote are laid out against. Kept as a max-width rather than a fixed width
+   so the column still collapses with the flex container below 1024px. */
 .honest-member__text {
   flex: 1 1 420px;
+  max-width: 744px;
   min-width: 0;
 }
+/* Typography from Figma node 21:459: name 1:339 (48 / 700 / 1.27), job title
+   1:345 (24.444 / 700 / normal -- the design's own scaled value, kept literal),
+   bio 1:340 (18 / 400 / 1.45) and quote 1:341 (24 / 700 / 1.27). None of it had
+   been set: the name rendered at the theme's 30px and the bio at 22px/500 with a
+   1.9 line-height. */
 .honest-member__name {
   color: var(--hh-member-name, #1e1e1e);
   margin: 0 0 12px;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.27;
 }
 .honest-member__title {
   color: var(--hh-member-title, #070707);
   margin: 0 0 20px;
+  font-size: 24.444px;
   font-weight: 700;
+  line-height: normal;
 }
 .honest-member__bio {
   color: var(--hh-member-bio, #1e1e1e);
   margin: 0 0 28px;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.45;
 }
 .honest-member__bio > *:last-child {
   margin-bottom: 0;
@@ -1286,16 +1303,18 @@
   border: none;
   color: var(--hh-member-quote, #6a4c91);
   font-weight: 700;
-  font-size: 1.3rem;
-  line-height: 1.45;
+  font-size: 24px;
+  line-height: 1.27;
   quotes: none;
 }
+/* Node 1:343: 18px bold in #6985c3, beside an 18x18 mark. */
 .honest-member__linkedin {
   display: inline-flex;
   align-items: center;
   gap: 10px;
   color: var(--hh-member-linkedin, #6985c3);
   text-decoration: none;
+  font-size: 18px;
   font-weight: 700;
 }
 .honest-member__linkedin-icon {
@@ -1309,8 +1328,15 @@
 
 .honest-member__media {
   position: relative;
-  flex: 0 0 340px;
-  width: 340px;
+  /* 403px across, from node 1:253 -- but SQUARE, not the node's 403x474 box.
+     That box is the asset's bounding rectangle in Figma; the thing it renders is
+     a circle 403 wide. Our portraits are square artwork (measured: 900x900 for
+     most, one 1200x1350) with the purple ring baked into the bitmap, so a taller
+     frame with object-fit: cover would scale to the height and crop 71px off
+     each side, slicing through that ring. A square frame at the circle's own
+     diameter reproduces what the design draws. */
+  flex: 0 0 403px;
+  width: 403px;
   max-width: 100%;
   aspect-ratio: 1;
   box-sizing: border-box;
