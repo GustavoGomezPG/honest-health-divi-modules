@@ -54,6 +54,11 @@ function honest_divi_modules_bootstrap() {
 	require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/member-card.php';
 	require_once HONEST_DIVI_MODULES_DIR . 'includes/partials/article-card.php';
 
+	// Draws a new stand-in member each time the Theme Builder screen is opened, so
+	// the member-page template is laid out against somebody different session to
+	// session instead of the same person indefinitely.
+	add_action( 'admin_init', 'honest_team_rotate_preview_member' );
+
 	add_action( 'et_builder_ready', 'honest_divi_modules_register' );
 	add_action( 'wp_enqueue_scripts', 'honest_divi_modules_assets' );
 	add_action( 'et_fb_enqueue_assets', 'honest_divi_modules_builder_assets' );

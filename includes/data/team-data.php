@@ -127,12 +127,21 @@ function honest_team_map_segment_ranges() {
  * caller makes it: a random member appearing on a live page would be a data bug,
  * not a preview.
  *
- * The choice is held in a short transient rather than drawn fresh each time,
- * because the header and the article grid are fetched in SEPARATE requests. Two
+ * The choice is held in a transient rather than drawn fresh each time, because
+ * the header and the article grid are fetched in SEPARATE requests. Two
  * independent draws would put one person in the header and "Articles by" someone
  * else underneath it, which reads as broken. Sharing the pick keeps the preview
- * coherent, and letting it expire means a later editing session shows somebody
- * different -- so the template still gets exercised against more than one member.
+ * coherent.
+ *
+ * WHEN IT CHANGES is the whole design of this: rotation is tied to opening the
+ * Theme Builder, not to the clock -- see honest_team_rotate_preview_member().
+ * A short expiry was the obvious first approach and was wrong in both
+ * directions. Reloading the editor inside the window kept showing the same
+ * person, so it looked stuck; and an expiry that fell BETWEEN the header
+ * request and the grid request produced exactly the mismatch the shared pick
+ * exists to prevent (observed: a heading reading "Articles by Mary" above one of
+ * Greg's articles). The long expiry here is only a floor under the transient, so
+ * a stale pick cannot outlive a deleted member indefinitely.
  *
  * Members with at least one credited article are preferred, so the section below
  * the header is populated too; on this site that is 15 of 17. Anyone published
@@ -147,6 +156,28 @@ function honest_team_get_preview_member_id() {
 		return (int) $cached;
 	}
 
+	return honest_team_pick_preview_member();
+}
+
+/**
+ * Draw a new stand-in member and store it.
+ *
+ * Hooked to loading the Theme Builder screen, which is the one moment that
+ * reliably means "a new editing session is starting" and is not itself one of
+ * the many requests that make up that session. The alternative, hooking a
+ * builder ajax action, was measured and rejected: the layout editor issues no
+ * et_fb_retrieve_builder_data at all -- the layout arrives embedded in the admin
+ * page -- and the actions it does issue fire repeatedly per session, so the
+ * member would change underneath the editor.
+ *
+ * The previous pick is excluded so a reload visibly produces somebody new. With
+ * a pool this size a fair draw repeats about one time in fifteen, which is
+ * indistinguishable from the rotation being broken.
+ *
+ * @param int $exclude Member to avoid choosing, when the pool allows it.
+ * @return int Member post ID, or 0 when there are no published members at all.
+ */
+function honest_team_pick_preview_member( $exclude = 0 ) {
 	$members = get_posts(
 		array(
 			'post_type'      => honest_team_member_post_type(),
@@ -168,10 +199,38 @@ function honest_team_get_preview_member_id() {
 		}
 	}
 
-	$pool   = ! empty( $with_articles ) ? $with_articles : $members;
+	$pool = ! empty( $with_articles ) ? $with_articles : $members;
+
+	// Only when something is left: with a single candidate, repeating it beats
+	// returning nobody and rendering the sections empty.
+	$without_previous = array_values( array_diff( $pool, array( (int) $exclude ) ) );
+
+	if ( ! empty( $without_previous ) ) {
+		$pool = $without_previous;
+	}
+
 	$choice = (int) $pool[ wp_rand( 0, count( $pool ) - 1 ) ];
 
-	set_transient( 'honest_team_preview_member', $choice, 5 * MINUTE_IN_SECONDS );
+	set_transient( 'honest_team_preview_member', $choice, DAY_IN_SECONDS );
 
 	return $choice;
+}
+
+/**
+ * Rotate the stand-in member when the Theme Builder is opened.
+ *
+ * Checked against $_GET rather than a `load-{$hook}` hook because the screen id
+ * is assembled from Divi's menu slug ("divi_page_et_theme_builder"), which is
+ * not ours to depend on. Reading the page argument is the stable half of that.
+ */
+function honest_team_rotate_preview_member() {
+	// phpcs:ignore WordPress.Security.NonceVerification -- reading which admin
+	// screen is being displayed; changes nothing a visitor can see.
+	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+
+	if ( 'et_theme_builder' !== $page ) {
+		return;
+	}
+
+	honest_team_pick_preview_member( (int) get_transient( 'honest_team_preview_member' ) );
 }
