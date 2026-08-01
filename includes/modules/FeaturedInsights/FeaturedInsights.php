@@ -62,21 +62,34 @@
  * matters most for `current_member`: a team member with no credited articles
  * must not leave a "Articles by So-and-so" heading sitting over a blank grid.
  *
- * Two composited layouts exist for the heading+button pairing, both real and
- * both reachable via the `button_position` field:
+ * Two composited treatments exist, both real, and the `style` field picks
+ * between them as ONE decision. They differ in more than button placement --
+ * heading size and weight, and every foreground colour, change too -- so a
+ * field naming only the button would have left the rest to be reproduced by
+ * hand on each instance. That is what it used to be: `button_position` chose
+ * the layout, and the member-page instance then carried seven hand-set colour
+ * and typography overrides to finish the job. Nothing recorded that those seven
+ * belonged together, so a third instance could only be built by copying values
+ * off the second. The treatments now live in the stylesheet, keyed off a
+ * modifier class, and the field selects one:
  *
- *   - `below` (button centred under the grid): the "Our Team" page's finished
- *     section -- heading and intro centred, then the grid, then a centred
- *     button reading "Explore All Articles" (node 54:308, solid `#6985c3`
- *     fill, white text).
- *   - `top` (button beside the heading, in a row above the grid): the "Team
- *     Member Page" frame's finished section (node 224:2532) -- "Articles by
- *     Aaron" on the left, a "View All Thought Leadership" button (node
- *     224:2997, white fill, `#6985c3` border and text) on the right, no
- *     visible intro in that instance. This is the `current_member` case, the
- *     one the brief calls out as the more important of the two ("This is
- *     what powers the 'Articles by [First Name]' section"), and it recurs on
- *     every team member's page -- so `top` is the field's default.
+ *   - `feature` (Our Team page, node 54:308): heading and intro centred, 70px
+ *     extrabold white over the section's purple band, then the grid, then a
+ *     centred solid `#6985c3` button reading "Explore All Articles".
+ *   - `member` (Team Member Page, node 224:2532): "Articles by Aaron" at 40px
+ *     bold `#1e1e1e` on the left with the button beside it on the right (node
+ *     224:2997 -- no fill, `#6985c3` border and label), grid below, no visible
+ *     intro in that instance. This is the `current_member` case, the one the
+ *     brief calls out as the more important of the two ("This is what powers
+ *     the 'Articles by [First Name]' section"), and it recurs on every team
+ *     member's page -- so `member` is the field's default.
+ *
+ * The colour fields stay, and still win where they are set: a style supplies
+ * the colour through a `var(--token, fallback)` fallback in the stylesheet,
+ * while a field that has been given a value emits the token inline and
+ * overrides it. Those fields therefore carry no `default` of their own -- a
+ * default would emit the token on every instance and the style could never be
+ * seen at all.
  *
  * An earlier pass at this module sourced its button/eyebrow colours from
  * Figma nodes 50:672/50:674, which turned out to be generic wireframe
@@ -388,22 +401,21 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'toggle_slug'     => 'main_content',
 				'dynamic_content' => 'url',
 			),
-			// Two real composited layouts exist in Figma -- see the file header
-			// comment. Defaults to `top` (beside the heading): that is the
-			// `current_member` / member-page treatment, which the brief calls
-			// out as the more important of the two and which recurs on every
-			// team member's page, versus the single Our Team page instance of
-			// `below`.
-			'button_position'      => array(
-				'label'           => esc_html__( 'Button Position', 'honest-divi-modules' ),
+			// The single control that picks a whole composited treatment --
+			// layout, heading scale and colours together. See the file header
+			// comment for what each one is and where it comes from. Defaults to
+			// `member`: that treatment recurs on every team member's page,
+			// versus the single Our Team page instance of `feature`.
+			'style'                => array(
+				'label'           => esc_html__( 'Style', 'honest-divi-modules' ),
 				'type'            => 'select',
 				'option_category' => 'configuration',
-				'description'     => esc_html__( 'Where the "view all" button sits relative to the heading and grid.', 'honest-divi-modules' ),
+				'description'     => esc_html__( 'Which composited treatment to use. This sets the layout, the heading scale and the default colours together; the colour fields on the Design tab override individual parts of it.', 'honest-divi-modules' ),
 				'options'         => array(
-					'top'   => esc_html__( 'Beside Heading (Top Right)', 'honest-divi-modules' ),
-					'below' => esc_html__( 'Below Grid (Centered)', 'honest-divi-modules' ),
+					'member'  => esc_html__( 'Author Articles - compact heading, button beside it', 'honest-divi-modules' ),
+					'feature' => esc_html__( 'Feature Band - large centred heading, button below grid', 'honest-divi-modules' ),
 				),
-				'default'         => 'top',
+				'default'         => 'member',
 				'toggle_slug'     => 'main_content',
 			),
 			// Colour fields. Defaults are the hexes extracted from Figma
@@ -418,32 +430,38 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 				'toggle_slug'  => 'colors',
 				'default'      => '#1e1e1e',
 			),
+			// The four fields the two styles disagree about carry NO default, on
+			// purpose. Divi passes a field's default through to the props like any
+			// other value, so a default here would emit the custom property inline
+			// on every instance -- and an inline declaration outranks the
+			// stylesheet, which is where the styles live. Every instance would
+			// render the default treatment and the Style field would do nothing
+			// but move the button. Left empty, the token is not emitted at all
+			// (see build_css_var_declarations()), the style's own
+			// `var(--token, fallback)` decides, and setting the field still wins.
 			'heading_color'        => array(
 				'label'        => esc_html__( 'Heading Color', 'honest-divi-modules' ),
-				'description'  => esc_html__( 'Colour of the section heading.', 'honest-divi-modules' ),
+				'description'  => esc_html__( 'Overrides the heading colour this style would use.', 'honest-divi-modules' ),
 				'type'         => 'color',
 				'custom_color' => true,
 				'tab_slug'     => 'advanced',
 				'toggle_slug'  => 'colors',
-				'default'      => '#ffffff',
 			),
 			'intro_color'          => array(
 				'label'        => esc_html__( 'Intro Color', 'honest-divi-modules' ),
-				'description'  => esc_html__( 'Colour of the intro copy.', 'honest-divi-modules' ),
+				'description'  => esc_html__( 'Overrides the intro colour this style would use.', 'honest-divi-modules' ),
 				'type'         => 'color',
 				'custom_color' => true,
 				'tab_slug'     => 'advanced',
 				'toggle_slug'  => 'colors',
-				'default'      => '#ffffff',
 			),
 			'button_bg_color'      => array(
 				'label'        => esc_html__( 'Button Background', 'honest-divi-modules' ),
-				'description'  => esc_html__( 'Fill colour of the "view all" button.', 'honest-divi-modules' ),
+				'description'  => esc_html__( 'Overrides the button fill this style would use.', 'honest-divi-modules' ),
 				'type'         => 'color',
 				'custom_color' => true,
 				'tab_slug'     => 'advanced',
 				'toggle_slug'  => 'colors',
-				'default'      => '#6985c3',
 			),
 			// Named `button_label_color`, not `button_text_color` -- init()
 			// declares a font group named `button`, and Divi's font-group
@@ -457,12 +475,11 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 			// matches it.
 			'button_label_color'   => array(
 				'label'        => esc_html__( 'Button Text Color', 'honest-divi-modules' ),
-				'description'  => esc_html__( 'Label colour of the "view all" button.', 'honest-divi-modules' ),
+				'description'  => esc_html__( 'Overrides the button label colour this style would use.', 'honest-divi-modules' ),
 				'type'         => 'color',
 				'custom_color' => true,
 				'tab_slug'     => 'advanced',
 				'toggle_slug'  => 'colors',
-				'default'      => '#ffffff',
 			),
 			'button_border_color'  => array(
 				'label'        => esc_html__( 'Button Border Color', 'honest-divi-modules' ),
@@ -949,14 +966,17 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 			);
 		}
 
-		// `top`: heading (+ eyebrow/intro) and the button share one row above
+		// `member`: heading (+ eyebrow/intro) and the button share one row above
 		// the grid, matching the Team Member Page's finished design -- the
 		// button sits beside the heading, not below the grid, so `$foot`
 		// stays empty and the button is folded into `$head` instead.
-		// `below` (or anything else): the Our Team page's finished design --
-		// heading/intro centred, button centred under the grid in its own
-		// `$foot`.
-		$top_button = 'top' === $this->props['button_position'] && '' !== $button;
+		// `feature`: the Our Team page's finished design -- heading/intro
+		// centred, button centred under the grid in its own `$foot`.
+		//
+		// Anything unrecognised resolves to `feature` rather than being passed
+		// through into a class name.
+		$style      = 'member' === $this->props['style'] ? 'member' : 'feature';
+		$top_button = 'member' === $style && '' !== $button;
 
 		$head = sprintf( '<div class="honest-insights__headtext">%1$s%2$s%3$s</div>', $eyebrow, $heading, $intro );
 		if ( $top_button ) {
@@ -980,7 +1000,11 @@ class Honest_Divi_Module_Featured_Insights extends Honest_Divi_Module_Base {
 		return $this->wrap(
 			$render_slug,
 			$inner,
-			array( 'honest-insights', $top_button ? 'honest-insights--top-button' : '' ),
+			// Both styles get a modifier, including the one whose rules are the
+			// unqualified base: it costs nothing, it makes the choice readable in
+			// the inspector, and it gives the base treatment somewhere to diverge
+			// later without another round of this.
+			array( 'honest-insights', 'honest-insights--' . $style ),
 			array(
 				'--hh-insights-eyebrow'       => $this->props['eyebrow_color'],
 				'--hh-insights-heading'       => $this->props['heading_color'],

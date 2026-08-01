@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Honest Divi Modules
  * Description: Custom Divi Builder modules for the Honest Health site.
- * Version:     1.31.2
+ * Version:     1.32.0
  * Author:      Honest Health
  * Text Domain: honest-divi-modules
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HONEST_DIVI_MODULES_VERSION', '1.31.2' );
+define( 'HONEST_DIVI_MODULES_VERSION', '1.32.0' );
 define( 'HONEST_DIVI_MODULES_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HONEST_DIVI_MODULES_URL', plugin_dir_url( __FILE__ ) );
 // plugin_basename() needs this file's own path, and the activation callback lives

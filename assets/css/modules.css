@@ -858,15 +858,27 @@
 }
 
 /* Featured Insights.
-   Two real composited layouts, chosen per instance by the `button_position`
-   field -- see the file header comment for which Figma frame each comes from:
-     - default (no `--top-button` modifier): Our Team page. Heading/intro/
-       eyebrow centred, grid, then a centred button below it (`__foot`).
-     - `.honest-insights--top-button`: Team Member Page. Heading/intro/eyebrow
+   Two real composited treatments, chosen per instance by the `style` field --
+   see the module's file header for which Figma frame each comes from:
+     - `.honest-insights--feature`: Our Team page. Heading/intro/eyebrow
+       centred, grid, then a centred button below it (`__foot`).
+     - `.honest-insights--member`: Team Member Page. Heading/intro/eyebrow
        (`__headtext`) and the button share one flex row above the grid,
        heading left / button right; wraps to a stacked column at narrow
        widths since a heading plus a button will not both fit on one line on
-       mobile.
+       mobile. Smaller, darker heading and an outlined button.
+
+   The rules below fall into three groups, and the split is deliberate: shared
+   skeleton first, then the `feature` values UNQUALIFIED, then everything
+   `member` changes. Keeping `feature` unqualified is what lets `member` win on
+   one class of specificity instead of needing to out-specify an equally
+   qualified rule -- and both treatments still resolve their colours through
+   `var(--token, fallback)`, so a colour set on the instance beats either.
+
+   These values used to be typed into the member-page instance by hand, seven
+   Design-tab settings that nothing tied together. They live here now so that
+   picking the style is the whole decision.
+
    3-column card grid either way, matching both Figma instances (the Our Team
    page's row of 3 and the member page's rows of 3 for its 8 cards) -- neither
    instance uses a different column count, so there is no separate "columns"
@@ -990,12 +1002,12 @@
   outline-offset: 3px;
 }
 
-/* `top` position: heading/intro on the left, button on the right, one row,
-   above the grid -- matches the Team Member Page's "Articles by Aaron" +
+/* The `member` treatment: heading/intro on the left, button on the right, one
+   row, above the grid -- matches the Team Member Page's "Articles by Aaron" +
    "View All Thought Leadership" row exactly. `flex-wrap` plus the narrow-
    width rule below is what keeps this from overlapping/overflowing once the
    heading and button can no longer share a line. */
-.honest-insights--top-button .honest-insights__head {
+.honest-insights--member .honest-insights__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1003,13 +1015,30 @@
   flex-wrap: wrap;
   text-align: left;
 }
-.honest-insights--top-button .honest-insights__headtext {
+.honest-insights--member .honest-insights__headtext {
   flex: 1 1 320px;
   min-width: 0;
 }
-.honest-insights--top-button .honest-insights__intro {
+/* Node 224:2532 draws the heading at 40px/700 over the lavender band, against
+   the feature treatment's 70px/800 reversed out of the purple one. Same
+   `var(--token, fallback)` as the base rule, so a Heading Color set on the
+   instance still overrides it. */
+.honest-insights--member .honest-insights__heading {
+  color: var(--hh-insights-heading, #1e1e1e);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.27;
+}
+.honest-insights--member .honest-insights__intro {
+  color: var(--hh-insights-intro, #1e1e1e);
   margin: 0;
   max-width: none;
+}
+/* Node 224:2997: no fill, `#6985c3` border and label -- the border is already
+   that colour in the base rule, so only the fill and the label change. */
+.honest-insights--member .honest-insights__button {
+  background: var(--hh-insights-button-bg, transparent);
+  color: var(--hh-insights-button-text, #6985c3);
 }
 
 @media (max-width: 1024px) {
@@ -1021,11 +1050,11 @@
   .honest-insights__grid {
     grid-template-columns: 1fr;
   }
-  .honest-insights--top-button .honest-insights__head {
+  .honest-insights--member .honest-insights__head {
     flex-direction: column;
     align-items: stretch;
   }
-  .honest-insights--top-button .honest-insights__button {
+  .honest-insights--member .honest-insights__button {
     align-self: flex-start;
   }
 }

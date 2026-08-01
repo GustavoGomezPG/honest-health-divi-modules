@@ -91,6 +91,18 @@
   line-height: normal;
 }
 
+/* The `member` style needs its own copy for the same reason its base rule
+   exists at all. In modules.css the style beats the shared rule on one extra
+   class, but the counter-rule above outranks BOTH of them here, so without this
+   the editor would show every member-page instance at the feature treatment's
+   70px. Restated one class further up to stay ahead of it. */
+.et-db #et-boc .et-l .honest-insights--member .honest-insights__heading {
+  color: var(--hh-insights-heading, #1e1e1e);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.27;
+}
+
 .et-db #et-boc .et-l .honest-cta__heading {
   padding: 0;
   color: var(--hh-cta-heading, #3a61b6);
@@ -125,6 +137,10 @@
 
 .et-db #et-boc .et-l .honest-insights__button {
   color: var(--hh-insights-button-text, #ffffff);
+}
+
+.et-db #et-boc .et-l .honest-insights--member .honest-insights__button {
+  color: var(--hh-insights-button-text, #6985c3);
 }
 
 .et-db #et-boc .et-l .honest-cta__button {

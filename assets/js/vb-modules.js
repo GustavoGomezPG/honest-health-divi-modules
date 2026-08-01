@@ -505,11 +505,12 @@
 		 * the `__cards` computed property, from the same get_cards_html() the front
 		 * end calls, so the article card markup exists in one place.
 		 *
-		 * Two layouts, chosen by `button_position`, exactly as the PHP builds them:
-		 * `top` folds the button into the head row beside the heading (the member
-		 * page), anything else drops it into a centred foot below the grid (Our
-		 * Team). The `--top-button` modifier only applies when there is actually a
-		 * button to place.
+		 * Two treatments, chosen by `style`, exactly as the PHP builds them:
+		 * `member` folds the button into the head row beside the heading (the
+		 * member page), `feature` drops it into a centred foot below the grid (Our
+		 * Team). Both emit their modifier class, and the class is what carries the
+		 * heading scale and the colours -- so the editor shows the treatment
+		 * without the settings having to describe it.
 		 *
 		 * The heading is rendered as typed, including a literal `%first_name%`.
 		 * Resolving that needs the member in context, which is a server concern;
@@ -572,7 +573,8 @@
 					}, label )
 					: null;
 
-				var topButton = 'top' === props.button_position && !! button;
+				var style     = 'member' === props.style ? 'member' : 'feature';
+				var topButton = 'member' === style && !! button;
 
 				var head = [ e( 'div', { className: 'honest-insights__headtext', key: 'headtext' }, headtext ) ];
 
@@ -596,7 +598,7 @@
 				return e(
 					'div',
 					{
-						className: 'honest-insights' + ( topButton ? ' honest-insights--top-button' : '' ),
+						className: 'honest-insights honest-insights--' + style,
 						style: cssVars( {
 							'--hh-insights-eyebrow': props.eyebrow_color,
 							'--hh-insights-heading': props.heading_color,
