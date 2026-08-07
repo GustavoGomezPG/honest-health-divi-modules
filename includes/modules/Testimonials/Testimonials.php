@@ -2,12 +2,18 @@
 /**
  * Testimonials module.
  *
- * A quote carousel on a coloured band: one slide per Executive Team member
- * who has a non-empty `quote`, each a pull quote plus an attribution line
- * (name and job title), with dot indicators below to jump between slides.
- * Members without a quote are excluded entirely; ordering follows the
- * `executive_team_members` relationship as-is (Open Assumption 3: ordering
- * does not matter here). If no member has a quote, render() returns ''.
+ * A quote carousel on a coloured band: one slide per row of the Quote Carousel
+ * screen under Teams, each a pull quote plus an attribution line (name and job
+ * title), with dot indicators below to jump between slides.
+ *
+ * The rows are a curated list, not a derived one. This used to render every
+ * Executive Team member who happened to carry a `quote`, which cannot express
+ * the actual carousel: it mixes executives with market leaders, and several of
+ * those people are quoted here with different words than the pull quote on
+ * their own page. A row supplies its own text and falls back to the member's
+ * pull quote when left blank -- see honest_team_get_carousel_quotes().
+ *
+ * If the carousel has no usable rows, render() returns ''.
  *
  * Every colour it renders is exposed as an editable Divi colour field
  * (Design tab) whose default is the hex extracted from Figma (file
@@ -212,26 +218,18 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 	 * server round-trip would make every nudge of a slider wait on AJAX.
 	 *
 	 * Static because Divi calls computed callbacks as plain callables with no
-	 * module instance. It reads no props: the quotes come from the executive
-	 * roster on the Teams settings screen.
+	 * module instance. It reads no props: the slides come from the Quote Carousel
+	 * screen under Teams.
 	 *
 	 * Same caveat as the market map's ids -- $uid comes from a per-request
 	 * counter, so two copies of this module on one page would collide in the
 	 * builder preview, where each module's computed value is fetched in its own
 	 * request. The front end renders both in one request and is unaffected.
 	 *
-	 * @return array{slides:string,dots:string} Empty array when no member has a quote.
+	 * @return array{slides:string,dots:string} Empty array when the carousel is unset.
 	 */
 	public static function get_carousel_parts() {
-		$slides = array();
-
-		foreach ( honest_team_get_members( honest_team_get_executive_members() ) as $member ) {
-			if ( '' === trim( (string) $member['quote'] ) ) {
-				continue;
-			}
-
-			$slides[] = $member;
-		}
+		$slides = honest_team_get_carousel_quotes();
 
 		if ( empty( $slides ) ) {
 			return array();
@@ -243,7 +241,8 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 		$slides_html = '';
 		$dots_html   = '';
 
-		foreach ( $slides as $i => $member ) {
+		foreach ( $slides as $i => $slide ) {
+			$member   = $slide['member'];
 			$active   = 0 === $i;
 			$slide_id = sprintf( '%s-slide-%d', $uid, $i );
 
@@ -270,7 +269,7 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 				esc_attr__( 'slide', 'honest-divi-modules' ),
 				esc_attr( $slide_label ),
 				$active ? ' is-current' : '',
-				esc_html( $member['quote'] ),
+				esc_html( $slide['quote'] ),
 				esc_html( $attribution )
 			);
 
