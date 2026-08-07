@@ -17,15 +17,31 @@ refuses to overwrite an edited page unless run with the 'force' argument.
 ## Team member body layout (Divi Theme Builder)
 
 `body-layout-109656-current.txt` is the known-good state of the member page's
-body layout: header section (no background, 0 padding), articles section
-(#dad4e3 -> #ffffff vertical gradient, 89px top/bottom padding) and the CTA
-section.
+body layout, in four sections, all of them 0-padding except the articles one:
+
+  1. header section  -- `honest_team_member_header`
+  2. statement band  -- `honest_member_statement`, which paints its own
+     full-bleed band and supplies its own vertical padding, so the section
+     around it must stay transparent with no padding of its own
+  3. articles section -- `honest_featured_insights`, white, 89px top/bottom
+  4. CTA section     -- `honest_call_to_action`
+
+Section 3 carried a `#dad4e3 -> #ffffff` vertical gradient until the redesign.
+It existed to fade the hero's lavender out to white; section 2 now supplies that
+colour, so the gradient became a second competing band and was removed. Its
+prior state is `body-layout-109656-before-gradient-removal.txt`.
 
 This lives in the DATABASE, not in this repository, so it is not covered by any
 commit. It has already been lost once: a save through the Divi UI re-persisted
 an earlier state and silently discarded a wp-cli edit. Re-apply with:
 
     wp post update 109656 docs/backups/body-layout-109656-current.txt
+
+After ANY scripted edit, refresh this file from the database as well -- a stale
+restore point is worse than none, because it silently reverts whatever the last
+edit added:
+
+    wp eval 'file_put_contents("wp-content/plugins/honest-divi-modules/docs/backups/body-layout-109656-current.txt", get_post(109656)->post_content);'
 
 Divi caches per-post CSS, so any scripted edit must be followed by:
 
