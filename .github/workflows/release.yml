@@ -25,9 +25,10 @@ jobs:
       - name: Check out
         uses: actions/checkout@v4
 
-      # The plugin needs no build step -- no bundler, no compiler, no
-      # dependencies. Packaging is therefore a copy and a zip, and the only real
-      # work here is making sure the right files are in it.
+      # There is no bundler and no compiler -- the plugin's PHP, CSS and JS all
+      # ship as authored. The one build step is minification, below: the sources
+      # carry a very large amount of explanatory comment that is worth keeping in
+      # the repository and worth nothing to a browser.
       - name: Read version from the plugin header
         id: plugin
         run: |
@@ -40,6 +41,30 @@ jobs:
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Plugin header version: $version"
+
+      # The header and the constant are two copies of one fact and they drift.
+      # This build found the header on 1.32.0 while the constant had reached
+      # 1.47.0 -- fifteen bumps apart. Neither is cosmetic: the header is what
+      # WordPress shows on the Plugins screen, and the constant is the `$ver`
+      # every wp_enqueue_style/script call passes, so a stale one serves browsers
+      # a cached stylesheet after an update. Checked on every run, not just on
+      # tags, so the drift is caught while it is still one bump wide.
+      - name: Verify the header and the version constant agree
+        run: |
+          header="${{ steps.plugin.outputs.version }}"
+          constant="$(sed -n "s/^[[:space:]]*define([[:space:]]*'HONEST_DIVI_MODULES_VERSION'[[:space:]]*,[[:space:]]*'\([^']*\)'.*/\1/p" honest-divi-modules.php | head -1)"
+
+          if [ -z "$constant" ]; then
+            echo "::error::Could not read HONEST_DIVI_MODULES_VERSION from honest-divi-modules.php."
+            exit 1
+          fi
+
+          if [ "$header" != "$constant" ]; then
+            echo "::error::Plugin header says '${header}' but HONEST_DIVI_MODULES_VERSION is '${constant}'. Set both to the same value."
+            exit 1
+          fi
+
+          echo "Header and constant agree: ${header}."
 
       # The header is what WordPress shows on the Plugins screen, and it has
       # drifted from the internal constant before now (header said 1.0.1 while
@@ -67,12 +92,11 @@ jobs:
             | xargs -0 -n1 -P4 php -l > /dev/null
           echo "All PHP files parse."
 
-      - name: Build the zip
-        id: build
+      - name: Stage the package
+        id: stage
         run: |
           slug=honest-divi-modules
           version="${{ steps.plugin.outputs.version }}"
-          zipname="${slug}-${version}.zip"
 
           # WordPress installs a plugin by its directory, so the archive has to
           # contain one top-level folder named for the plugin -- not its loose
@@ -88,10 +112,151 @@ jobs:
             --exclude 'build' \
             --exclude '.DS_Store'
 
+          echo "slug=$slug" >> "$GITHUB_OUTPUT"
+          echo "zipname=${slug}-${version}.zip" >> "$GITHUB_OUTPUT"
+          echo "zippath=build/${slug}-${version}.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Minified IN PLACE inside the staged copy, at the same paths. The plugin
+      # enqueues `assets/css/modules.css` and friends by name, so shipping the
+      # minified file under the original name means no PHP has to know a build
+      # ever happened, and there is no `.min` variant to keep in step or to pick
+      # between at runtime. The repository keeps the readable sources; only the
+      # zip is squeezed.
+      #
+      # esbuild is pinned: it does CSS and JS with one tool, and
+      # `--legal-comments=none` takes the `/*! */` blocks a bare `--minify`
+      # would preserve. `--target=es2017` stops a future esbuild from emitting
+      # syntax older browsers would choke on; the sources are ES5-era already,
+      # so nothing is actually downlevelled.
+      #
+      # lottie.min.js is deliberately absent from both lists. It is third-party
+      # and already minified, so re-minifying it is pure risk for no gain.
+      - name: Minify CSS and JS
+        working-directory: build/${{ steps.stage.outputs.slug }}
+        run: |
+          set -euo pipefail
+          ESBUILD="esbuild@0.28.1"
+
+          css_files="assets/css/modules.css assets/css/vb-fields.css assets/css/vb-overrides.css"
+          js_files="assets/js/vb-modules.js assets/js/market-map.js assets/js/testimonials.js"
+
+          before=$(cat $css_files $js_files | wc -c)
+
+          for f in $css_files; do
+            npx -y "$ESBUILD" "$f" --minify --legal-comments=none \
+              --outfile="$f.tmp" --log-level=warning
+            mv "$f.tmp" "$f"
+          done
+
+          for f in $js_files; do
+            npx -y "$ESBUILD" "$f" --minify --legal-comments=none --target=es2017 \
+              --outfile="$f.tmp" --log-level=warning
+            mv "$f.tmp" "$f"
+          done
+
+          after=$(cat $css_files $js_files | wc -c)
+          echo "Minified 6 files: ${before} -> ${after} bytes ($(( 100 - (after * 100 / before) ))% smaller)."
+
+      # A broken minify is silent: the zip still builds, the plugin still
+      # activates, and the damage only shows on a page nobody opened before
+      # release. These assertions are what make the step above safe to trust.
+      #
+      # Every content assertion runs through node rather than grep, on purpose.
+      # Minified CSS is one 20,000-character line, and the strings worth
+      # asserting on contain regex metacharacters -- `data:image/svg+xml` has a
+      # `+`, `--hh-card-rule` leads with dashes. Whether those match depends on
+      # the grep build: this was written against one that treats `+` as a
+      # quantifier in BRE, where the mask assertion silently failed on a file
+      # that was perfectly intact. A verification step that can report a false
+      # failure -- or worse, a false pass -- is not verification. node does plain
+      # substring comparison with no dialect to get wrong.
+      - name: Verify the minified assets
+        working-directory: build/${{ steps.stage.outputs.slug }}
+        run: |
+          set -uo pipefail
+          fail=0
+
+          for f in assets/js/vb-modules.js assets/js/market-map.js assets/js/testimonials.js; do
+            node --check "$f" || { echo "::error::$f no longer parses after minification."; fail=1; }
+          done
+
+          node -e '
+            const fs = require("fs");
+            const css = ["assets/css/modules.css", "assets/css/vb-fields.css", "assets/css/vb-overrides.css"];
+            const js  = ["assets/js/vb-modules.js", "assets/js/market-map.js", "assets/js/testimonials.js"];
+            // Load-bearing values a minifier could plausibly mangle. The two masks
+            // are the fragile ones: percent-encoded SVGs inside url(), drawing the
+            // Text Hero's eyebrow banner and the Member Statement's label banner.
+            // Both are asserted by their own path data, so losing either is caught
+            // rather than one standing in for the other.
+            //
+            // The @keyframes are asserted as DEFINITIONS, not just as substrings.
+            // Every scroll-in reveal on this site is keyed off them while Divi's
+            // own rule holds the element at opacity 0, so a renamed or dropped
+            // keyframe does not degrade the animation -- it leaves the content
+            // permanently invisible, on a page nobody opened before release.
+            const required = [
+              "data:image/svg+xml",
+              "M0 57V14H324V57",
+              "M0 33.97V8.4H244.712",
+              "--hh-card-rule",
+              "--hh-member-inset",
+              "--hh-member-inset-bottom",
+              "--hh-statement-banner",
+              "open-quote",
+              "@keyframes honest-anim-rise",
+              "@keyframes honest-anim-fade",
+            ];
+            let bad = 0;
+            const err = (m) => { console.error("::error::" + m); bad = 1; };
+
+            for (const f of css) {
+              let d = 0;
+              for (const ch of fs.readFileSync(f, "utf8")) {
+                if (ch === "{") d++;
+                else if (ch === "}" && --d < 0) { err(f + ": unbalanced braces after minification."); break; }
+              }
+              if (d > 0) err(f + ": " + d + " unclosed block(s) after minification.");
+            }
+
+            for (const f of css.concat(js)) {
+              if (fs.readFileSync(f, "utf8").includes("/*")) {
+                err(f + " still contains block comments; the minify step did not run over it.");
+              }
+            }
+
+            const modules = fs.readFileSync("assets/css/modules.css", "utf8");
+            for (const token of required) {
+              if (!modules.includes(token)) err("modules.css lost \"" + token + "\" during minification.");
+            }
+
+            process.exit(bad);
+          ' || fail=1
+
+          # Third-party and already minified: it must come through byte-identical.
+          if ! cmp -s assets/js/lottie.min.js "$GITHUB_WORKSPACE/assets/js/lottie.min.js"; then
+            echo "::error::lottie.min.js was modified; it must ship untouched."
+            fail=1
+          fi
+
+          [ "$fail" -eq 0 ] || exit 1
+          echo "Minified assets parse, kept their load-bearing values, and carry no comments."
+
+      - name: Build the zip
+        id: build
+        run: |
+          slug="${{ steps.stage.outputs.slug }}"
+          zipname="${{ steps.stage.outputs.zipname }}"
+
           ( cd build && zip -rq "$zipname" "$slug" )
 
           echo "zipname=$zipname" >> "$GITHUB_OUTPUT"
-          echo "zippath=build/$zipname" >> "$GITHUB_OUTPUT"
+          echo "zippath=${{ steps.stage.outputs.zippath }}" >> "$GITHUB_OUTPUT"
 
       # Asserts the package is actually installable and that no development
       # material leaked into it. A silent packaging mistake is otherwise only
