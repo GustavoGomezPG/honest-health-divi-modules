@@ -185,58 +185,68 @@ jobs:
             node --check "$f" || { echo "::error::$f no longer parses after minification."; fail=1; }
           done
 
-          node -e '
-            const fs = require("fs");
-            const css = ["assets/css/modules.css", "assets/css/vb-fields.css", "assets/css/vb-overrides.css"];
-            const js  = ["assets/js/vb-modules.js", "assets/js/market-map.js", "assets/js/testimonials.js"];
-            // Load-bearing values a minifier could plausibly mangle. The two masks
-            // are the fragile ones: percent-encoded SVGs inside url(), drawing the
-            // Text Hero's eyebrow banner and the Member Statement's label banner.
-            // Both are asserted by their own path data, so losing either is caught
-            // rather than one standing in for the other.
-            //
-            // The @keyframes are asserted as DEFINITIONS, not just as substrings.
-            // Every scroll-in reveal on this site is keyed off them while Divi's
-            // own rule holds the element at opacity 0, so a renamed or dropped
-            // keyframe does not degrade the animation -- it leaves the content
-            // permanently invisible, on a page nobody opened before release.
-            const required = [
-              "data:image/svg+xml",
-              "M0 57V14H324V57",
-              "M0 33.97V8.4H244.712",
-              "--hh-card-rule",
-              "--hh-member-inset",
-              "--hh-member-inset-bottom",
-              "--hh-statement-banner",
-              "open-quote",
-              "@keyframes honest-anim-rise",
-              "@keyframes honest-anim-fade",
-            ];
-            let bad = 0;
-            const err = (m) => { console.error("::error::" + m); bad = 1; };
+          # Written to a file through a QUOTED heredoc rather than passed to
+          # `node -e '...'`. In the -e form the script is one single-quoted shell
+          # word, so a single apostrophe anywhere inside it -- including inside a
+          # JavaScript comment -- ends the quoting and hands the remainder to the
+          # shell. That is not hypothetical: this step shipped with "Text Hero's"
+          # and "Divi's" in its comments and the runner tried to execute `//` as a
+          # command, failing the release with "//: Is a directory". A quoted
+          # heredoc is interpolated by nothing, so apostrophes, backslashes and
+          # `$` are all safe here permanently.
+          cat <<'VERIFY_JS' > "$RUNNER_TEMP/verify-assets.js"
+          const fs = require("fs");
+          const css = ["assets/css/modules.css", "assets/css/vb-fields.css", "assets/css/vb-overrides.css"];
+          const js  = ["assets/js/vb-modules.js", "assets/js/market-map.js", "assets/js/testimonials.js"];
+          // Load-bearing values a minifier could plausibly mangle. The two masks
+          // are the fragile ones: percent-encoded SVGs inside url(), drawing the
+          // Text Hero's eyebrow banner and the Member Statement's label banner.
+          // Both are asserted by their own path data, so losing either is caught
+          // rather than one standing in for the other.
+          //
+          // The @keyframes are asserted as DEFINITIONS, not just as substrings.
+          // Every scroll-in reveal on this site is keyed off them while Divi's
+          // own rule holds the element at opacity 0, so a renamed or dropped
+          // keyframe does not degrade the animation -- it leaves the content
+          // permanently invisible, on a page nobody opened before release.
+          const required = [
+            "data:image/svg+xml",
+            "M0 57V14H324V57",
+            "M0 33.97V8.4H244.712",
+            "--hh-card-rule",
+            "--hh-member-inset",
+            "--hh-member-inset-bottom",
+            "--hh-statement-banner",
+            "open-quote",
+            "@keyframes honest-anim-rise",
+            "@keyframes honest-anim-fade",
+          ];
+          let bad = 0;
+          const err = (m) => { console.error("::error::" + m); bad = 1; };
 
-            for (const f of css) {
-              let d = 0;
-              for (const ch of fs.readFileSync(f, "utf8")) {
-                if (ch === "{") d++;
-                else if (ch === "}" && --d < 0) { err(f + ": unbalanced braces after minification."); break; }
-              }
-              if (d > 0) err(f + ": " + d + " unclosed block(s) after minification.");
+          for (const f of css) {
+            let d = 0;
+            for (const ch of fs.readFileSync(f, "utf8")) {
+              if (ch === "{") d++;
+              else if (ch === "}" && --d < 0) { err(f + ": unbalanced braces after minification."); break; }
             }
+            if (d > 0) err(f + ": " + d + " unclosed block(s) after minification.");
+          }
 
-            for (const f of css.concat(js)) {
-              if (fs.readFileSync(f, "utf8").includes("/*")) {
-                err(f + " still contains block comments; the minify step did not run over it.");
-              }
+          for (const f of css.concat(js)) {
+            if (fs.readFileSync(f, "utf8").includes("/*")) {
+              err(f + " still contains block comments; the minify step did not run over it.");
             }
+          }
 
-            const modules = fs.readFileSync("assets/css/modules.css", "utf8");
-            for (const token of required) {
-              if (!modules.includes(token)) err("modules.css lost \"" + token + "\" during minification.");
-            }
+          const modules = fs.readFileSync("assets/css/modules.css", "utf8");
+          for (const token of required) {
+            if (!modules.includes(token)) err("modules.css lost \"" + token + "\" during minification.");
+          }
 
-            process.exit(bad);
-          ' || fail=1
+          process.exit(bad);
+          VERIFY_JS
+          node "$RUNNER_TEMP/verify-assets.js" || fail=1
 
           # Third-party and already minified: it must come through byte-identical.
           if ! cmp -s assets/js/lottie.min.js "$GITHUB_WORKSPACE/assets/js/lottie.min.js"; then
