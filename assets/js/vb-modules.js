@@ -396,6 +396,7 @@
 							'--hh-exec-heading': props.heading_color,
 							'--hh-exec-intro': props.intro_color,
 							'--hh-card-bg': props.card_bg_color,
+							'--hh-card-rule': props.card_rule_color,
 							'--hh-card-hover-bg': props.card_hover_bg_color,
 							'--hh-card-hover-shadow': props.card_hover_shadow_color,
 							'--hh-card-name': props.card_name_color,
@@ -486,6 +487,7 @@
 							'--hh-market-tab-active-bg': props.tab_active_bg_color,
 							'--hh-market-caption': props.caption_color,
 							'--hh-card-bg': props.card_bg_color,
+							'--hh-card-rule': props.card_rule_color,
 							'--hh-card-hover-bg': props.card_hover_bg_color,
 							'--hh-card-hover-shadow': props.card_hover_shadow_color,
 							'--hh-card-name': props.card_name_color,
@@ -721,17 +723,51 @@
 				}
 
 				return e( 'div', {
-					className: 'honest-member' + ( 'on' === props.portrait_ring ? ' honest-member--portrait-ring' : '' ),
+					className: 'honest-member',
 					style: cssVars( {
 						'--hh-member-name': props.name_color,
 						'--hh-member-title': props.job_title_color,
 						'--hh-member-bio': props.bio_color,
-						'--hh-member-quote': props.quote_color,
 						'--hh-member-linkedin': props.linkedin_color,
 						'--hh-member-back-bg': props.back_bg_color,
-						'--hh-member-back-label': props.back_label_color,
-						'--hh-member-portrait-ring': props.portrait_ring_color,
-						'--hh-member-portrait-bg': props.portrait_bg_color
+						'--hh-member-back-label': props.back_label_color
+					} ),
+					dangerouslySetInnerHTML: computed( body )
+				} );
+			}
+		} );
+
+		/**
+		 * Member Statement.
+		 *
+		 * Server-rendered for the same reason as the header above it: the markup
+		 * depends on which of the member's two fields are filled in -- quote only,
+		 * why only, or both in two columns -- and duplicating that decision in
+		 * JavaScript is how the two drift apart. The label is the only prop the
+		 * body depends on, so editing it costs one round trip; the five colours are
+		 * custom properties on the wrapper built here and stay instant.
+		 */
+		modules.push( {
+			slug: 'honest_member_statement',
+
+			render: function () {
+				var props = this.props || {};
+				var body = props.__body;
+
+				// '' is PHP's answer for "no member, or nothing to show"; undefined
+				// only means the round-trip has not landed yet.
+				if ( '' === body ) {
+					return null;
+				}
+
+				return e( 'div', {
+					className: 'honest-statement',
+					style: cssVars( {
+						'--hh-statement-band': props.band_color,
+						'--hh-statement-quote': props.quote_color,
+						'--hh-statement-label': props.label_color,
+						'--hh-statement-banner': props.banner_color,
+						'--hh-statement-why': props.why_color
 					} ),
 					dangerouslySetInnerHTML: computed( body )
 				} );

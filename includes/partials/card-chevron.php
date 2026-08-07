@@ -6,26 +6,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * The double-chevron mark on a member card.
  *
- * Traced from Figma node 1:427 ("Arrow2 1 [Vectorized]"), which is four vector
- * children: two purple #6A4C91 chevrons, each with an inner shape filled in the
- * card's own #D2D8EE background so the chevron reads as an outline rather than a
- * solid. The child offsets here are that node's own insets resolved against its
- * 171x145 box, and the 180-degree rotation is the one the card applies to the
- * instance, so the chevrons point right as they do in the design.
+ * Traced from Figma node I414:803;224:2337 / ;224:2339 ("Arrow2 1
+ * [Vectorized]") as the redesigned card instantiates it: a 29x24.591 box holding
+ * exactly TWO vector children, both filled solid #6A4C91.
  *
- * Inlined rather than referenced as a file because both fills are CSS custom
- * properties: on hover the card background turns purple, so the outline and its
- * knockout have to swap to stay legible. An <img> could not do that.
+ * This replaced a 171x145, four-child version. That one drew each chevron as a
+ * purple outline around an inner shape filled in the card's own #D2D8EE, so it
+ * read as hollow. The redesign draws both chevrons solid, which is why the
+ * knockout fill (`--hh-chevron-inner`) is gone rather than merely retuned --
+ * with the card background now 38% lavender there is no longer a single opaque
+ * colour a knockout could be filled with anyway.
+ *
+ * The child offsets below are that node's own percentage insets resolved against
+ * the 29x24.591 box (left chevron at 7.37%/8.54%, right at 50.56%/8.55%), and
+ * each path's own coordinate space is already its natural ~12.2x20.5, so the
+ * offsets are plain translations with no scaling. The 180-degree rotation is the
+ * one the card applies to the instance, so the chevrons point right as they do
+ * in the design.
+ *
+ * Still inlined rather than referenced as a file because the fill is a CSS
+ * custom property: on hover the card background turns purple and the mark has to
+ * follow it to white. An <img> could not do that.
  *
  * @return string
  */
 function honest_team_render_card_chevron() {
-	return '<svg class="honest-member-card__chevron" viewBox="0 0 171 145" width="40" height="34" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
-  <g transform="rotate(180 85.5 72.5)">
-    <path transform="translate(73.87 -0.12)" fill="var(--hh-chevron, #6a4c91)" d="M71.1697 0.15861C71.8772 0.0721103 72.5847 0.0198623 73.2947 0.00211231C77.2447 -0.100638 81.0847 3.56561 83.6647 6.53886C88.0747 11.6221 100.995 19.1761 96.4522 27.0839C95.2647 29.1506 91.7597 32.4299 90.0222 34.1576L81.7672 42.3971C71.6372 52.5176 61.1932 62.7386 51.2202 72.9889C52.06 73.6324 53.0292 74.6016 53.7942 75.3534L81.6573 103.226L90.3773 111.891C93.1223 114.621 97.2722 118.017 97.1922 122.152C97.1022 126.759 91.7498 130.852 88.6273 133.894C84.9773 137.451 81.5123 141.831 77.2823 144.613C75.8598 145.55 73.9147 145.618 72.2747 145.595C71.4147 145.444 70.588 145.232 69.7912 144.865C66.995 143.579 44.811 120.581 40.733 116.552L15.5182 91.6766C11.498 87.6874 7.47674 83.6804 3.49124 79.6636C-0.831512 75.3069 -1.34702 70.7834 3.11248 66.2536C7.52773 61.7691 12.0135 57.3349 16.471 52.8866L38.4722 30.8951L57.071 12.3826C60.4275 9.04311 66.9865 1.54061 71.1697 0.15861Z"/>
-    <path transform="translate(-0.05 -0.10)" fill="var(--hh-chevron, #6a4c91)" d="M71.1208 0.140858C71.6715 0.0668582 72.2258 0.0211054 72.781 0.00360536C78.414 -0.163145 82.2323 5.49211 85.9315 9.11886C89.2055 12.3289 93.0218 15.6319 95.6975 19.2796C97.139 21.2444 97.0435 26.0756 95.413 27.9294C91.583 32.5409 86.9188 36.4849 82.7235 40.7826C72.1593 51.6046 61.0423 62.0421 50.6268 72.9944C53.4263 75.0771 54.9925 76.9656 57.4755 79.3926L70.7058 92.5544C78.4005 100.249 86.3143 107.867 93.958 115.619C96.0215 117.712 96.876 119.614 96.7165 122.627C96.6363 124.178 96.1323 125.678 95.2593 126.963C93.726 129.255 89.6795 132.754 87.601 134.847C84.9453 137.432 82.4675 140.215 79.75 142.735C77.1923 145.108 75.136 145.729 71.7925 145.541C70.944 145.382 70.1215 145.107 69.3475 144.724C67.1443 143.647 51.7118 127.722 48.638 124.681L18.6275 94.8949C13.4423 89.7334 8.21528 84.5641 3.08728 79.3514C1.78153 78.0241 1.05778 77.1851 0.405284 75.5056C-0.160216 74.1084 -0.206214 70.5144 0.734286 69.2586C4.61479 64.0769 10.7223 58.5429 15.278 54.0021L33.4525 35.8331L54.94 14.3271C58.883 10.3819 62.8475 6.32686 66.9073 2.50036C68.1098 1.36686 69.5628 0.661108 71.1208 0.140858Z"/>
-    <path transform="translate(86.46 12.40)" fill="var(--hh-chevron-inner, #d2d8ee)" d="M60.777 0C64.4695 3.452 67.932 7.28725 71.747 10.7868L22.0305 60.4262C25.559 63.3635 31.0467 69.132 34.5277 72.568L58.4895 96.299C62.682 100.465 67.6845 105.739 71.962 109.55C68.182 113.198 64.462 116.91 60.8045 120.682C56.466 115.941 50.7865 110.529 46.1628 105.908L19.3082 79.1628L6.8895 66.8662C5.0815 65.0817 1.93975 61.7078 0 60.4175C19.984 40.017 40.765 20.3048 60.777 0Z"/>
-    <path transform="translate(12.60 12.38)" fill="var(--hh-chevron-inner, #d2d8ee)" d="M60.3317 0C61.137 0.22725 70.0567 9.39775 71.5687 10.7515L38.549 43.764C33.0585 49.2455 27.248 54.833 21.9325 60.4325C26.1065 64.229 30.8052 69.1378 34.836 73.1575L57.4922 95.7513C60.948 99.194 68.333 106.929 71.8382 109.557C69.2235 111.596 63.1498 117.921 60.661 120.428C60.2795 120.331 51.752 111.68 50.4635 110.393L15.7725 76.0145L5.47725 65.8368C4.01675 64.4023 1.18425 61.785 0 60.361C4.52175 55.3913 11.0118 49.2413 15.8785 44.3735L46.4805 13.836C50.699 9.637 56.47 4.27325 60.3317 0Z"/>
+	return '<svg class="honest-member-card__chevron" viewBox="0 0 29 24.591" width="29" height="24.591" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <g transform="rotate(180 14.5 12.2955)">
+    <path transform="translate(14.662 2.103)" fill="var(--hh-chevron, #6a4c91)" d="M10.3072 0C10.9334 0.585427 11.5206 1.23585 12.1676 1.82933L3.73617 10.2477C4.33457 10.7459 5.26524 11.7241 5.85558 12.3069L9.91927 16.3314C10.6303 17.0379 11.4787 17.9324 12.2041 18.5787C11.563 19.1974 10.9322 19.8268 10.3119 20.4666C9.57611 19.6626 8.61291 18.7447 7.82877 17.961L3.2745 13.4253L1.16839 11.3399C0.861774 11.0373 0.328963 10.4651 0 10.2462C3.3891 6.78651 6.91336 3.4435 10.3072 0Z"/>
+    <path transform="translate(2.137 2.100)" fill="var(--hh-chevron, #6a4c91)" d="M10.2317 0C10.3683 0.0385395 11.881 1.59377 12.1374 1.82335L6.53755 7.42196C5.60641 8.35158 4.62101 9.29916 3.71955 10.2488C4.42742 10.8926 5.22428 11.7251 5.90786 12.4068L9.75015 16.2385C10.3362 16.8224 11.5886 18.1342 12.1831 18.5798C11.7397 18.9256 10.7096 19.9983 10.2875 20.4235C10.2228 20.407 8.77665 18.9398 8.55814 18.7216L2.67487 12.8913L0.92889 11.1653C0.681203 10.922 0.200838 10.4782 0 10.2367C0.766846 9.39384 1.86749 8.35086 2.69285 7.52533L7.88266 2.34646C8.59807 1.63434 9.57678 0.724703 10.2317 0Z"/>
   </g>
 </svg>';
 }

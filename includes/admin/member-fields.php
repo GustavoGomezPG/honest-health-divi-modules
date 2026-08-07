@@ -45,6 +45,22 @@ function honest_team_register_member_fields() {
 					'rows'         => 4,
 					'new_lines'    => '',
 				),
+				// A wysiwyg rather than a textarea like the quote above it, so a
+				// longer statement can carry paragraphs and emphasis. Media upload
+				// is off and the toolbar reduced: this is a block of prose inside a
+				// fixed two-column band, and an image or a heading dropped into it
+				// has nowhere sensible to go.
+				array(
+					'key'           => 'field_honest_member_why',
+					'label'         => __( 'Why Statement', 'honest-divi-modules' ),
+					'name'          => 'why_statement',
+					'type'          => 'wysiwyg',
+					'instructions'  => __( 'Shown beside the pull quote in the Member Statement module. With only one of the two filled in, that one runs at full width instead. Leave both blank to hide the band entirely.', 'honest-divi-modules' ),
+					'tabs'          => 'visual',
+					'toolbar'       => 'basic',
+					'media_upload'  => 0,
+					'delay'         => 0,
+				),
 				array(
 					'key'          => 'field_honest_member_linkedin',
 					'label'        => __( 'LinkedIn URL', 'honest-divi-modules' ),

@@ -76,12 +76,24 @@
  */
 
 .honest-member-card {
-  display: block;
-  background: var(--hh-card-bg, #d2d8ee);
-  /* Figma node 1:106: radius 18, padding 20 top / 30 sides / 28 bottom. The
-     bottom is deeper than the top because the chevron row sits above it. */
+  /* A column flex, not a block, so the chevron can pin to the card's bottom
+     rather than flow under whatever height the job title happened to need. The
+     design puts it 17px above the bottom edge on BOTH breakpoints (415-398 on
+     desktop node 414:796, 433-416 on mobile node 403:1330) regardless of whether
+     the title runs to one line or two -- which is what keeps the chevrons level
+     across a row. Grid rows already equalise card heights, so `margin-top: auto`
+     on the arrow is all that is needed to land on the design's number. */
+  display: flex;
+  flex-direction: column;
+  background: var(--hh-card-bg, rgba(210, 216, 238, 0.38));
+  /* Figma node 414:796: 289x415, radius 18, and NO padding of its own. The
+     headshots are transparent cutouts now, so the portrait is full-bleed to the
+     card's top and side edges and the 30px inset belongs to the body below the
+     rule instead. `overflow: hidden` is what lets the cutout reach those edges
+     and still be clipped by the radius; it does not touch the hover shadow,
+     which is painted outside this element's own border box. */
   border-radius: 18px;
-  padding: 20px 30px 28px;
+  overflow: hidden;
   text-decoration: none;
   transition:
     transform 0.25s cubic-bezier(0.2, 0.7, 0.3, 1),
@@ -90,34 +102,70 @@
     color 0.2s ease;
 }
 .honest-member-card__media {
+  flex: 0 0 auto;
+  /* Required, not tidy-up. As a flex item this box gets `min-height: auto`,
+     which resolves to its CONTENT's height -- and the content is an <img> whose
+     intrinsic height at full width can exceed the ratio below. That floor then
+     beats `aspect-ratio` and the portrait area grows to the image's own
+     proportions: measured, a legacy 1200x1350 portrait pushed this box to 292.7px
+     against the 250.6px the ratio asks for, which dropped that card's rule ~42px
+     below its neighbour's in the same row. Cutouts are all one size so they never
+     showed it. Zeroing the floor lets the ratio win for every image. */
+  min-height: 0;
   display: block;
   position: relative;
-  /* Figma node 1:107: the portrait box is 228.75x269, not square. */
-  aspect-ratio: 228.75 / 269;
-  overflow: hidden;
+  /* Figma node 414:796 (and 26:364 in the older file): the portrait area runs
+     from the card's top edge down to the rule at y=278, on a 289-wide card.
+     Landscape-ish, where the old baked-in purple-circle asset was portrait
+     (228.75x269). */
+  aspect-ratio: 289 / 278;
 }
 .honest-member-card__image {
   display: block;
   width: 100%;
   height: 100%;
-  /* Figma specifies object-cover, but its asset is exactly 228.75x269 -- the
-     same ratio as the box -- so cover crops nothing there. Real uploads are not
-     that ratio, and cover would silently crop faces, so `contain` is the honest
-     equivalent of the designed result. The box is background-transparent, so
-     any letterboxing shows the card, not a grey band. */
+  /* `bottom` is the whole trick. Every delivered cutout is a transparent PNG
+     whose subject is flush to the BOTTOM edge of the file -- verified across all
+     19: zero rows of transparent padding below the subject, with the slack all
+     above and to the sides. Anchoring the box's bottom therefore lands every
+     subject ON the rule, which is exactly how the design places them: it hand-
+     positions each cutout at a different height and width, but all of them share
+     one bottom edge (y=278). One rule reproduces that for any person without a
+     per-member number anywhere.
+     `contain` rather than `cover` so a legacy non-cutout portrait -- the three
+     members still on the old ringed asset, or the article-card reuse -- is kept
+     whole instead of having a face cropped. The box is transparent, so the slack
+     shows the card. */
   object-fit: contain;
+  object-position: center bottom;
 }
 .honest-member-card__body {
+  /* Grows to fill whatever height the grid row settles on, which is what gives
+     `margin-top: auto` on the arrow something to absorb. */
+  flex: 1 1 auto;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 20px;
+  flex-direction: column;
+  /* Children stretch (the default) on purpose: it gives the text block the full
+     inner width so long job titles wrap at the card edge, and it left-aligns the
+     chevron, which the redesign moves out of the text's row and onto its own line
+     underneath. */
+  /* Figma node 414:801: a 1px #B9C4ED rule spanning the full card width at
+     y=278, separating portrait from text. Drawn as this element's top border so
+     it bleeds to both card edges while the text keeps its 30px inset. */
+  border-top: 1px solid var(--hh-card-rule, #b9c4ed);
+  /* Top: the rule's lower edge at 279 to the name's line box at 294. Sides: 30.
+     Bottom: the chevron ends at 398 and the card at 415. */
+  padding: 15px 30px 17px;
 }
 .honest-member-card__text {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* The FLOOR under the chevron's `margin-top: auto`, not the usual gap. On the
+     tallest card in a row the auto margin collapses to nothing, and without this
+     a two-line job title would sit right on top of the mark; the design's own
+     tightest case (mobile node 403:1330, a two-line title) leaves 12.41px. */
+  margin-bottom: 12px;
 }
 .honest-member-card__name {
   display: block;
@@ -126,7 +174,8 @@
 }
 .honest-member-card__title {
   display: block;
-  font-weight: 700;
+  /* Figma node 414:800 is Proxima Nova Medium, against Bold on the name above. */
+  font-weight: 500;
   color: var(--hh-card-title, #1e1e1e);
 }
 .honest-member-card:hover {
@@ -149,12 +198,32 @@
   outline-offset: 2px;
 }
 
+/* Mobile member card -- Figma "Team Mobile" frame 403:1322, card node 403:1330.
+   A 289x433 card against the desktop 289x415: the portrait area is taller, 296 to
+   the rule rather than 278. Everything else here -- the rule, the 30px inset, the
+   chevron pinned 17px off the bottom -- is unchanged, so only what moves is
+   restated. The job title also drops to 15px Regular, but that lives with the
+   rest of the card's typography near the end of this file, next to the desktop
+   value it has to beat on source order.
+   Scoped to the shared component, not to a grid, because BOTH sections use it at
+   this width; Leadership by Market then overrides the layout wholesale further
+   down, since its mobile card is horizontal. */
+@media (max-width: 600px) {
+  .honest-member-card__media {
+    aspect-ratio: 289 / 296;
+  }
+  /* 339.2 (name box bottom) to 343 (job box top) on node 403:1330. */
+  .honest-member-card__text {
+    gap: 4px;
+  }
+}
+
 /* Empty-media placeholder (both card types). Centred in the existing
    fixed-ratio media box without changing the box's dimensions; sized from the
-   box so the square member box and the 390/260 article box both get a
-   proportionate mark. `object-fit: contain` keeps the heart square in the
-   non-square article box. Greyscaled in CSS rather than shipping a second
-   binary -- one asset stays the single source of truth. */
+   box as a percentage so the 289/278 member box and the 390/260 article box both
+   get a proportionate mark. `object-fit: contain` keeps the heart square in
+   boxes that are not. Greyscaled in CSS rather than shipping a second binary --
+   one asset stays the single source of truth. */
 .honest-media-placeholder {
   position: absolute;
   top: 50%;
@@ -509,8 +578,57 @@
   font-weight: 400;
   line-height: 1.45;
   letter-spacing: normal;
-  max-width: 1040px;
-  margin-inline: auto;
+}
+
+/* Mobile Text Hero -- Figma "Team Mobile" frame 403:1322, nodes 403:1227
+   (eyebrow), 403:1229 (headline), 403:1228 (body).
+
+   Letter spacing is 0 on all three there, which is what `normal` already
+   resolves to for these faces, so none of them restate it.
+
+   What actually moves at this width is alignment and two metrics: the hero stops
+   centring its copy (only the eyebrow banner stays centred), the headline's line
+   box tightens from 1.45 to 1.01 -- the mock's 28px type sets a 28.28px line, so
+   its two lines close right up -- and the body drops 20px to 16px. The eyebrow
+   keeps its 56px. */
+@media (max-width: 600px) {
+  .honest-text-hero__inner {
+    text-align: left;
+  }
+  .honest-text-hero__eyebrow {
+    text-align: center;
+    /* The banner is the one thing here that will not fit. It measures the text
+       plus 0.8929em of padding -- 5.882em all in -- so at the design's 56px it
+       needs 329.4px against the 321.6px Divi gives this column at 402, and "Our
+       Team." breaks onto a second line. The design has it on one, in a banner
+       330 wide: it simply lets the banner sit outside the 45px gutter the rest
+       of the hero keeps.
+       Divi's row is a flat 80% of the viewport, so 80vw / 5.882em = 13.6vw is
+       the size at which the banner exactly fills the column; 13.5vw leaves a
+       couple of px of slack. Capped at the design's 56px, which it reaches at a
+       415px viewport -- wide enough that the column fits the banner anyway.
+       Measured, not assumed: this site's face sets "Our Team." at 4.989em
+       against Figma's 5.0em, so the design's own numbers carry over directly. */
+    font-size: min(56px, 13.5vw);
+    /* Banner bottom 157 to headline top 182. */
+    margin-bottom: 25px;
+  }
+  .honest-text-hero__headline {
+    line-height: 1.01;
+    /* Headline box ends 238, body starts 254.5. */
+    margin-bottom: 16px;
+  }
+  /* 18px, NOT the design's 16px. Body copy on this site holds an 18px floor on
+     mobile -- a deliberate, client-confirmed departure from the Figma frame,
+     which takes this paragraph to 16px and the three section intros to 15px.
+     Both were rejected as too small to read on a phone. This is still a
+     reduction from the 20px desktop sets, just a smaller one.
+     The same floor is applied to `.honest-exec__intro`,
+     `.honest-insights__intro` and `.honest-market__intro`. Do not "restore" the
+     mock's values. */
+  .honest-text-hero__body {
+    font-size: 18px;
+  }
 }
 
 /* Executive Leadership.
@@ -563,9 +681,25 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+/* Figma "Team Mobile" frame 403:1322 takes the section heading from 48px to 24px
+   and the intro from 18px to 15px. NEITHER is followed here, both by client
+   decision: the heading holds at 34px and the intro at an 18px floor. 24px read
+   as too small for a section heading on a phone -- see
+   `.honest-text-hero__body` for the body-copy note.
+   34px is the shared mobile size for all three section headings on this page
+   (Leadership by Market, Executive Leadership, Featured Insights), so they
+   should be changed together or not at all.
+   Line heights are unchanged either way (1.27 and 1.45).
+   At the desktop 48px the heading was taking three lines of a 402px screen. */
 @media (max-width: 600px) {
   .honest-exec__grid {
     grid-template-columns: 1fr;
+  }
+  .honest-exec__heading {
+    font-size: 34px;
+  }
+  .honest-exec__intro {
+    font-size: 18px;
   }
 }
 
@@ -701,48 +835,79 @@
     grid-template-columns: 1fr;
   }
 }
-/* Mobile keeps TWO member cards per row here, unlike every other grid in this
-   file, and drops the chevron.
-   Both rules are scoped to `.honest-market__grid` on purpose: the member card is
-   a shared partial, and Executive Leadership uses the same markup on the same
-   page. Styling `.honest-member-card` directly would change that section too.
-   Two narrow cards work because this grid only ever holds a handful per market,
-   and the tighter padding keeps the portrait and name legible at roughly half a
-   phone's width. The chevron is the first thing to go: it is a decorative
-   affordance on a card that is entirely a link, and at this size it competes
-   with the name for the same row. */
+/* Leadership by Market goes to ONE column on mobile, and its card turns
+   horizontal -- Figma "Team Mobile" frame 403:1322, cards 403:1330 / 403:1337.
+   This is a different card from the one Executive Leadership shows at the same
+   width, which is why the whole block is scoped to `.honest-market__grid`: the
+   member card is a shared partial and styling `.honest-member-card` bare here
+   would drag the executive grid along with it.
+
+   The design's card is 319x106: a ~96x104 portrait bottom-flush against the
+   card's own bottom edge on the left, name and job title centred beside it, and
+   NEITHER the rule nor the chevron. Both of those are genuinely absent from the
+   mock rather than merely clipped by it -- the rule is not in the node tree at
+   all, and the chevron is left at its desktop coordinates outside the card's
+   106px box, which `clip` then discards. */
 @media (max-width: 600px) {
   .honest-market__grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    grid-template-columns: 1fr;
+    /* 1013 (card 1 bottom) to 1026.04 (card 2 top). */
+    gap: 13px;
   }
   .honest-market__grid .honest-member-card {
-    padding: 14px 14px 18px;
+    flex-direction: row;
+    /* The design's card height. A min rather than a fixed height so a name that
+       wraps on a narrow phone grows the card instead of being clipped by the
+       `overflow: hidden` the radius needs. */
+    min-height: 106px;
+  }
+  /* Stretching to the card's full height is what puts the portrait's bottom edge
+       on the card's bottom edge, since the image inside is already bottom-
+       anchored. Width covers the design's ~96px portrait plus its ~11px inset;
+       `aspect-ratio` has to be cleared or it would fight the stretch. */
+  .honest-market__grid .honest-member-card__media {
+    flex: 0 0 104px;
+    aspect-ratio: auto;
+  }
+  .honest-market__grid .honest-member-card__body {
+    /* Centred against the portrait: the text block sits 26.5px from the top and
+       30.6px from the bottom of the design's card, i.e. optically centred. */
+    justify-content: center;
+    border-top: 0;
+    padding: 12px 16px;
+  }
+  .honest-market__grid .honest-member-card__text {
+    /* No chevron below it here, so the floor the shared rule sets is dead weight,
+       and the name/title gap goes back to the 8px the mock measures. */
+    gap: 8px;
+    margin-bottom: 0;
   }
   .honest-market__grid .honest-member-card__arrow {
     display: none;
   }
-  /* With the chevron gone the text is the only thing left in the row, so it
-     takes the full width instead of leaving a gap where the arrow was. */
-  .honest-market__grid .honest-member-card__text {
-    width: 100%;
-  }
-  /* The pills keep their desktop sizing otherwise -- 24px type in 15/20 padding,
-     which measures 54px tall and made "Southwest" 160px wide on its own. Four of
-     those wrap to three rows on a phone and push the map down the page. Smaller
-     type and tighter padding fit two per row.
-     10px of vertical padding on 16px type still leaves a 36px target, above the
-     24px WCAG 2.5.8 asks for, so the pills stay comfortably tappable. */
+  /* Pills: the design's are 35px tall and sit four across one row (node 403:1322
+     puts them at x=45/113/221/314 with 9px between).
+     Its own numbers are 16px type on a 1.958 line box in 4/20 padding, but those
+     frames are FIXED-width, so the declared 20 is not what renders -- measured
+     against each label the real inset is ~11. Reproduced here as the line box
+     plus 9px, not 11: this site's fallback face sets the four labels 8px wider in
+     total than Proxima Nova does, and at 11px the row totals 330 against a 321.6
+     content column and wraps to two. 9px brings it to 314 and it fits.
+     The line height has to be restated because the base rule sets 1; the desktop
+     pill reaches its 55px through 15px of padding instead, and inheriting that
+     `1` here is what made these render 20px tall.
+     35px stays comfortably above the 24px target WCAG 2.5.8 asks for. */
   .honest-market__tabs {
-    gap: 10px;
+    gap: 9px;
   }
   /* Qualified by the parent rather than left as `.honest-market__tab`, which
      would tie this to source order: the pill's Figma typography block sits far
      below this media query at equal specificity, so a plain selector here loses
      the font-size and silently keeps the 24px. */
   .honest-market__tabs .honest-market__tab {
-    padding: 10px 16px;
+    padding: 2px 9px;
     font-size: 16px;
+    line-height: 1.958;
   }
 }
 
@@ -1046,13 +1211,48 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+/* The "Team Mobile" frame (403:1322) stops after the executive cards, so unlike
+   Leadership by Market and Executive Leadership this section has NO mobile
+   design to read.
+
+   - The FEATURE heading is 34px by client decision, the shared mobile size for
+     all three section headings on the Our Team page. Changing it means changing
+     the other two with it, or the row of sections stops matching.
+   - The MEMBER variant keeps 24px. It is the only heading of its kind on the
+     member template, so it is not part of that set; 24 is half its 40px desktop
+     size, the ratio the mobile frame applies to a heading elsewhere.
+   - The intro is NOT scaled. Body copy holds an 18px floor on mobile by client
+     decision, so it keeps its desktop size -- see `.honest-text-hero__body`.
+
+   At the desktop 70px "Featured Insights" was taking two lines and 192px of a
+   402px screen on its own, with the intro running to eight lines under it.
+   Both heading variants are named explicitly so neither can win on specificity
+   by accident: the `--member` rule above is already two classes deep, so a bare
+   `.honest-insights__heading` here would lose to it on the member page. */
 @media (max-width: 600px) {
   .honest-insights__grid {
     grid-template-columns: 1fr;
   }
+  .honest-insights--feature .honest-insights__heading {
+    font-size: 34px;
+  }
+  .honest-insights--member .honest-insights__heading {
+    font-size: 24px;
+  }
+  .honest-insights__intro {
+    font-size: 18px;
+  }
   .honest-insights--member .honest-insights__head {
     flex-direction: column;
     align-items: stretch;
+  }
+  /* The basis has to be reset with the direction. `flex: 1 1 320px` above is a
+     WIDTH -- the point at which the heading and the button stop sharing a line
+     -- but flex-basis follows the main axis, so the moment this container turns
+     into a column that 320px becomes a minimum HEIGHT. Measured: a 30.5px
+     heading in a 320px box, leaving a 313.5px hole above the button. */
+  .honest-insights--member .honest-insights__headtext {
+    flex: 0 1 auto;
   }
   .honest-insights--member .honest-insights__button {
     align-self: flex-start;
@@ -1213,6 +1413,29 @@
   .honest-cta__inner {
     padding: 60px 0 70px;
   }
+  /* 34px, the shared mobile size for every section title on this page -- see
+     `.honest-exec__heading`. This one had no mobile rule at all and was still
+     rendering its full desktop 50px.
+     The tracking has to come with it: -0.5px is -0.01em at the 50px it was
+     picked for, and left literal it would bite ~50% harder on 34px type.
+     Restated as the ratio so it tracks the size instead of the pixel. */
+  .honest-cta__heading {
+    font-size: 34px;
+    letter-spacing: -0.01em;
+  }
+  /* Body and button both to 22px. The body is the one paragraph on the page that
+     sits ABOVE the 18px mobile floor rather than under it -- 23px was oversized
+     next to a 34px heading -- and the button label comes down with it from
+     24.444px so the control does not out-shout the copy it belongs to.
+     The button's box is left alone: `min-width: 283px` still fits the 321.6px
+     column at 402, and `min-height: 63px` keeps the tap target well clear of the
+     44px minimum even with a smaller label. */
+  .honest-cta__body {
+    font-size: 22px;
+  }
+  .honest-cta__button {
+    font-size: 22px;
+  }
   .honest-cta__content {
     max-width: 100%;
   }
@@ -1236,23 +1459,16 @@
 }
 
 /* Team Member Header.
-   Full-width "Back to Team Page" bar, then a two-column header (text left,
-   circular portrait right) -- see the module's file header comment for the
-   Figma nodes and the portrait ring/backdrop pixel-sampling.
+   Full-width "Back to Team Page" bar, then a two-column header: text left,
+   portrait right -- see the module's file header comment for the Figma nodes.
 
-   The portrait frame (`__media`) is a circular crop with NO ring by default.
-   Every published member's `author_image` is a `*-PurpleCircle.png` asset
-   with the purple ring and lavender backdrop already baked into the bitmap
-   (12 of 12 members with a usable portrait), so drawing a second ring in CSS
-   produced two concentric purple rings with a lavender gap between them.
-   The ring is therefore off unless the module opts in, which it does by
-   adding `.honest-member--portrait-ring` to its own wrapper (the
-   `portrait_ring` field) -- the capability is intact for the day portraits
-   are re-cut as plain photos, colour and all, it is just not the default.
-   The backdrop fill stays on unconditionally: it is invisible behind a
-   full-bleed circular portrait and is what the fallback placeholder mark
-   sits on when a member's attachment is missing. `object-fit: cover` fills
-   the circle. */
+   The portrait was a 403px circle on a lavender disc, with an opt-in purple
+   ring, because every member's `author_image` was then a `*-PurpleCircle.png`
+   with ring and backdrop baked into the bitmap. Node 479:380 retires all of it:
+   the portraits are transparent cutouts now and the design sits one straight on
+   the page, uncropped and full-height, with no circle, ring or backdrop behind
+   it. The ring toggle and both portrait colour fields went with the disc rather
+   than being left as controls that paint nothing. */
 /* The back bar is the module's one breakout: its fill reaches the viewport
    edges while the link inside it lines up with the page's content, i.e. with
    Divi's Row -- see rule 5 in the file header. */
@@ -1280,7 +1496,19 @@
 }
 
 .honest-member__inner {
-  padding: 60px 0;
+  /* Held in properties because the portrait cancels the bottom one: the design
+     runs the portrait the full height of the section while insetting the text,
+     so `.honest-member__media` escapes this padding with a matching negative
+     margin. Changing the padding at a breakpoint therefore has to change both,
+     and this keeps them from drifting apart.
+
+     Top and bottom are separate values, and only the bottom is cancelled. The
+     design sits the text block's last line 112px above the section's lower edge
+     -- where the Member Statement band begins -- which is a bigger gap than the
+     60px above the name. */
+  --hh-member-inset: 60px;
+  --hh-member-inset-bottom: 112px;
+  padding: var(--hh-member-inset) 0 var(--hh-member-inset-bottom);
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -1296,6 +1524,13 @@
   flex: 1 1 420px;
   max-width: 744px;
   min-width: 0;
+  /* The design hangs this column off the section's bottom edge, not its top.
+     Only bites when the portrait is the taller item -- which happens as soon as
+     a member has a short bio, or none -- and then the block sits down against
+     the 112px inset instead of leaving the gap beneath it. Reset in the column
+     layout below: `align-self` follows the cross axis, so a column container
+     would read this as "push the text to the right". */
+  align-self: flex-end;
 }
 /* Typography from Figma node 21:459: name 1:339 (48 / 700 / 1.27), job title
    1:345 (24.444 / 700 / normal -- the design's own scaled value, kept literal),
@@ -1334,29 +1569,25 @@
 .honest-member__bio > *:last-child {
   margin-bottom: 0;
 }
-.honest-member__quote {
-  margin: 0 0 24px;
-  padding: 0;
-  border: none;
-  color: var(--hh-member-quote, #6a4c91);
-  font-weight: 700;
-  font-size: 24px;
-  line-height: 1.27;
-  quotes: none;
-}
-/* Node 1:343: 18px bold in #6985c3, beside an 18x18 mark. */
+/* Node 594:225: a 24x24 mark on its own, with the label dropped. */
+/* Icon only -- no label beside the mark, so no `gap` and no type.
+
+   Block, not inline-flex: this is the last thing in the text column, and the
+   112px inset below is measured to the mark's own bottom edge. An inline-level
+   box sits on a baseline, so the line box kept ~15px of strut descender and
+   half-leading underneath it and the mark floated that much high. A block box
+   has no line box of its own to pad. `fit-content` then keeps the hit area on
+   the mark instead of stretching it across the whole 744px column.
+
+   `color` is still load-bearing: the mark is `fill="currentColor"`. */
 .honest-member__linkedin {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
+  display: block;
+  width: fit-content;
   color: var(--hh-member-linkedin, #6985c3);
   text-decoration: none;
-  font-size: 18px;
-  font-weight: 700;
 }
 .honest-member__linkedin-icon {
   display: block;
-  flex: 0 0 auto;
 }
 .honest-member__linkedin:focus-visible {
   outline: 3px solid var(--hh-member-linkedin, #6985c3);
@@ -1365,41 +1596,81 @@
 
 .honest-member__media {
   position: relative;
-  /* 403px across, from node 1:253 -- but SQUARE, not the node's 403x474 box.
-     That box is the asset's bounding rectangle in Figma; the thing it renders is
-     a circle 403 wide. Our portraits are square artwork (measured: 900x900 for
-     most, one 1200x1350) with the purple ring baked into the bitmap, so a taller
-     frame with object-fit: cover would scale to the height and crop 71px off
-     each side, slicing through that ring. A square frame at the circle's own
-     diameter reproduces what the design draws. */
-  flex: 0 0 403px;
-  width: 403px;
-  max-width: 100%;
-  aspect-ratio: 1;
-  box-sizing: border-box;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 0 solid var(--hh-member-portrait-ring, #6a4c91);
-  background: var(--hh-member-portrait-bg, #d2d8ee);
-}
-/* Opt-in ring, for portraits uploaded as plain photos -- see the section
-   comment above. Only the width is switched here; the colour is still the
-   inherited `--hh-member-portrait-ring` custom property either way, so the
-   ring stays fully editable from the module. */
-.honest-member--portrait-ring .honest-member__media {
-  border-width: 14px;
+  /* Figma node 479:380 replaces the 403px disc with a plain cutout: no circle,
+     no ring, no lavender backdrop -- the portrait sits straight on the page,
+     occupying the right side of the section and running its full height.
+
+     The design's own box is 758.8x592 flush to the right of a 1388.3 section,
+     which OVERLAPS its 744px text column by 114.5px. That overlap is not
+     reproduced here: it would need a negative margin whose safety depends on
+     each cutout happening to carry enough transparent padding on its left, and
+     one tight crop would put a shoulder through the bio. Sizing the column at
+     46% instead lands the rendered portrait within a few px of the design's
+     without any of that -- measured 510x483 against the design's 474x491 scaled
+     to this row -- because the image is bound by the section's height, not by
+     this width.
+
+     `align-self: stretch` is what supplies that height: it makes the column as
+     tall as the text beside it, which is what lets the portrait fill the band
+     the way the design draws it. `min-height: 0` for the same reason it is on
+     the card media -- a flex item's automatic minimum would otherwise let a tall
+     image push the column past the line. */
+  flex: 0 0 46%;
+  align-self: stretch;
+  min-height: 0;
+  /* Flush to the section's lower edge, as the design has it: its portrait box
+     runs the section's full height while the text block stops 112px short of it.
+     Cancelling the inner's bottom padding is what lets the cutout meet whatever
+     section follows instead of floating above it -- and only the portrait
+     escapes, so the text keeps its inset.
+     Safe against a stretched item: the used cross size grows by the margin, so
+     the MARGIN box still matches the flex line and `__inner` does not get any
+     taller -- only the portrait's border box reaches past it. */
+  margin-bottom: calc(var(--hh-member-inset-bottom) * -1);
+  /* The last 10%. `contain` sizes the cutout to fit the column, which leaves it
+     a touch under the design's; scaling up from the bottom edge closes the gap
+     without touching layout, since transforms do not reflow. `bottom` is the
+     origin precisely so the flush lower edge established above stays put -- the
+     growth all goes upward and sideways.
+     Unscoped on purpose, breakpoints included. The sideways growth is ~26px per
+     side at 1440 and ~16px at 402, and the page gutter absorbs both -- Divi's
+     row is 80% of the viewport, so there is always ~10% of slack either side,
+     which is more than the 5% per side this adds. Upward it takes the
+     `--hh-member-inset` above it, stopping level with the back bar, which is
+     where the design puts the portrait's top edge anyway. */
+  transform: scale(1.1);
+  transform-origin: bottom;
 }
 .honest-member__portrait {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* `contain`, not `cover`: the disc used to crop the portrait square and the
+     circle hid the join. Uncropped is the point of the new design -- the whole
+     cutout shows. Bottom-anchored to match the design, where the subject is cut
+     by the section's lower edge, and for the same reason as the member card:
+     every delivered cutout is flush to the bottom of its own file. */
+  object-fit: contain;
+  object-position: center bottom;
 }
 
 @media (max-width: 1024px) {
   .honest-member__inner {
     flex-direction: column;
     gap: 40px;
+  }
+  /* Both bases are widths, and flex-basis follows the main axis, so turning this
+     container into a column would reinterpret them as heights: the text's
+     `1 1 420px` becomes a 420px floor and the media's `0 0 46%` a share of the
+     container's height. The media was already guarded; the text was not, and only
+     escaped notice because every current bio runs past 420px on its own. A short
+     one would have opened a gap under it. */
+  .honest-member__text {
+    flex-basis: auto;
+    /* Same axis flip: stacked, `flex-end` would right-align the whole text
+       block. There is nothing to hang off the bottom here anyway -- the
+       portrait sits below the text and spends the 112px itself. */
+    align-self: stretch;
   }
   .honest-member__media {
     width: 260px;
@@ -1411,14 +1682,176 @@
     padding: 14px 0;
     gap: 10px;
   }
+  /* Set the property, not `padding`, so the portrait's negative margin follows
+     it down and stays flush here too. */
   .honest-member__inner {
-    padding: 40px 0;
+    --hh-member-inset: 40px;
   }
+  /* 34px, the shared mobile size for titles across these modules -- see
+     `.honest-exec__heading`. The desktop 48px was taking three lines of a
+     402px screen. */
+  .honest-member__name {
+    font-size: 34px;
+  }
+  /* Full container width, not the 200px box this used to be. Stacked under the
+     text there is no column to share, so capping the portrait only made it
+     small: at 200px it rendered 200x190 against the 322x305 the width allows.
+     `width: 100%` rather than dropping the declaration entirely because the
+     1024 rule above sets 260px and would otherwise still apply here.
+     The height follows the image: `flex-basis` is already `auto` at this
+     breakpoint, so the box takes the cutout's own aspect and `contain` has no
+     letterboxing to do. */
   .honest-member__media {
-    width: 200px;
+    width: 100%;
   }
-  .honest-member--portrait-ring .honest-member__media {
-    border-width: 10px;
+}
+
+/* Member Statement.
+   Figma nodes 594:224 (both columns) and 594:225 (one only). A full-bleed band
+   carrying the member's pull quote and their "Why Statement" side by side.
+
+   The band breaks out to the viewport the same way the Text Hero and the member
+   back bar do -- see rule 5 in this file's header for why that technique rather
+   than a width on the module. Content stays at Divi's Row width: in the design
+   the quote starts at 153.4 and the why column ends at 1306.5, spanning 1153.1,
+   which is the 1152 Row.
+
+   Vertical padding is 55/67, taken from node 594:225. The two mocks disagree --
+   594:224 measures 123/158 -- and one rule was chosen over reproducing both,
+   so the band's rhythm does not change between member pages depending on which
+   fields somebody filled in. Height then varies with content alone. */
+.honest-statement {
+  margin-inline: calc(50% - 50vw);
+  padding-inline: calc(50vw - 50%);
+  padding-block: 55px 67px;
+  background: var(--hh-statement-band, rgba(218, 212, 227, 0.65));
+}
+/* Column geometry straight off node 594:224, as percentages of the Row: the
+   quote track is 481.1/1153.1 and the why track 536.7/1153.1. The 11.74% left
+   over is the gutter, which `space-between` supplies rather than a `gap` -- that
+   way the two tracks stay the design's own fractions instead of being shrunk to
+   make room for a gap. `minmax(0, …)` because a long unbroken word in either
+   column would otherwise blow the track past its share. */
+.honest-statement__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 41.72%) minmax(0, 46.54%);
+  justify-content: space-between;
+  align-items: start;
+}
+/* One column only. 875px is the cap the design asks for and node 594:225 draws
+   the quote at 874.3 wide. Applied as a modifier from PHP rather than via
+   `:only-child`, so the cap cannot leak into the two-column case and fight the
+   percentage tracks. */
+.honest-statement__grid--single {
+  grid-template-columns: minmax(0, 875px);
+  justify-content: center;
+}
+/* Node 594:224: 40px/800 at 1.27 in #6a4c91.
+   The curly quotes are drawn here, not stored: `quotes` + `open-quote` is what
+   the language provides for exactly this, so the meta value stays clean text and
+   nothing has to be stripped back out to edit it. MemberStatement::quote_html()
+   normalises any marks an editor does type, so the two cannot double up. */
+.honest-statement__quote {
+  margin: 0;
+  padding: 0;
+  border: none;
+  color: var(--hh-statement-quote, #6a4c91);
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1.27;
+  quotes: "\201C" "\201D";
+}
+.honest-statement__quote::before {
+  content: open-quote;
+}
+.honest-statement__quote::after {
+  content: close-quote;
+}
+/* Label banner (nodes "Rectangle 117" and "Rectangle 118" inside node 594:224).
+   Structurally the SAME shape as the Text Hero's eyebrow: a plain block plus a
+   larger vector offset left and down whose bottom edge is a single cubic bezier
+   bulging below its own box. Measured, the relative offsets are identical to the
+   hero's -- the block sits 4.53% in from the left (the hero's 4.5%) and the
+   vector drops 18.55% (the hero's 18.4%). What differs is the aspect: this union
+   is 249.214x45.294, so 5.50 against the hero's 4.34. That is why the hero's mask
+   is not reused: `preserveAspectRatio="none"` stretches it to whatever box the
+   text makes, so borrowing it would distort this banner's curve. This is that
+   node's own geometry.
+
+   The two fills differ by ~6/255 per channel; #6985c3 is the larger shape, is
+   what the overlap renders as, and is already this file's --hh-blue, so the
+   banner is one editable colour rather than two -- same call as the hero. */
+.honest-statement__label {
+  margin: 0 0 34px;
+  color: var(--hh-statement-label, #ffffff);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.22;
+}
+.honest-statement__label-text {
+  position: relative;
+  z-index: 0;
+  display: inline-block;
+  vertical-align: top;
+  /* Resolved against the design's 28px label: the union is 45.294 tall on a
+     34.16 line box, leaving 3.3 above and 7.83 below (0.1179em / 0.2796em) --
+     asymmetric because the curved edge bulges downward. Horizontally the label
+     measures 210.1 in this site's face against a 249.214 union, so 19.56 a side
+     = 0.6986em, and the design centres the text in the union. */
+  padding: 0.1179em 0.6986em 0.2796em;
+}
+/* `:not(:empty)` so a blank label paints no floating shape; render() also omits
+   the whole paragraph when the why statement itself is absent. */
+.honest-statement__label-text:not(:empty)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--hh-statement-banner, #6985c3);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 249.214 45.294' preserveAspectRatio='none'%3E%3Cpath d='M0 33.97V8.4H244.712V33.97C171.215 54.426 50.947 42.493 0 33.97ZM11.3 0H249.214V22.594H11.3Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
+}
+/* Node 594:224: 16px/400 at 1.45 in #070707. Editor HTML from a wysiwyg, so a
+   multi-paragraph statement arrives as several <p> -- and Divi's reset zeroes
+   their margins, which would run them together. Same one-line separation the
+   member bio uses, for the same reason. */
+.honest-statement__why-body {
+  color: var(--hh-statement-why, #070707);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+.honest-statement__why-body p {
+  margin: 0 0 1em;
+}
+.honest-statement__why-body > *:last-child {
+  margin-bottom: 0;
+}
+/* Stacked at the width the member header already collapses its own two columns,
+   so the page changes shape once rather than twice. The single-column cap is
+   dropped with it -- at this width the Row is narrower than 875 anyway, and
+   leaving it in place would centre a track that should simply fill. */
+@media (max-width: 1024px) {
+  .honest-statement__grid,
+  .honest-statement__grid--single {
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
+    row-gap: 40px;
+  }
+}
+@media (max-width: 600px) {
+  .honest-statement {
+    padding-block: 40px 48px;
+  }
+  /* 34px, the shared mobile size for titles across these modules -- see
+     `.honest-exec__heading`. */
+  .honest-statement__quote {
+    font-size: 34px;
+  }
+  /* Body copy holds an 18px floor on mobile -- see `.honest-text-hero__body`. */
+  .honest-statement__why-body {
+    font-size: 18px;
   }
 }
 
@@ -1459,6 +1892,33 @@
 
 .honest-anim.et-waypoint.et-animated {
   animation: honest-anim-rise 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+/* Fade only, for an element whose POSITION is load-bearing.
+
+   `honest-anim-rise` animates `translate`, which is a separate property from
+   `transform` and composes with it rather than replacing it. On the member
+   portrait -- which carries `transform: scale(1.1)` and whose whole design
+   contract is a bottom edge flush with the section -- a 24px downward translate
+   would dip the cutout into the statement band below for the length of the
+   animation. So that element fades and does not move.
+
+   Only `animation-name` is overridden: the duration, easing and `both` fill come
+   from the shorthand in the rule above and are still wanted. Four classes, so it
+   outranks that three-class rule wherever it sits in the file. The
+   reduced-motion reset above already covers this variant, since it matches on
+   `.honest-anim`. */
+@keyframes honest-anim-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.honest-anim.honest-anim--fade.et-waypoint.et-animated {
+  animation-name: honest-anim-fade;
 }
 
 /* Reduced motion: neutralise the movement AND undo Divi's hide, so the finished
@@ -1543,12 +2003,32 @@
   line-height: 1.27;
 }
 
-/* Figma nodes 1:228 / 1:229: both card lines are 18px at 1.45. Weight and
-   colour already come from the shared card rules above. */
+/* Figma nodes 414:799 / 414:800: both card lines are 16px at 1.45, down from the
+   18px the pre-redesign card used. Weight and colour already come from the shared
+   card rules above (the name bold, the job title medium). */
 .honest-member-card__name,
 .honest-member-card__title {
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.45;
+}
+
+/* Mobile card type. The Figma "Team Mobile" nodes (403:1333 executive, 403:1334
+   market) put the name at 16px Bold and the job title at 15px Regular; the title
+   follows the mock, the NAME does not -- it goes to 18px by client decision, the
+   same legibility call as the 18px body-copy floor.
+   This block has to sit AFTER the one above, not with the rest of the mobile card
+   rules near the top of this file, because that block names both selectors at the
+   same specificity and media queries add none of their own -- from up there the
+   16px would win and only the weight would take, which is exactly what happened
+   the first time. */
+@media (max-width: 600px) {
+  .honest-member-card__name {
+    font-size: 18px;
+  }
+  .honest-member-card__title {
+    font-size: 15px;
+    font-weight: 400;
+  }
 }
 
 @media (scripting: none) {
@@ -1604,25 +2084,51 @@
   letter-spacing: normal;
 }
 
-/* Member card double chevron (Figma node 1:427).
-   Two fills, both custom properties: the outline and its knockout. On hover the
-   card background becomes purple, so a knockout still filled with the resting
-   lavender would show as a stray shape -- both flip instead, giving a white
-   outline on the purple card. Sized from the design's 40x34 instance. */
+/* Mobile sizes for the two above -- Figma "Team Mobile" frame 403:1322 puts the
+   heading at 24px and the intro at 15px. NEITHER is followed, both by client
+   decision: the heading holds at 34px, the shared mobile size for all three
+   section headings on this page, and the intro at an 18px body-copy floor. See
+   `.honest-text-hero__body` for the body note. Line heights are unchanged.
+   Parent-qualified for the same reason the mobile tab rule is: this block sits
+   BELOW the mobile media query that owns the rest of the market's phone layout,
+   and media queries add no specificity, so a bare `.honest-market__heading` up
+   there would lose to the 48px declared just above and silently keep it. The
+   intro is qualified to match, so the pair reads as one rule rather than looking
+   like an inconsistency. */
+@media (max-width: 600px) {
+  .honest-market__inner .honest-market__heading {
+    font-size: 34px;
+  }
+  .honest-market__inner .honest-market__intro {
+    font-size: 18px;
+  }
+}
+
+/* Member card double chevron (Figma node I414:803).
+   One fill, one custom property: the redesigned mark is two SOLID chevrons, so
+   the knockout fill the old outlined version needed is gone (see
+   includes/partials/card-chevron.php). On hover the card background turns purple
+   and the mark follows it to white.
+   The redesign also moves the chevron out of the name's row and onto its own line
+   beneath it, and pins it to the bottom of the card rather than spacing it a
+   fixed distance under the text. The design places it 17px above the card's
+   bottom edge whether the job title runs to one line or two, which is what keeps
+   the marks level across a row; `margin-top: auto` reproduces that, with the
+   floor supplied by `.honest-member-card__text`'s bottom margin. */
 .honest-member-card__arrow {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  padding-bottom: 13px;
+  margin-top: auto;
 }
 .honest-member-card__chevron {
   display: block;
-  width: 40px;
-  height: 34px;
+  /* The design's instance is 29x24.591. */
+  width: 29px;
+  height: 24.6px;
 }
 .honest-member-card:hover .honest-member-card__chevron {
   --hh-chevron: var(--hh-white, #ffffff);
-  --hh-chevron-inner: var(--hh-card-hover-bg, #6a4c91);
 }
 
 @media (prefers-reduced-motion: reduce) {

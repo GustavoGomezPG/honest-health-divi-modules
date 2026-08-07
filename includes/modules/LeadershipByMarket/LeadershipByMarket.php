@@ -220,9 +220,12 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 			),
 			// Card colour fields. Same Figma-extracted defaults as the Executive
 			// Leadership module, because they drive the same shared member card
-			// partial (member card component node 145:291 for the resting state,
-			// hover-state example node 224:2431 for the hover fill and its hard
-			// offset drop-shadow).
+			// partial -- redesigned member card node 414:796 for the resting
+			// state (a 38% wash of the old solid lavender, since the portrait is
+			// now a transparent cutout on the card), its rule node 414:801 for
+			// the new divider, and hover-state example node 224:2431 for the
+			// hover fill and its hard offset drop-shadow. See that module for the
+			// full derivation.
 			'card_bg_color'           => array(
 				'label'        => esc_html__( 'Card Background', 'honest-divi-modules' ),
 				'description'  => esc_html__( 'Background colour of each member card.', 'honest-divi-modules' ),
@@ -230,7 +233,16 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 				'custom_color' => true,
 				'tab_slug'     => 'advanced',
 				'toggle_slug'  => 'colors',
-				'default'      => '#d2d8ee',
+				'default'      => 'rgba(210,216,238,0.38)',
+			),
+			'card_rule_color'         => array(
+				'label'        => esc_html__( 'Card Divider', 'honest-divi-modules' ),
+				'description'  => esc_html__( 'Colour of the rule between the portrait and the name on each member card.', 'honest-divi-modules' ),
+				'type'         => 'color',
+				'custom_color' => true,
+				'tab_slug'     => 'advanced',
+				'toggle_slug'  => 'colors',
+				'default'      => '#b9c4ed',
 			),
 			'card_hover_bg_color'     => array(
 				'label'        => esc_html__( 'Card Background (Hover)', 'honest-divi-modules' ),
@@ -491,6 +503,7 @@ class Honest_Divi_Module_Leadership_By_Market extends Honest_Divi_Module_Base {
 				'--hh-market-tab-active-bg' => $this->props['tab_active_bg_color'],
 				'--hh-market-caption'       => $this->props['caption_color'],
 				'--hh-card-bg'              => $this->props['card_bg_color'],
+				'--hh-card-rule'            => $this->props['card_rule_color'],
 				'--hh-card-hover-bg'        => $this->props['card_hover_bg_color'],
 				'--hh-card-hover-shadow'    => $this->props['card_hover_shadow_color'],
 				'--hh-card-name'            => $this->props['card_name_color'],

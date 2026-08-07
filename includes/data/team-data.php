@@ -20,6 +20,9 @@ function honest_team_get_member( $post_id ) {
 		'job_title' => (string) get_post_meta( $post_id, 'job_title_short', true ),
 		'bio'       => (string) get_post_meta( $post_id, 'bio', true ),
 		'quote'     => (string) get_post_meta( $post_id, 'quote', true ),
+		// Editor HTML from a wysiwyg field, unlike every other value here.
+		// Consumers must run it through wp_kses_post() rather than esc_html().
+		'why'       => (string) get_post_meta( $post_id, 'why_statement', true ),
 		'linkedin'  => (string) get_post_meta( $post_id, 'linkedin_url', true ),
 		'image_id'  => (int) get_post_meta( $post_id, 'author_image', true ),
 		'permalink' => (string) get_permalink( $post_id ),

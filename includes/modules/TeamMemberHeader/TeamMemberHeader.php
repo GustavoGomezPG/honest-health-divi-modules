@@ -29,35 +29,25 @@
  *     President" / a genuine bio paragraph / a genuine attributed quote),
  *     unlike the "View All CTA" scaffolding a previous task in this plugin
  *     was burned by.
- *   - Portrait 224:2849 -- real (a real headshot), confirmed via
- *     get_design_context: the node is a single flattened image asset (ring,
- *     lavender backdrop and photo already baked into one PNG per member by
- *     whoever built the mock), not live, separately-stroked circle layers.
- *     Pixel-sampled off that asset: ring #6a4c92 (rounds to `#6a4c91`, the
- *     same purple already used elsewhere in this plugin -- the member card's
- *     name colour and this design's own quote colour) and backdrop
- *     `#d2d8ee` (the exact same lavender already the member card's
- *     `--hh-card-bg` fallback in modules.css).
+ *   - Portrait: node 479:380 supersedes 224:2849 and changes the treatment
+ *     outright. 224:2849 was a single flattened PNG per member with a purple
+ *     ring and a lavender disc baked in, which this module reproduced as a
+ *     403px circular crop (ring #6a4c92, backdrop #d2d8ee, both pixel-sampled
+ *     off that asset) and a `portrait_ring` toggle left OFF, because drawing a
+ *     CSS ring over an already-ringed bitmap gave two concentric rings.
  *
- *     An earlier pass here assumed a real deployment would upload a PLAIN
- *     portrait photo with no ring baked in, and so drew the ring and backdrop
- *     unconditionally in live CSS. That assumption is wrong for this site:
- *     every published member's `author_image` is a `*-PurpleCircle.png`
- *     asset with the ring and lavender backdrop already baked into the
- *     bitmap -- 12 of the 12 members with a usable portrait -- exactly like
- *     the Figma node itself. Drawing a second ring around one of those
- *     produced two concentric purple rings with a lavender gap between them
- *     on every member page.
+ *     479:380 has none of it: a 758.8x592 transparent cutout, flush to the
+ *     right of the 1388.3-wide section and running its full height, sitting
+ *     straight on the page. No circle, no ring, no backdrop. The whole
+ *     apparatus -- the disc, the `portrait_ring` toggle, `portrait_ring_color`
+ *     and `portrait_bg_color` -- was removed rather than left switched off,
+ *     since there is no longer anything for any of them to paint and a control
+ *     that does nothing is worse than no control.
  *
- *     So the CSS ring now defaults to OFF (`portrait_ring` => 'off'), and
- *     the capability is kept rather than deleted: turning the field on adds
- *     `honest-member--portrait-ring` to this module's wrapper, which is what
- *     switches the ring's border width on, and `portrait_ring_color` still
- *     governs its colour. That is the setting to flip if portraits are ever
- *     re-cut as plain photos. `portrait_bg_color` is applied either way: it
- *     is invisible behind a full-bleed circular portrait and is what the
- *     fallback placeholder mark sits on when a member's attachment is
- *     missing.
+ *     The design overlaps its portrait and its 744px text column by 114.5px.
+ *     modules.css deliberately does not reproduce that; see the note on
+ *     `.honest-member__media` for why, and for how the rendered size still
+ *     lands within a few px of the design's.
  *   - Back bar: strip 224:2787 (`#6a4c91` fill), label 224:2788 ("Back to
  *     Team Page", white, bold), arrow 224:2790 -- all real and rendered
  *     together in place above the header exactly as the brief describes.
@@ -91,9 +81,8 @@
  * `name_text_color`, `quote_text_color`, etc. would be an exact match for
  * that auto-generated prop name on this module's own `name`/`quote`/etc.
  * font groups -- the same trap CallToAction.php already documents and was
- * fixed for. The two colours with no font group of their own -- the back
- * bar's solid fill and the portrait's ring/backdrop -- are named
- * `back_bg_color` and `portrait_ring_color`/`portrait_bg_color`, never
+ * fixed for. The one colour with no font group of its own -- the back bar's
+ * solid fill -- is named `back_bg_color`, never
  * `background_color`: that exact name is reserved by Divi's own native
  * "Background" advanced option, which base_advanced_fields() enables for
  * every module in this plugin, and reusing it for an unrelated purpose here
@@ -163,8 +152,6 @@ class Honest_Divi_Module_Team_Member_Header extends Honest_Divi_Module_Base {
 					'name'       => esc_html__( 'Name', 'honest-divi-modules' ),
 					'job_title'  => esc_html__( 'Job Title', 'honest-divi-modules' ),
 					'bio'        => esc_html__( 'Bio', 'honest-divi-modules' ),
-					'quote'      => esc_html__( 'Pull Quote', 'honest-divi-modules' ),
-					'linkedin'   => esc_html__( 'LinkedIn Link', 'honest-divi-modules' ),
 					'back_label' => esc_html__( 'Back Bar Link', 'honest-divi-modules' ),
 					'colors'     => esc_html__( 'Colors', 'honest-divi-modules' ),
 				),
@@ -221,25 +208,6 @@ class Honest_Divi_Module_Team_Member_Header extends Honest_Divi_Module_Base {
 					'letter_spacing'  => array( 'default' => '0px' ),
 					'line_height'     => array( 'default' => '1.45em' ),
 					'font'            => array( 'default' => '|400|||||||' ),
-				),
-				'quote'      => array(
-					'label'           => esc_html__( 'Pull Quote', 'honest-divi-modules' ),
-					'css'             => array( 'main' => "{$this->main_css_element} .honest-member__quote" ),
-					'toggle_slug'     => 'quote',
-					'hide_text_color' => true,
-					'font_size'       => array( 'default' => '24px' ),
-					'letter_spacing'  => array( 'default' => '0px' ),
-					'line_height'     => array( 'default' => '1.27em' ),
-					'font'            => array( 'default' => '|700|||||||' ),
-				),
-				'linkedin'   => array(
-					'label'           => esc_html__( 'LinkedIn Link', 'honest-divi-modules' ),
-					'css'             => array( 'main' => "{$this->main_css_element} .honest-member__linkedin" ),
-					'toggle_slug'     => 'linkedin',
-					'hide_text_color' => true,
-					'font_size'       => array( 'default' => '18px' ),
-					'letter_spacing'  => array( 'default' => '0px' ),
-					'font'            => array( 'default' => '|700|||||||' ),
 				),
 				'back_label' => array( 'label' => esc_html__( 'Back Bar Link', 'honest-divi-modules' ), 'css' => array( 'main' => "{$this->main_css_element} .honest-member__back-link" ), 'toggle_slug' => 'back_label', 'hide_text_color' => true ),
 			)
@@ -306,15 +274,6 @@ class Honest_Divi_Module_Team_Member_Header extends Honest_Divi_Module_Base {
 				'toggle_slug'  => 'colors',
 				'default'      => '#1e1e1e',
 			),
-			'quote_color'         => array(
-				'label'        => esc_html__( 'Pull Quote Color', 'honest-divi-modules' ),
-				'description'  => esc_html__( 'Colour of the pull quote. Hidden entirely if the member has no quote.', 'honest-divi-modules' ),
-				'type'         => 'color',
-				'custom_color' => true,
-				'tab_slug'     => 'advanced',
-				'toggle_slug'  => 'colors',
-				'default'      => '#6a4c91',
-			),
 			'linkedin_color'      => array(
 				'label'        => esc_html__( 'LinkedIn Link Color', 'honest-divi-modules' ),
 				'description'  => esc_html__( 'Colour of the LinkedIn link and its icon. Hidden entirely if the member has no LinkedIn URL.', 'honest-divi-modules' ),
@@ -345,54 +304,6 @@ class Honest_Divi_Module_Team_Member_Header extends Honest_Divi_Module_Base {
 				'toggle_slug'  => 'colors',
 				'default'      => '#ffffff',
 			),
-			// Portrait ring + backdrop. Both pixel-sampled off the Figma
-			// portrait asset (see the file header comment) -- both numbers
-			// happen to match tokens already used elsewhere in this plugin
-			// (the member card's name colour and `--hh-card-bg` fallback
-			// respectively).
-			//
-			// The ring is OFF by default because every published member's
-			// portrait is a `*-PurpleCircle.png` with the ring already baked
-			// into the bitmap, and a CSS ring on top of one of those renders
-			// as a double ring -- see the file header comment. The field is
-			// here, rather than the ring simply being deleted, so the
-			// treatment can be switched back on (with its colour) if
-			// portraits are ever re-cut as plain photos.
-			'portrait_ring'       => array(
-				'label'            => esc_html__( 'Portrait Ring', 'honest-divi-modules' ),
-				'description'      => esc_html__( 'Draw a coloured ring around the portrait. Leave off for portraits that already have the ring baked into the image, which is how every current team member\'s photo is supplied.', 'honest-divi-modules' ),
-				'type'             => 'yes_no_button',
-				'option_category'  => 'configuration',
-				'options'          => array(
-					'off' => esc_html__( 'No', 'honest-divi-modules' ),
-					'on'  => esc_html__( 'Yes', 'honest-divi-modules' ),
-				),
-				'default'          => 'off',
-				'default_on_front' => 'off',
-				'tab_slug'         => 'advanced',
-				'toggle_slug'      => 'colors',
-			),
-			'portrait_ring_color' => array(
-				'label'        => esc_html__( 'Portrait Ring Color', 'honest-divi-modules' ),
-				'description'  => esc_html__( 'Colour of the circular ring around the portrait. Only visible while Portrait Ring is on.', 'honest-divi-modules' ),
-				'type'         => 'color',
-				'custom_color' => true,
-				'tab_slug'     => 'advanced',
-				'toggle_slug'  => 'colors',
-				'default'      => '#6a4c91',
-				'show_if'      => array(
-					'portrait_ring' => 'on',
-				),
-			),
-			'portrait_bg_color'   => array(
-				'label'        => esc_html__( 'Portrait Backdrop Color', 'honest-divi-modules' ),
-				'description'  => esc_html__( 'Colour behind the portrait (and behind the fallback mark if no portrait resolves).', 'honest-divi-modules' ),
-				'type'         => 'color',
-				'custom_color' => true,
-				'tab_slug'     => 'advanced',
-				'toggle_slug'  => 'colors',
-				'default'      => '#d2d8ee',
-			),
 		);
 	}
 
@@ -400,15 +311,19 @@ class Honest_Divi_Module_Team_Member_Header extends Honest_Divi_Module_Base {
 	 * The LinkedIn brand mark, single-path, `fill="currentColor"` so it
 	 * always matches whatever `linkedin_color` resolves to -- see the file
 	 * header comment for why there is no separate icon colour field.
-	 * Decorative: aria-hidden, no alt text of its own. Path traced from the
-	 * real Figma icon node (224:2963, file 6LBpKOMFlN8KxaKbut00YW), which
-	 * was itself a flat `#6985c3` fill -- this module's own default for
-	 * `linkedin_color`.
+	 * Decorative: aria-hidden, because the link that wraps it carries the
+	 * accessible name on an `aria-label`. Path traced from the real Figma icon
+	 * node (224:2963, file 6LBpKOMFlN8KxaKbut00YW), which was itself a flat
+	 * `#6985c3` fill -- this module's own default for `linkedin_color`.
+	 *
+	 * 24px: the design dropped the label beside the mark and sized the mark up
+	 * to suit. The `viewBox` was already 24 wide, so this is now 1:1 and the
+	 * path renders on whole pixels.
 	 *
 	 * @return string Trusted, static SVG markup (no user input).
 	 */
 	private static function linkedin_icon_svg() {
-		return '<svg class="honest-member__linkedin-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M21.3333 0C22.0406 0 22.7189 0.280951 23.219 0.781048C23.719 1.28115 24 1.95942 24 2.66667V21.3333C24 22.0406 23.719 22.7189 23.219 23.219C22.7189 23.719 22.0406 24 21.3333 24H2.66667C1.95942 24 1.28115 23.719 0.781048 23.219C0.280951 22.7189 0 22.0406 0 21.3333V2.66667C0 1.95942 0.280951 1.28115 0.781048 0.781048C1.28115 0.280951 1.95942 0 2.66667 0H21.3333ZM20.6667 20.6667V13.6C20.6667 12.4472 20.2087 11.3416 19.3936 10.5264C18.5784 9.71128 17.4728 9.25333 16.32 9.25333C15.1867 9.25333 13.8667 9.94667 13.2267 10.9867V9.50667H9.50667V20.6667H13.2267V14.0933C13.2267 13.0667 14.0533 12.2267 15.08 12.2267C15.5751 12.2267 16.0499 12.4233 16.3999 12.7734C16.75 13.1235 16.9467 13.5983 16.9467 14.0933V20.6667H20.6667ZM5.17333 7.41333C5.76742 7.41333 6.33717 7.17733 6.75725 6.75725C7.17733 6.33717 7.41333 5.76742 7.41333 5.17333C7.41333 3.93333 6.41333 2.92 5.17333 2.92C4.57571 2.92 4.00257 3.1574 3.57999 3.57999C3.1574 4.00257 2.92 4.57571 2.92 5.17333C2.92 6.41333 3.93333 7.41333 5.17333 7.41333ZM7.02667 20.6667V9.50667H3.33333V20.6667H7.02667Z"/></svg>';
+		return '<svg class="honest-member__linkedin-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M21.3333 0C22.0406 0 22.7189 0.280951 23.219 0.781048C23.719 1.28115 24 1.95942 24 2.66667V21.3333C24 22.0406 23.719 22.7189 23.219 23.219C22.7189 23.719 22.0406 24 21.3333 24H2.66667C1.95942 24 1.28115 23.719 0.781048 23.219C0.280951 22.7189 0 22.0406 0 21.3333V2.66667C0 1.95942 0.280951 1.28115 0.781048 0.781048C1.28115 0.280951 1.95942 0 2.66667 0H21.3333ZM20.6667 20.6667V13.6C20.6667 12.4472 20.2087 11.3416 19.3936 10.5264C18.5784 9.71128 17.4728 9.25333 16.32 9.25333C15.1867 9.25333 13.8667 9.94667 13.2267 10.9867V9.50667H9.50667V20.6667H13.2267V14.0933C13.2267 13.0667 14.0533 12.2267 15.08 12.2267C15.5751 12.2267 16.0499 12.4233 16.3999 12.7734C16.75 13.1235 16.9467 13.5983 16.9467 14.0933V20.6667H20.6667ZM5.17333 7.41333C5.76742 7.41333 6.33717 7.17733 6.75725 6.75725C7.17733 6.33717 7.41333 5.76742 7.41333 5.17333C7.41333 3.93333 6.41333 2.92 5.17333 2.92C4.57571 2.92 4.00257 3.1574 3.57999 3.57999C3.1574 4.00257 2.92 4.57571 2.92 5.17333C2.92 6.41333 3.93333 7.41333 5.17333 7.41333ZM7.02667 20.6667V9.50667H3.33333V20.6667H7.02667Z"/></svg>';
 	}
 
 	/**
@@ -501,18 +416,10 @@ class Honest_Divi_Module_Team_Member_Header extends Honest_Divi_Module_Base {
 			esc_html( $back_text )
 		);
 
-		$linkedin = '' !== trim( $member['linkedin'] )
-			? sprintf(
-				'<a class="honest-member__linkedin" href="%1$s" target="_blank" rel="noopener noreferrer">%2$s%3$s</a>',
-				esc_url( $member['linkedin'] ),
-				self::linkedin_icon_svg(),
-				esc_html__( 'View LinkedIn Profile', 'honest-divi-modules' )
-			)
-			: '';
-
-		$quote = '' !== trim( $member['quote'] )
-			? sprintf( '<blockquote class="honest-member__quote">%s</blockquote>', esc_html( trim( $member['quote'] ) ) )
-			: '';
+		// The pull quote used to render here, between the bio and the LinkedIn
+		// link. It now belongs to the Member Statement module, which gives it its
+		// own band and pairs it with the why statement -- see that module's file
+		// header. The `quote` meta is untouched; only where it is drawn moved.
 
 		// Tested on the rendered HTML, not on image_id -- a member can carry a
 		// non-zero author_image whose attachment no longer exists (member
@@ -527,23 +434,84 @@ class Honest_Divi_Module_Team_Member_Header extends Honest_Divi_Module_Base {
 			$portrait = honest_team_render_media_placeholder();
 		}
 
+		// Intro animation, on the same system as every other module here: Divi's
+		// waypoint adds `et-animated` and this plugin's stylesheet does the
+		// reveal. honest_team_animation_attrs() withholds both in the builder, so
+		// the editor never shows an empty hero.
+		//
+		// The back bar is deliberately left out. It is a navigation band pinned
+		// above the content, not part of the composition being introduced, and
+		// animating it delays the only way off the page.
+		$step       = 0;
+		$anim_name  = honest_team_animation_attrs( $step++ );
+		$anim_role  = honest_team_animation_attrs( $step++ );
+		$anim_bio   = honest_team_animation_attrs( $step++ );
+		$anim_link  = honest_team_animation_attrs( $step++ );
+		// The portrait enters WITH the name rather than after the text: it is the
+		// other half of the composition, and a large image arriving last reads as
+		// a slow load rather than as choreography. It also fades instead of
+		// rising -- see `.honest-anim--fade` for why moving it is not an option.
+		$anim_media  = honest_team_animation_attrs( 0 );
+		$media_class = '' !== $anim_media['class'] ? $anim_media['class'] . ' honest-anim--fade' : '';
+
+		// Icon only, no label beside it. The visible text carried the link's
+		// accessible name, so removing it moves that job to `aria-label` --
+		// otherwise the link announces as its bare URL. The member's name is in
+		// the label rather than a generic "View LinkedIn Profile" because a
+		// nameless icon link reads identically to every other one on a page.
+		$linkedin = '' !== trim( $member['linkedin'] )
+			? sprintf(
+				'<a class="honest-member__linkedin%4$s" href="%1$s" target="_blank" rel="noopener noreferrer" aria-label="%3$s"%5$s>%2$s</a>',
+				esc_url( $member['linkedin'] ),
+				self::linkedin_icon_svg(),
+				esc_attr( sprintf(
+					/* translators: %s: team member name. */
+					__( 'View %s on LinkedIn', 'honest-divi-modules' ),
+					$member['name']
+				) ),
+				$anim_link['class'],
+				$anim_link['style']
+			)
+			: '';
+
+		// Composed from named parts rather than one sprintf: with a class and a
+		// style fragment per element, a single template would run to thirteen
+		// positional placeholders.
+		$name_el = sprintf(
+			'<h1 class="honest-member__name%2$s"%3$s>%1$s</h1>',
+			esc_html( $member['name'] ),
+			$anim_name['class'],
+			$anim_name['style']
+		);
+		$role_el = sprintf(
+			'<p class="honest-member__title%2$s"%3$s>%1$s</p>',
+			esc_html( $member['job_title'] ),
+			$anim_role['class'],
+			$anim_role['style']
+		);
+		$bio_el = sprintf(
+			'<div class="honest-member__bio%2$s"%3$s>%1$s</div>',
+			self::render_bio( $member['bio'] ),
+			$anim_bio['class'],
+			$anim_bio['style']
+		);
+		$media_el = sprintf(
+			'<div class="honest-member__media%2$s"%3$s>%1$s</div>',
+			$portrait,
+			$media_class,
+			$anim_media['style']
+		);
+
 		return $backbar . sprintf(
 			'<div class="honest-member__inner">
-				<div class="honest-member__text">
-					<h1 class="honest-member__name">%1$s</h1>
-					<p class="honest-member__title">%2$s</p>
-					<div class="honest-member__bio">%3$s</div>
-					%4$s
-					%5$s
-				</div>
-				<div class="honest-member__media">%6$s</div>
+				<div class="honest-member__text">%1$s%2$s%3$s%4$s</div>
+				%5$s
 			</div>',
-			esc_html( $member['name'] ),
-			esc_html( $member['job_title'] ),
-			self::render_bio( $member['bio'] ),
-			$quote,
+			$name_el,
+			$role_el,
+			$bio_el,
 			$linkedin,
-			$portrait
+			$media_el
 		);
 	}
 
@@ -559,26 +527,17 @@ class Honest_Divi_Module_Team_Member_Header extends Honest_Divi_Module_Base {
 			return '';
 		}
 
-		// The ring is a wrapper modifier class rather than another custom
-		// property because its "off" state is a border WIDTH of zero, and
-		// wrap()'s $css_vars map only ever carries validated colour (or image
-		// URL) values -- see Honest_Divi_Module_Base::build_style_attr().
-		$ring = 'on' === $this->props['portrait_ring'];
-
 		return $this->wrap(
 			$render_slug,
 			$inner,
-			array( 'honest-member', $ring ? 'honest-member--portrait-ring' : '' ),
+			array( 'honest-member' ),
 			array(
-				'--hh-member-name'          => $this->props['name_color'],
-				'--hh-member-title'         => $this->props['job_title_color'],
-				'--hh-member-bio'           => $this->props['bio_color'],
-				'--hh-member-quote'         => $this->props['quote_color'],
-				'--hh-member-linkedin'      => $this->props['linkedin_color'],
-				'--hh-member-back-bg'       => $this->props['back_bg_color'],
-				'--hh-member-back-label'    => $this->props['back_label_color'],
-				'--hh-member-portrait-ring' => $this->props['portrait_ring_color'],
-				'--hh-member-portrait-bg'   => $this->props['portrait_bg_color'],
+				'--hh-member-name'       => $this->props['name_color'],
+				'--hh-member-title'      => $this->props['job_title_color'],
+				'--hh-member-bio'        => $this->props['bio_color'],
+				'--hh-member-linkedin'   => $this->props['linkedin_color'],
+				'--hh-member-back-bg'    => $this->props['back_bg_color'],
+				'--hh-member-back-label' => $this->props['back_label_color'],
 			)
 		);
 	}
