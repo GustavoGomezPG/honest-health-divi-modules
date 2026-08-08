@@ -324,7 +324,12 @@ CSS blocks are `honest-<block>` BEM: `honest-text-hero`, `honest-exec`,
 edits are instant with no server round-trip. Paints a full-bleed gradient band.
 The eyebrow's blue banner is a `::before` on an inner `<span>`, which must
 shrink-wrap. Stagger indices only advance for parts that actually render, so a
-hero with no eyebrow does not open on a dead beat.
+hero with no eyebrow does not open on a dead beat. Like `CallToAction` it
+redirects Design-tab padding at `.honest-text-hero__inner`; the band element
+itself carries the breakout's `padding-inline`, so it cannot host the control
+without an editor value stranding the copy at viewport width. The stylesheet's
+`padding: 80px 0 70px` on `__inner` is the floor and the field default repeats
+it — keep the two in step.
 
 **ExecutiveLeadership** — `get_cards_html()` is `static` because Divi invokes
 computed callbacks as plain callables with no instance. `__cards` declares a
@@ -360,7 +365,7 @@ stylesheet, so the `style` modifier could never take effect.
 **CallToAction** — the odd one out twice over: it has **no computed property**
 (its markup is duplicated in `vb-modules.js`, the drift risk the other modules
 were written to avoid), and **no empty-state bail** (every field blank still
-paints a band). It is also the only module that passes `$overrides` to
+paints a band). Along with `TextHero` it passes `$overrides` to
 `base_advanced_fields()`, redirecting Design-tab padding at
 `.honest-cta__inner` — without that, padding lands on Divi's outer wrapper,
 *outside* the painted band. `cta_image` is never trusted directly:
@@ -818,10 +823,15 @@ Collected from the source comments; most were paid for once already.
 2. Never emit your own wrapper outside `wrap()` — the `'on'` / `'partial'`
    wrapper-ownership rule is what stops full-bleed bands painting twice.
 3. Invalid CSS custom-property values are **dropped silently**. The stylesheet
-   fallback renders and nothing is logged.
-4. `is_valid_css_color()` accepts only **comma-form** `rgb()`/`hsl()`. Modern
-   space/slash syntax (`rgb(0 0 0 / 50%)`) is rejected and the property is
-   dropped — a real trap when pasting from a design tool or dev-tools.
+   fallback renders and nothing is logged. Colours accept hex 3/4/6/8, both the
+   comma form and the CSS Color 4 space form of `rgb()`/`hsl()`, and named
+   keywords — anything else, including an unresolved `gcid-…` global-colour
+   placeholder, is dropped.
+4. Divi **backfills a missing toggle definition** for third-party modules:
+   `get_toggles()` borrows an existing definition of the same slug from any
+   other registered module. Convenient, but it means a module can render
+   correctly while depending on another module's declaration — and inherit that
+   module's text domain for the toggle title. Declare your own toggles.
 5. `vb-overrides.css` duplicates declarations from `modules.css` by necessity.
    Change a value in one and you must change it in the other.
 6. Every user-facing string in `vb-modules.js` is hard-coded English. The
@@ -862,25 +872,13 @@ Collected from the source comments; most were paid for once already.
 
 **Known issues**
 
-18. **`Testimonials::init()` declares no `general` tab**, yet `autoplay`,
-    `slide_duration` and `fade_duration` all set
-    `toggle_slug => 'main_content'`. Divi's `get_options()` only iterates
-    declared toggles, so on the classic-builder settings-modal path those three
-    controls have no UI. Every sibling module declares the toggle. Fix: add
-    `'general' => array( 'toggles' => array( 'main_content' => … ) )` to
-    `init()`. *(The React VB pipeline is a separate code path and was not
-    verified; the declaration is missing either way.)*
-19. `TextHero` paints a full-bleed band on its inner div but leaves
-    `margin_padding` at the default `%%order_class%%` — Divi's *outer* wrapper.
-    Design-tab padding therefore appears as blank space above and below the
-    band instead of insetting the content. `CallToAction` shows the fix.
-20. Duplicate `LeadershipByMarket` / `Testimonials` instances on one page
+18. Duplicate `LeadershipByMarket` / `Testimonials` instances on one page
     collide on ARIA ids **in the builder preview** — each module's computed
     value is fetched in its own AJAX request, so both get the same instance
     counter. The front end is fine.
-21. `CallToAction` body copy `#6a8090` on the `#b8c8e7` overlay computes to
+19. `CallToAction` body copy `#6a8090` on the `#b8c8e7` overlay computes to
     ~2.44:1, short of WCAG AA's 4.5:1. Faithfully reproduced from Figma.
-22. `class-honest-divi-module-base.php` references a
+20. `class-honest-divi-module-base.php` references a
     `filter_outer_wrapper_attrs()` method that does not exist anywhere in the
     plugin, and stacks two contradictory docblocks before
     `base_advanced_fields()`. Both are stale comments, not behaviour.
