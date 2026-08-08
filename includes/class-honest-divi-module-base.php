@@ -262,10 +262,17 @@ abstract class Honest_Divi_Module_Base extends ET_Builder_Module {
 
 	/**
 	 * Whether a string is safe to use as a CSS colour value: 3/4/6/8-digit
-	 * hex, rgb()/rgba(), hsl()/hsla(), or a CSS named colour keyword.
-	 * Anything else (including a value that merely starts with a valid
-	 * colour but carries extra content, e.g. "red;background:url(...)") is
-	 * rejected.
+	 * hex, rgb()/rgba()/hsl()/hsla() in either the legacy comma form or the
+	 * CSS Color 4 space form, or a CSS named colour keyword. Anything else
+	 * (including a value that merely starts with a valid colour but carries
+	 * extra content, e.g. "red;background:url(...)") is rejected.
+	 *
+	 * Both function forms are accepted because the two are not
+	 * interchangeable in the wild: Divi's own colour picker emits the comma
+	 * form, while a value pasted from a design tool or from dev-tools'
+	 * computed panel is almost always the space form -- `rgb(0 0 0 / 50%)`.
+	 * Rejecting the latter dropped the custom property silently and rendered
+	 * the stylesheet fallback, with nothing logged anywhere to explain it.
 	 *
 	 * @param string $value
 	 * @return bool
@@ -281,7 +288,22 @@ abstract class Honest_Divi_Module_Base extends ET_Builder_Module {
 			return true;
 		}
 
-		if ( preg_match( '/^(?:rgb|rgba|hsl|hsla)\(\s*[0-9.]+%?\s*,\s*[0-9.]+%?\s*,\s*[0-9.]+%?\s*(?:,\s*[0-9.]+%?\s*)?\)$/i', $value ) ) {
+		// One numeric component: an optionally-signed number carrying an
+		// optional percentage or angle unit. Deliberately not split per
+		// channel -- this gates what may reach the style attribute, not
+		// whether the colour is well-formed, and every character the class
+		// admits is inert there. The browser discards a malformed
+		// declaration on its own, which lands on the same stylesheet
+		// fallback a rejection would have.
+		$num = '-?(?:\d+\.?\d*|\.\d+)(?:%|deg|grad|rad|turn)?';
+
+		// Legacy comma form: rgb(0, 0, 0) / rgba(0, 0, 0, 0.5).
+		if ( preg_match( "/^(?:rgb|rgba|hsl|hsla)\(\s*{$num}\s*,\s*{$num}\s*,\s*{$num}\s*(?:,\s*{$num}\s*)?\)$/i", $value ) ) {
+			return true;
+		}
+
+		// Space form: rgb(0 0 0) / rgb(0 0 0 / 50%) / hsl(210deg 40% 96%).
+		if ( preg_match( "/^(?:rgb|rgba|hsl|hsla)\(\s*{$num}\s+{$num}\s+{$num}\s*(?:\/\s*{$num}\s*)?\)$/i", $value ) ) {
 			return true;
 		}
 
