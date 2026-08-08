@@ -63,6 +63,29 @@ class Honest_Divi_Module_Testimonials extends Honest_Divi_Module_Base {
 		$this->main_css_element = '%%order_class%%';
 
 		$this->settings_modal_toggles = array(
+			// Declared for parity with the other seven modules, all of which
+			// declare the General tab their main_content fields sit on. This
+			// module's are playback controls rather than editor copy, which is
+			// how it came to be the one that did not.
+			//
+			// NOT a bug fix -- the three controls below were always reachable.
+			// Divi backfills a missing toggle definition for third-party
+			// modules: ET_Builder_Element::get_toggles() borrows an existing
+			// definition of the same slug from any other registered module
+			// (class-et-builder-element.php:18895-18933), and get_options()
+			// writes it back into settings_modal_toggles (:12692-12697).
+			// Verified on Divi 4.27.7 by registering a module with the old
+			// shape: the lookup still resolved.
+			//
+			// Worth declaring anyway. It drops a dependency on undocumented
+			// self-healing and on some other module happening to define
+			// 'main_content', and it pins the toggle's title to this plugin's
+			// own text domain instead of whichever module Divi borrowed from.
+			'general'  => array(
+				'toggles' => array(
+					'main_content' => esc_html__( 'Content', 'honest-divi-modules' ),
+				),
+			),
 			'advanced' => array(
 				'toggles' => array(
 					'quote'   => esc_html__( 'Quote', 'honest-divi-modules' ),
