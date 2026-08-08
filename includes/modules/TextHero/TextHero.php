@@ -104,6 +104,44 @@ class Honest_Divi_Module_Text_Hero extends Honest_Divi_Module_Base {
 					'line_height'    => array( 'default' => '1.45em' ),
 					'font'           => array( 'default' => '|400|||||||' ),
 				),
+			),
+			array(
+				// Point the Design tab's Padding at the module's own inner element
+				// rather than Divi's wrapper.
+				//
+				// `.honest-text-hero` is the painted band: it carries the gradient
+				// and the full-bleed breakout (`margin-inline: calc(50% - 50vw)`
+				// plus the `padding-inline: calc(50vw - 50%)` that brings the copy
+				// back to Divi's Row width). At vb_support='on' Divi wraps
+				// third-party output, so `%%order_class%%` -- the default target --
+				// is the wrapper OUTSIDE all of that: padding set there appeared as
+				// blank space above and below the band instead of insetting the
+				// content within it.
+				//
+				// `.honest-text-hero__inner` sits inside the painted box, so
+				// padding on it moves the copy while the gradient still fills the
+				// full band. Horizontal padding works there too, insetting the copy
+				// without disturbing the breakout, whose `padding-inline` must stay
+				// on `.honest-text-hero` untouched.
+				//
+				// `margin` is deliberately left on the default wrapper: margin
+				// belongs outside the band, and pointing it here would fight that
+				// same breakout.
+				//
+				// `important` is what lets an editor's value beat the stylesheet's
+				// declaration. The stylesheet holds `padding: 80px 0 70px` on
+				// `__inner` as the floor -- moved there from the band element for
+				// exactly this reason -- because Divi emits no CSS for a field
+				// still at its default, which is also why the default below repeats
+				// the design values, so the Design tab opens on the numbers
+				// actually in force.
+				'margin_padding' => array(
+					'css'            => array(
+						'padding'   => "{$this->main_css_element} .honest-text-hero__inner",
+						'important' => 'all',
+					),
+					'custom_padding' => array( 'default' => '80px||70px||false|false' ),
+				),
 			)
 		);
 	}

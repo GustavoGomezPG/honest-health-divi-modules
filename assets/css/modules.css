@@ -440,10 +440,20 @@
    documentElement.scrollWidth - clientWidth == 0 at 1920/1436/1020/764/410/
    371/316, and the band still reaches both viewport edges at each.
 
-   `padding-block` bottom is 70px, not the old 140px: 140 was clearance for
-   the ellipse, which covered the lower 80px of the band. 70px is the gap
-   between the body copy (node 1:204, ends y=435) and the band's bottom edge
-   (y=505) in Figma; 80px top is 197-116, band top to the eyebrow frame.
+   The band's vertical padding is 80px top / 70px bottom: 70 is the gap between
+   the body copy (node 1:204, ends y=435) and the band's bottom edge (y=505) in
+   Figma, and 80 is 197-116, band top to the eyebrow frame. (Not the old 140px
+   bottom -- that was clearance for the ellipse, which covered the lower 80px.)
+
+   IT LIVES ON `__inner`, NOT ON THE BAND. The band element carries the
+   breakout's `padding-inline`, so it cannot also host the Design tab's Padding
+   control without an editor value wiping that out and stranding the copy at
+   viewport width. TextHero::init() therefore points `margin_padding` at
+   `__inner` and repeats these two numbers as the field default; this
+   declaration is the floor Divi emits nothing for while the field is untouched.
+   Keep the two in step. The painted height is unchanged either way: the band
+   has no vertical padding of its own now, so its height is exactly `__inner`'s
+   padded height, and the gradient still fills it.
 
    `__inner` carries no width of its own: `position: relative; z-index: 1` is
    only what puts the copy in its own layer above the band background.
@@ -479,7 +489,6 @@
 .honest-text-hero {
   margin-inline: calc(50% - 50vw);
   padding-inline: calc(50vw - 50%);
-  padding-block: 80px 70px;
   background: linear-gradient(
     90deg,
     var(--hh-hero-from, #6a4c91) 0%,
@@ -493,6 +502,7 @@
   text-align: center;
   position: relative;
   z-index: 1;
+  padding: 80px 0 70px;
 }
 .honest-text-hero__eyebrow {
   font-size: 56px;
